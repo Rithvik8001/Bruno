@@ -40,7 +40,12 @@ export type IconSource = IconToken | SFSymbol;
 
 export type ResolvedTextStyle = Pick<
   TextStyle,
-  "fontFamily" | "fontSize" | "lineHeight" | "letterSpacing" | "textTransform" | "fontVariant"
+  | "fontFamily"
+  | "fontSize"
+  | "lineHeight"
+  | "letterSpacing"
+  | "textTransform"
+  | "fontVariant"
 >;
 
 export const colorTokens = Object.keys(themes.light).filter(

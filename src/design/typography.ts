@@ -26,9 +26,14 @@ export function isDisplay(token: TypeToken): boolean {
   return displayTokens.has(token);
 }
 
-export function scaleTypeStyle(token: TypeToken, fontScale: number): ResolvedTextStyle {
+export function scaleTypeStyle(
+  token: TypeToken,
+  fontScale: number,
+): ResolvedTextStyle {
   const base = type[token];
-  const range = isDisplay(token) ? dynamicTypeRange.display : dynamicTypeRange.text;
+  const range = isDisplay(token)
+    ? dynamicTypeRange.display
+    : dynamicTypeRange.text;
   const scale = clamp(fontScale, range.min, range.max);
 
   return {

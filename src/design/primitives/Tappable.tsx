@@ -13,11 +13,19 @@ export type TappableProps = Omit<PressableProps, "style" | "children"> & {
   style?: StyleProp<ViewStyle>;
 };
 
-export function Tappable({ children, style, disabled, ...rest }: TappableProps) {
+export function Tappable({
+  children,
+  style,
+  disabled,
+  ...rest
+}: TappableProps) {
   return (
     <Pressable
       disabled={disabled}
-      style={({ pressed }) => [style, { opacity: pressed && !disabled ? pressedOpacity : 1 }]}
+      style={({ pressed }) => [
+        style,
+        { opacity: pressed && !disabled ? pressedOpacity : 1 },
+      ]}
       {...rest}
     >
       {children}

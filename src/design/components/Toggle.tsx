@@ -8,7 +8,8 @@ import { T } from "../primitives/T";
 
 const toggleDuration = 160;
 
-const travel = layout.toggle.width - layout.toggle.knob - layout.toggle.knobInset * 2;
+const travel =
+  layout.toggle.width - layout.toggle.knob - layout.toggle.knobInset * 2;
 
 export type ToggleProps = {
   value: boolean;
@@ -17,7 +18,12 @@ export type ToggleProps = {
   accessibilityLabel: string;
 };
 
-export function Toggle({ value, onValueChange, disabled = false, accessibilityLabel }: ToggleProps) {
+export function Toggle({
+  value,
+  onValueChange,
+  disabled = false,
+  accessibilityLabel,
+}: ToggleProps) {
   const theme = useTheme();
   const reduceMotion = useReduceMotion();
   const progress = useRef(new Animated.Value(value ? 1 : 0)).current;
@@ -30,7 +36,10 @@ export function Toggle({ value, onValueChange, disabled = false, accessibilityLa
     }).start();
   }, [value, reduceMotion, progress]);
 
-  const translateX = progress.interpolate({ inputRange: [0, 1], outputRange: [0, travel] });
+  const translateX = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, travel],
+  });
 
   return (
     <Pressable
@@ -76,7 +85,13 @@ export type ToggleRowProps = {
   last?: boolean;
 };
 
-export function ToggleRow({ label, value, onValueChange, disabled, last = true }: ToggleRowProps) {
+export function ToggleRow({
+  label,
+  value,
+  onValueChange,
+  disabled,
+  last = true,
+}: ToggleRowProps) {
   const theme = useTheme();
 
   return (

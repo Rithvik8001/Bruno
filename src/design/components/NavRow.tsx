@@ -49,7 +49,11 @@ export function NavRow({
           onPress={action.onPress}
           accessibilityRole="button"
           accessibilityLabel={action.title}
-          style={{ height: layout.hit, justifyContent: "center", marginVertical: -10 }}
+          style={{
+            height: layout.hit,
+            justifyContent: "center",
+            marginVertical: -10,
+          }}
         >
           <T style="filter" color="ink2">
             {action.title}

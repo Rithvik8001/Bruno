@@ -3,7 +3,11 @@ import { useCallback, useMemo, useState, type ReactNode } from "react";
 
 import { themes } from "../tokens";
 import type { ThemeName } from "../types";
-import { ThemeContext, type AppearancePreference, type ThemeContextValue } from "./ThemeContext";
+import {
+  ThemeContext,
+  type AppearancePreference,
+  type ThemeContextValue,
+} from "./ThemeContext";
 
 export type ThemeProviderProps = {
   children: ReactNode;
@@ -17,7 +21,8 @@ export function ThemeProvider({
   onPreferenceChange,
 }: ThemeProviderProps) {
   const system = useColorScheme();
-  const [preference, setPreferenceState] = useState<AppearancePreference>(initialPreference);
+  const [preference, setPreferenceState] =
+    useState<AppearancePreference>(initialPreference);
 
   const setPreference = useCallback(
     (next: AppearancePreference) => {
@@ -28,7 +33,11 @@ export function ThemeProvider({
   );
 
   const themeName: ThemeName =
-    preference === "system" ? (system === "dark" ? "dark" : "light") : preference;
+    preference === "system"
+      ? system === "dark"
+        ? "dark"
+        : "light"
+      : preference;
 
   const value = useMemo<ThemeContextValue>(
     () => ({ theme: themes[themeName], themeName, preference, setPreference }),

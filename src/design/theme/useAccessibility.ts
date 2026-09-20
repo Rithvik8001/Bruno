@@ -39,7 +39,10 @@ export function useReduceMotion(): boolean {
       }
     });
 
-    const subscription = AccessibilityInfo.addEventListener("reduceMotionChanged", setReduced);
+    const subscription = AccessibilityInfo.addEventListener(
+      "reduceMotionChanged",
+      setReduced,
+    );
 
     return () => {
       active = false;

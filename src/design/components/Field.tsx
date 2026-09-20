@@ -14,7 +14,13 @@ export type FieldProps = Omit<TextInputProps, "style" | "allowFontScaling"> & {
   size?: FieldSize;
 };
 
-export function Field({ label, size = "input", onFocus, onBlur, ...rest }: FieldProps) {
+export function Field({
+  label,
+  size = "input",
+  onFocus,
+  onBlur,
+  ...rest
+}: FieldProps) {
   const theme = useTheme();
   const typeStyle = useTypeStyle(size);
   const [focused, setFocused] = useState(false);

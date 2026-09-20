@@ -1,19 +1,32 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
+import * as SystemUI from "expo-system-ui";
+import { useEffect, useMemo } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
-import { ThemeProvider, useBrunoFonts, useTheme } from "@/design";
+import {
+  ThemeProvider,
+  readStoredPreference,
+  useBrunoFonts,
+  useTheme,
+  useThemeName,
+  writeStoredPreference,
+} from "@/design";
 
 SplashScreen.preventAutoHideAsync();
 
 function RootNavigator() {
   const theme = useTheme();
+  const themeName = useThemeName();
+
+  useEffect(() => {
+    SystemUI.setBackgroundColorAsync(theme.paper);
+  }, [theme.paper]);
 
   return (
     <>
-      <StatusBar style="auto" />
+      <StatusBar style={themeName === "dark" ? "light" : "dark"} />
       <Stack
         screenOptions={{
           headerShown: false,
@@ -28,6 +41,7 @@ function RootNavigator() {
 
 export default function RootLayout() {
   const [loaded, error] = useBrunoFonts();
+  const initialPreference = useMemo(readStoredPreference, []);
 
   useEffect(() => {
     if (loaded || error) {
@@ -41,7 +55,10 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <ThemeProvider>
+      <ThemeProvider
+        initialPreference={initialPreference}
+        onPreferenceChange={writeStoredPreference}
+      >
         <RootNavigator />
       </ThemeProvider>
     </SafeAreaProvider>

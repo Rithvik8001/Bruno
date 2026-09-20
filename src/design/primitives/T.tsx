@@ -1,4 +1,9 @@
-import { Text, type StyleProp, type TextProps, type TextStyle } from "react-native";
+import {
+  Text,
+  type StyleProp,
+  type TextProps,
+  type TextStyle,
+} from "react-native";
 
 import { useTheme } from "../theme/useTheme";
 import type { ColorToken, TypeToken } from "../types";

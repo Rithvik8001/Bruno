@@ -45,7 +45,10 @@ export function LedgerRow({
       <T
         style="caption"
         color="ink3"
-        override={{ width: layout.dateColumn, paddingRight: layout.ledger.datePadding }}
+        override={{
+          width: layout.dateColumn,
+          paddingRight: layout.ledger.datePadding,
+        }}
         numberOfLines={1}
         adjustsFontSizeToFit
         minimumFontScale={0.75}
@@ -57,7 +60,11 @@ export function LedgerRow({
           {name}
         </T>
         {note === undefined ? null : (
-          <T style="sub" color={noteTone} override={{ marginTop: layout.ledger.noteGap }}>
+          <T
+            style="sub"
+            color={noteTone}
+            override={{ marginTop: layout.ledger.noteGap }}
+          >
             {note}
           </T>
         )}

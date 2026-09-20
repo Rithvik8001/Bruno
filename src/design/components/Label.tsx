@@ -21,7 +21,13 @@ export type LabelRowProps = {
 
 export function LabelRow({ label, caption }: LabelRowProps) {
   return (
-    <View style={{ flexDirection: "row", alignItems: "baseline", justifyContent: "space-between" }}>
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "baseline",
+        justifyContent: "space-between",
+      }}
+    >
       <Label>{label}</Label>
       {caption === undefined ? null : (
         <T style="caption" color="ink3">

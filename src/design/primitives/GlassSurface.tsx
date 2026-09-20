@@ -31,7 +31,10 @@ export function GlassSurface({ radius }: GlassSurfaceProps) {
           {
             borderRadius: radius,
             backgroundColor: reduceTransparency
-              ? withOpacity(theme.paper, layout.tabBar.reduceTransparency.paperOpacity)
+              ? withOpacity(
+                  theme.paper,
+                  layout.tabBar.reduceTransparency.paperOpacity,
+                )
               : theme.glass,
           },
         ]}

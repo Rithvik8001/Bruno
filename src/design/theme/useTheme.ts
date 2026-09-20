@@ -1,7 +1,11 @@
 import { use } from "react";
 
 import type { ColorToken, Theme, ThemeName } from "../types";
-import { ThemeContext, type AppearancePreference, type ThemeContextValue } from "./ThemeContext";
+import {
+  ThemeContext,
+  type AppearancePreference,
+  type ThemeContextValue,
+} from "./ThemeContext";
 
 export function useThemeContext(): ThemeContextValue {
   const value = use(ThemeContext);

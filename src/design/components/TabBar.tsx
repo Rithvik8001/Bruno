@@ -27,7 +27,11 @@ export function useTabBarSpace(): number {
   return layout.tabBar.height + layout.tabBar.bottom + insets.bottom;
 }
 
-export function TabBar<TKey extends string>({ items, value, onChange }: TabBarProps<TKey>) {
+export function TabBar<TKey extends string>({
+  items,
+  value,
+  onChange,
+}: TabBarProps<TKey>) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const reduceTransparency = useReduceTransparency();

@@ -14,7 +14,14 @@ export type PlanRowProps = {
   last?: boolean;
 };
 
-export function PlanRow({ name, price, note, selected, onSelect, last = false }: PlanRowProps) {
+export function PlanRow({
+  name,
+  price,
+  note,
+  selected,
+  onSelect,
+  last = false,
+}: PlanRowProps) {
   const theme = useTheme();
 
   return (
@@ -22,7 +29,9 @@ export function PlanRow({ name, price, note, selected, onSelect, last = false }:
       onPress={onSelect}
       accessibilityRole="radio"
       accessibilityState={{ selected }}
-      accessibilityLabel={note === undefined ? `${name}, ${price}` : `${name}, ${note}, ${price}`}
+      accessibilityLabel={
+        note === undefined ? `${name}, ${price}` : `${name}, ${note}, ${price}`
+      }
       style={{
         height: layout.rowXL,
         flexDirection: "row",
@@ -37,7 +46,9 @@ export function PlanRow({ name, price, note, selected, onSelect, last = false }:
           width: layout.radio.size,
           height: layout.radio.size,
           borderRadius: layout.radio.size / 2,
-          borderWidth: selected ? layout.radio.selectedRing : layout.radio.idleStroke,
+          borderWidth: selected
+            ? layout.radio.selectedRing
+            : layout.radio.idleStroke,
           borderColor: selected ? theme.accent : theme.ink3,
         }}
       />

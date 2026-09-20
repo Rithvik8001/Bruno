@@ -1,8 +1,9 @@
 import { createContext } from "react";
 
 import type { Theme, ThemeName } from "../types";
+import type { AppearancePreference } from "./appearanceStorage";
 
-export type AppearancePreference = "system" | ThemeName;
+export type { AppearancePreference };
 
 export type ThemeContextValue = {
   theme: Theme;
