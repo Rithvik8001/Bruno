@@ -1,0 +1,68 @@
+import type { ReactNode } from "react";
+import { ScrollView, View, type ScrollViewProps } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+import { layout } from "../tokens";
+import { useTheme } from "../theme/useTheme";
+import { useTabBarSpace } from "../components/TabBar";
+
+export function useScreenTop(): number {
+  const insets = useSafeAreaInsets();
+  return Math.max(layout.top, insets.top + 20);
+}
+
+export function useScreenBottom(): number {
+  const insets = useSafeAreaInsets();
+  return layout.bottom + insets.bottom;
+}
+
+export type ScreenProps = {
+  children: ReactNode;
+  scroll?: boolean;
+  padded?: boolean;
+  withTabBar?: boolean;
+  scrollViewProps?: Omit<ScrollViewProps, "children" | "contentContainerStyle">;
+};
+
+export function Screen({
+  children,
+  scroll = false,
+  padded = true,
+  withTabBar = false,
+  scrollViewProps,
+}: ScreenProps) {
+  const theme = useTheme();
+  const top = useScreenTop();
+  const bottom = useScreenBottom();
+  const tabBarSpace = useTabBarSpace();
+
+  const paddingHorizontal = padded ? layout.margin : 0;
+  const paddingBottom = withTabBar ? tabBarSpace + layout.bottom : bottom;
+
+  if (scroll) {
+    return (
+      <ScrollView
+        style={{ flex: 1, backgroundColor: theme.paper }}
+        contentContainerStyle={{ paddingTop: top, paddingBottom, paddingHorizontal }}
+        showsVerticalScrollIndicator={false}
+        {...scrollViewProps}
+      >
+        {children}
+      </ScrollView>
+    );
+  }
+
+  return (
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: theme.paper,
+        paddingTop: top,
+        paddingBottom,
+        paddingHorizontal,
+      }}
+    >
+      {children}
+    </View>
+  );
+}
