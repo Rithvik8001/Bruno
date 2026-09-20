@@ -19,7 +19,9 @@ function RootNavigator() {
           headerShown: false,
           contentStyle: { backgroundColor: theme.paper },
         }}
-      />
+      >
+        <Stack.Screen name="index" options={{ animation: "none" }} />
+      </Stack>
     </>
   );
 }

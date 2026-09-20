@@ -19,6 +19,7 @@ export function useScreenBottom(): number {
 export type ScreenProps = {
   children: ReactNode;
   scroll?: boolean;
+  fill?: boolean;
   padded?: boolean;
   withTabBar?: boolean;
   scrollViewProps?: Omit<ScrollViewProps, "children" | "contentContainerStyle">;
@@ -27,6 +28,7 @@ export type ScreenProps = {
 export function Screen({
   children,
   scroll = false,
+  fill = false,
   padded = true,
   withTabBar = false,
   scrollViewProps,
@@ -43,7 +45,12 @@ export function Screen({
     return (
       <ScrollView
         style={{ flex: 1, backgroundColor: theme.paper }}
-        contentContainerStyle={{ paddingTop: top, paddingBottom, paddingHorizontal }}
+        contentContainerStyle={{
+          paddingTop: top,
+          paddingBottom,
+          paddingHorizontal,
+          flexGrow: fill ? 1 : undefined,
+        }}
         showsVerticalScrollIndicator={false}
         {...scrollViewProps}
       >

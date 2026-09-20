@@ -1,4 +1,14 @@
-export { fonts, icons, iconSizes, layout, space, symbolWeight, themes, type } from "./tokens";
+export {
+  displayTypeTokens,
+  fonts,
+  icons,
+  iconSizes,
+  layout,
+  space,
+  symbolWeight,
+  themes,
+  type,
+} from "./tokens";
 export {
   colorTokens,
   iconTokens,
@@ -19,7 +29,7 @@ export {
 export {
   dynamicTypeRange,
   heroMinimumFontScale,
-  isSerif,
+  isDisplay,
   numericVariant,
   scaleTypeStyle,
   useFontScale,
@@ -39,6 +49,7 @@ export { useReduceMotion, useReduceTransparency } from "./theme/useAccessibility
 export { brunoFontMap, useBrunoFonts } from "./fonts/useBrunoFonts";
 
 export { Gap, type GapProps } from "./primitives/Gap";
+export { Spacer, type SpacerProps } from "./primitives/Spacer";
 export { GlassSurface, type GlassSurfaceProps } from "./primitives/GlassSurface";
 export { Hairline, type HairlineProps } from "./primitives/Hairline";
 export { Icon, resolveIconSize, resolveSymbol, type IconColorToken, type IconProps } from "./primitives/Icon";

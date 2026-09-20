@@ -1,13 +1,13 @@
 import { useWindowDimensions } from "react-native";
 
-import { fonts, type } from "./tokens";
+import { displayTypeTokens, type } from "./tokens";
 import type { ResolvedTextStyle, TypeToken } from "./types";
 
-const serifFamilies: readonly string[] = [fonts.serif, fonts.serifItalic];
+const displayTokens: ReadonlySet<TypeToken> = new Set(displayTypeTokens);
 
 export const dynamicTypeRange = {
-  serif: { min: 0.85, max: 1.3 },
-  sans: { min: 0.85, max: 1.6 },
+  display: { min: 0.85, max: 1.3 },
+  text: { min: 0.85, max: 1.6 },
 } as const;
 
 export const numericVariant = ["lining-nums", "tabular-nums"] as const;
@@ -22,13 +22,13 @@ function round(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-export function isSerif(token: TypeToken): boolean {
-  return serifFamilies.includes(type[token].fontFamily);
+export function isDisplay(token: TypeToken): boolean {
+  return displayTokens.has(token);
 }
 
 export function scaleTypeStyle(token: TypeToken, fontScale: number): ResolvedTextStyle {
   const base = type[token];
-  const range = isSerif(token) ? dynamicTypeRange.serif : dynamicTypeRange.sans;
+  const range = isDisplay(token) ? dynamicTypeRange.display : dynamicTypeRange.text;
   const scale = clamp(fontScale, range.min, range.max);
 
   return {

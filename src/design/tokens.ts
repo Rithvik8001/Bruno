@@ -40,14 +40,14 @@ export const fonts = {
 } as const;
 
 export const type = {
-  moneyXL: { fontFamily: fonts.serif, fontSize: 76, lineHeight: 76, letterSpacing: -1.5 },
-  moneyL: { fontFamily: fonts.serif, fontSize: 64, lineHeight: 64, letterSpacing: -1.5 },
-  moneyM: { fontFamily: fonts.serif, fontSize: 56, lineHeight: 56, letterSpacing: -1.5 },
-  statement: { fontFamily: fonts.serif, fontSize: 48, lineHeight: 50, letterSpacing: -1 },
-  amount: { fontFamily: fonts.serif, fontSize: 40, lineHeight: 40, letterSpacing: -1 },
-  title: { fontFamily: fonts.serif, fontSize: 36, lineHeight: 36, letterSpacing: -0.6 },
-  digit: { fontFamily: fonts.serif, fontSize: 34, lineHeight: 34, letterSpacing: -0.2 },
-  wordmark: { fontFamily: fonts.serifItalic, fontSize: 24, lineHeight: 24, letterSpacing: 0 },
+  moneyXL: { fontFamily: fonts.sansMedium, fontSize: 76, lineHeight: 76, letterSpacing: -2.5 },
+  moneyL: { fontFamily: fonts.sansMedium, fontSize: 64, lineHeight: 64, letterSpacing: -2 },
+  moneyM: { fontFamily: fonts.sansMedium, fontSize: 56, lineHeight: 56, letterSpacing: -1.8 },
+  statement: { fontFamily: fonts.sansMedium, fontSize: 34, lineHeight: 40, letterSpacing: -0.6 },
+  amount: { fontFamily: fonts.sansMedium, fontSize: 40, lineHeight: 40, letterSpacing: -1.2 },
+  title: { fontFamily: fonts.sansMedium, fontSize: 36, lineHeight: 36, letterSpacing: -1 },
+  digit: { fontFamily: fonts.sansMedium, fontSize: 34, lineHeight: 34, letterSpacing: -0.5 },
+  wordmark: { fontFamily: fonts.sansSemibold, fontSize: 24, lineHeight: 24, letterSpacing: -0.4 },
 
   input: { fontFamily: fonts.sansMedium, fontSize: 22, lineHeight: 28, letterSpacing: -0.3 },
   field: { fontFamily: fonts.sansMedium, fontSize: 20, lineHeight: 26, letterSpacing: -0.2 },
@@ -67,6 +67,17 @@ export const type = {
   },
   tab: { fontFamily: fonts.sansSemibold, fontSize: 10, lineHeight: 12, letterSpacing: 0.1 },
 } as const;
+
+export const displayTypeTokens = [
+  "moneyXL",
+  "moneyL",
+  "moneyM",
+  "statement",
+  "amount",
+  "title",
+  "digit",
+  "wordmark",
+] as const;
 
 export const space = {
   s8: 8,
@@ -100,6 +111,7 @@ export const layout = {
   field: { labelGap: 8, paddingTop: 18, paddingBottom: 16 },
   codeSlot: { height: 56, gap: 10, paddingBottom: 8, caretWidth: 1.5, caretHeight: 30, count: 6 },
   ledger: { noteGap: 2, datePadding: 8 },
+  onboarding: { lede: 236 },
   plan: { gap: 14, subGap: 2 },
   stat: { gap: 16, valueGap: 6 },
   filterTabs: { gap: 24, height: 24 },

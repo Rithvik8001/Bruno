@@ -1,0 +1,1 @@
+export { onboardingCopy } from "./copy";
