@@ -14,6 +14,8 @@ import {
   writeStoredPreference,
 } from "@/design";
 import { SessionProvider, useSession } from "@/features/auth";
+import { ProfileProvider } from "@/features/profile";
+import { SubscriptionsProvider } from "@/features/subscriptions";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -53,6 +55,10 @@ function RootNavigator() {
         </Stack.Protected>
         <Stack.Protected guard={session !== null}>
           <Stack.Screen name="(tabs)" options={{ animation: "none" }} />
+          <Stack.Screen
+            name="add-subscription"
+            options={{ presentation: "fullScreenModal" }}
+          />
         </Stack.Protected>
       </Stack>
     </>
@@ -74,7 +80,11 @@ export default function RootLayout() {
         onPreferenceChange={writeStoredPreference}
       >
         <SessionProvider>
-          <RootNavigator />
+          <ProfileProvider>
+            <SubscriptionsProvider>
+              <RootNavigator />
+            </SubscriptionsProvider>
+          </ProfileProvider>
         </SessionProvider>
       </ThemeProvider>
     </SafeAreaProvider>

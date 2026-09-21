@@ -123,6 +123,12 @@ export {
   type StatCellProps,
   type StatRowProps,
 } from "./components/StatCell";
+export { DateRow, type DateRowProps } from "./components/DateRow";
+export {
+  PickerRow,
+  type PickerOption,
+  type PickerRowProps,
+} from "./components/PickerRow";
 export { TextLink, type TextLinkProps } from "./components/TextLink";
 export {
   Toggle,

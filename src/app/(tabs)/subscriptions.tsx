@@ -1,5 +1,5 @@
-import { PlaceholderScreen, homeCopy } from "@/features/home";
+import { SubscriptionsScreen } from "@/features/subscriptions";
 
 export default function SubscriptionsRoute() {
-  return <PlaceholderScreen title={homeCopy.tabs.subscriptions} />;
+  return <SubscriptionsScreen />;
 }

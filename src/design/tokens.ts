@@ -206,6 +206,7 @@ export const layout = {
     noteGap: 10,
   },
   auth: { navGap: 44, fieldGap: 28, forgotGap: 18 },
+  form: { fieldGap: 28 },
   nativeAlert: { host: 1 },
   codeSlot: {
     height: 56,

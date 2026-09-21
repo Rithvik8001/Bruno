@@ -3,6 +3,7 @@ import { View } from "react-native";
 
 import {
   CodeSlots,
+  DateRow,
   Field,
   NativeAlert,
   FilterTabs,
@@ -10,6 +11,7 @@ import {
   LabelRow,
   LedgerRow,
   NavRow,
+  PickerRow,
   Pill,
   PlanRow,
   Screen,
@@ -45,6 +47,7 @@ export default function ShowcaseScreen() {
   const [revealed, setRevealed] = useState(false);
   const { session } = useSession();
   const [alertVisible, setAlertVisible] = useState(false);
+  const [renewal, setRenewal] = useState(() => new Date());
 
   return (
     <Screen scroll withTabBar>
@@ -120,6 +123,17 @@ export default function ShowcaseScreen() {
         value={reminders}
         onValueChange={setReminders}
       />
+
+      <Gap size="s36" />
+      <LabelRow label="Native rows · picker · date" />
+      <Gap size="s12" />
+      <PickerRow
+        label="Billing cycle"
+        options={filters}
+        value={filter}
+        onChange={setFilter}
+      />
+      <DateRow label="Next renewal" value={renewal} onChange={setRenewal} last />
 
       <Gap size="s36" />
       <LabelRow label="Filter · text with underline" />

@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { AppState } from "react-native";
 
+import type { Database } from "./database.types";
 import { sessionStorage } from "./sessionStorage";
 
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
@@ -12,7 +13,7 @@ if (url === undefined || publishableKey === undefined) {
   );
 }
 
-export const supabase = createClient(url, publishableKey, {
+export const supabase = createClient<Database>(url, publishableKey, {
   auth: {
     storage: sessionStorage,
     autoRefreshToken: true,
