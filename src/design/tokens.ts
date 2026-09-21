@@ -198,7 +198,14 @@ export const layout = {
   link: { height: 48 },
   toggle: { width: 42, height: 26, radius: 13, knob: 20, knobInset: 3 },
   radio: { size: 16, selectedRing: 5, idleStroke: 1.5 },
-  field: { labelGap: 8, paddingTop: 18, paddingBottom: 16 },
+  field: {
+    labelGap: 8,
+    paddingTop: 18,
+    paddingBottom: 16,
+    trailingGap: 12,
+    noteGap: 10,
+  },
+  auth: { navGap: 64, fieldGap: 28 },
   codeSlot: {
     height: 56,
     gap: 10,

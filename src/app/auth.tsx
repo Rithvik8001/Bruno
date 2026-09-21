@@ -1,11 +1,15 @@
 import { router, useLocalSearchParams } from "expo-router";
 
-import { parseAuthMode } from "@/features/auth";
+import { SignUpScreen, parseAuthMode } from "@/features/auth";
 import { Gap, NavRow, Screen, T } from "@/design";
 
 export default function AuthScreen() {
   const params = useLocalSearchParams<{ mode?: string }>();
   const mode = parseAuthMode(params.mode);
+
+  if (mode === "signUp") {
+    return <SignUpScreen />;
+  }
 
   return (
     <Screen>
@@ -14,7 +18,7 @@ export default function AuthScreen() {
       <T style="title">Auth.</T>
       <Gap size="s8" />
       <T style="body" color="ink2">
-        {mode === "signUp" ? "Creating a new account." : "Signing back in."}
+        Signing back in.
       </T>
     </Screen>
   );

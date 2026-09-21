@@ -1,5 +1,10 @@
 import type { ReactNode } from "react";
-import { ScrollView, View, type ScrollViewProps } from "react-native";
+import {
+  KeyboardAvoidingView,
+  ScrollView,
+  View,
+  type ScrollViewProps,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { layout } from "../tokens";
@@ -22,6 +27,7 @@ export type ScreenProps = {
   fill?: boolean;
   padded?: boolean;
   withTabBar?: boolean;
+  keyboard?: boolean;
   scrollViewProps?: Omit<ScrollViewProps, "children" | "contentContainerStyle">;
 };
 
@@ -31,6 +37,7 @@ export function Screen({
   fill = false,
   padded = true,
   withTabBar = false,
+  keyboard = false,
   scrollViewProps,
 }: ScreenProps) {
   const theme = useTheme();
@@ -42,7 +49,7 @@ export function Screen({
   const paddingBottom = withTabBar ? tabBarSpace + layout.bottom : bottom;
 
   if (scroll) {
-    return (
+    const content = (
       <ScrollView
         style={{ flex: 1, backgroundColor: theme.paper }}
         contentContainerStyle={{
@@ -52,10 +59,25 @@ export function Screen({
           flexGrow: fill ? 1 : undefined,
         }}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps={keyboard ? "handled" : undefined}
+        keyboardDismissMode={keyboard ? "interactive" : undefined}
         {...scrollViewProps}
       >
         {children}
       </ScrollView>
+    );
+
+    if (!keyboard) {
+      return content;
+    }
+
+    return (
+      <KeyboardAvoidingView
+        behavior="padding"
+        style={{ flex: 1, backgroundColor: theme.paper }}
+      >
+        {content}
+      </KeyboardAvoidingView>
     );
   }
 

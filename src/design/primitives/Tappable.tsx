@@ -24,7 +24,7 @@ export function Tappable({
       disabled={disabled}
       style={({ pressed }) => [
         style,
-        { opacity: pressed && !disabled ? pressedOpacity : 1 },
+        pressed && !disabled ? { opacity: pressedOpacity } : null,
       ]}
       {...rest}
     >

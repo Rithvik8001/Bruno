@@ -22,6 +22,7 @@ import {
   type FilterOption,
   type TabBarItem,
 } from "@/design";
+import { signOut, useSession } from "@/features/auth";
 
 type FilterValue = "all" | "monthly" | "yearly" | "paused";
 
@@ -51,6 +52,9 @@ export default function ShowcaseScreen() {
   const [reminders, setReminders] = useState(true);
   const [email, setEmail] = useState("rithvik@hey.com");
   const [code, setCode] = useState("491");
+  const [password, setPassword] = useState("correcthorse1");
+  const [revealed, setRevealed] = useState(false);
+  const { session } = useSession();
 
   return (
     <View style={{ flex: 1 }}>
@@ -120,6 +124,32 @@ export default function ShowcaseScreen() {
         />
 
         <Gap size="s36" />
+        <LabelRow label="Field · trailing action · hint" />
+        <Gap size="s12" />
+        <Field
+          label="Password"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry={!revealed}
+          autoCapitalize="none"
+          hint="At least 8 characters, with one number."
+          trailing={{
+            title: revealed ? "Hide" : "Show",
+            onPress: () => setRevealed((current) => !current),
+          }}
+        />
+
+        <Gap size="s36" />
+        <LabelRow label="Field · error" />
+        <Gap size="s12" />
+        <Field
+          label="Email"
+          value="rithvik@hey"
+          editable={false}
+          error="That email does not look right."
+        />
+
+        <Gap size="s36" />
         <LabelRow label="Code slots · serif digits" />
         <Gap size="s12" />
         <CodeSlots value={code} onChangeValue={setCode} />
@@ -160,6 +190,14 @@ export default function ShowcaseScreen() {
         <Pill title="Get started" onPress={() => {}} />
         <Gap size="s8" />
         <TextLink title="I already have an account" onPress={() => {}} />
+        {session === null ? null : (
+          <>
+            <Gap size="s36" />
+            <LabelRow label="Session" caption={session.user.email} />
+            <Gap size="s12" />
+            <TextLink title="Sign out" onPress={signOut} />
+          </>
+        )}
       </Screen>
 
       <TabBar items={tabs} value={tab} onChange={setTab} />

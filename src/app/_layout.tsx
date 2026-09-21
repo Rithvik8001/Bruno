@@ -13,16 +13,28 @@ import {
   useThemeName,
   writeStoredPreference,
 } from "@/design";
+import { SessionProvider, useSession } from "@/features/auth";
 
 SplashScreen.preventAutoHideAsync();
 
 function RootNavigator() {
   const theme = useTheme();
   const themeName = useThemeName();
+  const { session, loading } = useSession();
 
   useEffect(() => {
     SystemUI.setBackgroundColorAsync(theme.paper);
   }, [theme.paper]);
+
+  useEffect(() => {
+    if (!loading) {
+      SplashScreen.hideAsync();
+    }
+  }, [loading]);
+
+  if (loading) {
+    return null;
+  }
 
   return (
     <>
@@ -34,6 +46,11 @@ function RootNavigator() {
         }}
       >
         <Stack.Screen name="index" options={{ animation: "none" }} />
+        <Stack.Protected guard={session === null}>
+          <Stack.Screen name="onboarding" />
+          <Stack.Screen name="auth" />
+          <Stack.Screen name="verify" />
+        </Stack.Protected>
       </Stack>
     </>
   );
@@ -42,12 +59,6 @@ function RootNavigator() {
 export default function RootLayout() {
   const [loaded, error] = useBrunoFonts();
   const initialPreference = useMemo(readStoredPreference, []);
-
-  useEffect(() => {
-    if (loaded || error) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded, error]);
 
   if (!loaded && !error) {
     return null;
@@ -59,7 +70,9 @@ export default function RootLayout() {
         initialPreference={initialPreference}
         onPreferenceChange={writeStoredPreference}
       >
-        <RootNavigator />
+        <SessionProvider>
+          <RootNavigator />
+        </SessionProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );

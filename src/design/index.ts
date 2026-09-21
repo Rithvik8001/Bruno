@@ -81,7 +81,12 @@ export {
 } from "./primitives/Tappable";
 
 export { CodeSlots, type CodeSlotsProps } from "./components/CodeSlots";
-export { Field, type FieldProps, type FieldSize } from "./components/Field";
+export {
+  Field,
+  type FieldProps,
+  type FieldSize,
+  type FieldTrailing,
+} from "./components/Field";
 export {
   FilterTabs,
   type FilterOption,

@@ -1,0 +1,31 @@
+export const authCopy = {
+  signUp: {
+    title: "Create your account.",
+    body: "An email and a password. That is all we keep.",
+    emailLabel: "Email",
+    passwordLabel: "Password",
+    passwordHint: "At least 8 characters, with one number.",
+    show: "Show",
+    hide: "Hide",
+    primary: "Continue",
+    secondary: "Already have an account? Sign in",
+  },
+  verify: {
+    title: "Check your inbox.",
+    bodyLead: "Six digits, sent to ",
+    bodyTail: ".",
+    resendIn: "Resend in ",
+    resend: "Resend code",
+    primary: "Verify",
+    secondary: "Use a different email",
+  },
+  errors: {
+    invalidEmail: "That email does not look right.",
+    invalidCode: "That code is wrong or has expired.",
+    rateLimited: "Too many attempts. Wait a minute and try again.",
+    alertTitle: "Something went wrong",
+    network: "Check your connection and try again.",
+    generic: "We could not finish that. Try again in a moment.",
+    dismiss: "OK",
+  },
+} as const;
