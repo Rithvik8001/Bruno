@@ -4,9 +4,7 @@ import { useState } from "react";
 import {
   CodeSlots,
   Gap,
-  NavRow,
   Pill,
-  Screen,
   Spacer,
   T,
   Tappable,
@@ -16,9 +14,11 @@ import {
 
 import { resendCode, verifyCode } from "../api";
 import { authCopy } from "../copy";
-import { alertFailure, failureMessage } from "../errors";
+import { failureMessage } from "../errors";
+import { useAuthAlert } from "../useAuthAlert";
 import { formatCountdown, useResendCountdown } from "../useResendCountdown";
 import { isValidCode } from "../validation";
+import { AuthShell } from "./AuthShell";
 
 export type VerifyScreenProps = {
   email: string;
@@ -30,6 +30,7 @@ export function VerifyScreen({ email }: VerifyScreenProps) {
   const [resending, setResending] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
   const countdown = useResendCountdown();
+  const { alert, showFailure } = useAuthAlert();
 
   const submit = async (value: string) => {
     if (submitting || !isValidCode(value)) {
@@ -47,7 +48,7 @@ export function VerifyScreen({ email }: VerifyScreenProps) {
       setError(failureMessage(result.reason));
       return;
     }
-    alertFailure(result.reason);
+    showFailure(result.reason);
   };
 
   const resend = async () => {
@@ -68,23 +69,22 @@ export function VerifyScreen({ email }: VerifyScreenProps) {
       setError(failureMessage(result.reason));
       return;
     }
-    alertFailure(result.reason);
+    showFailure(result.reason);
   };
 
   return (
-    <Screen scroll fill keyboard scrollViewProps={{ alwaysBounceVertical: false }}>
-      <NavRow onBack={() => router.back()} />
-      <Spacer height={layout.auth.navGap} />
-      <T style="title">{authCopy.verify.title}</T>
-      <Gap size="s16" />
-      <T style="body" color="ink2">
-        {authCopy.verify.bodyLead}
-        <T style="body" color="ink">
-          {email}
-        </T>
-        {authCopy.verify.bodyTail}
-      </T>
-      <Gap size="s56" />
+    <AuthShell
+      title={authCopy.verify.title}
+      body={
+        <>
+          {authCopy.verify.bodyLead}
+          <T style="body" color="ink">
+            {email}
+          </T>
+          {authCopy.verify.bodyTail}
+        </>
+      }
+    >
       <CodeSlots
         value={code}
         onChangeValue={(next) => {
@@ -137,6 +137,7 @@ export function VerifyScreen({ email }: VerifyScreenProps) {
         title={authCopy.verify.secondary}
         onPress={() => router.back()}
       />
-    </Screen>
+      {alert}
+    </AuthShell>
   );
 }

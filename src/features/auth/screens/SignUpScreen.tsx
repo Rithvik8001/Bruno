@@ -2,22 +2,14 @@ import { router } from "expo-router";
 import { useRef, useState } from "react";
 import type { TextInput } from "react-native";
 
-import {
-  Field,
-  Gap,
-  NavRow,
-  Pill,
-  Screen,
-  Spacer,
-  T,
-  TextLink,
-  layout,
-} from "@/design";
+import { Field, Gap, Pill, Spacer, TextLink, layout } from "@/design";
 
 import { signUp } from "../api";
 import { authCopy } from "../copy";
-import { alertFailure, failureMessage } from "../errors";
+import { failureMessage } from "../errors";
+import { useAuthAlert } from "../useAuthAlert";
 import { isValidEmail, isValidPassword, normalizeEmail } from "../validation";
+import { AuthShell } from "./AuthShell";
 
 export function SignUpScreen() {
   const passwordInput = useRef<TextInput>(null);
@@ -26,6 +18,7 @@ export function SignUpScreen() {
   const [revealed, setRevealed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [emailError, setEmailError] = useState<string | undefined>(undefined);
+  const { alert, showFailure } = useAuthAlert();
 
   const normalizedEmail = normalizeEmail(email);
   const canSubmit =
@@ -47,19 +40,11 @@ export function SignUpScreen() {
       setEmailError(failureMessage(result.reason));
       return;
     }
-    alertFailure(result.reason);
+    showFailure(result.reason);
   };
 
   return (
-    <Screen scroll fill keyboard scrollViewProps={{ alwaysBounceVertical: false }}>
-      <NavRow onBack={() => router.back()} />
-      <Spacer height={layout.auth.navGap} />
-      <T style="title">{authCopy.signUp.title}</T>
-      <Gap size="s16" />
-      <T style="body" color="ink2">
-        {authCopy.signUp.body}
-      </T>
-      <Gap size="s56" />
+    <AuthShell title={authCopy.signUp.title} body={authCopy.signUp.body}>
       <Field
         label={authCopy.signUp.emailLabel}
         value={email}
@@ -112,6 +97,7 @@ export function SignUpScreen() {
           router.replace({ pathname: "/auth", params: { mode: "signIn" } })
         }
       />
-    </Screen>
+      {alert}
+    </AuthShell>
   );
 }

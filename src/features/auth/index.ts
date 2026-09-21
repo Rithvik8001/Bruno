@@ -13,5 +13,6 @@ export {
   useSession,
   type SessionState,
 } from "./SessionProvider";
+export { SignInScreen } from "./screens/SignInScreen";
 export { SignUpScreen } from "./screens/SignUpScreen";
 export { VerifyScreen } from "./screens/VerifyScreen";

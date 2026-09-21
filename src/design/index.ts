@@ -80,6 +80,11 @@ export {
   type TappableProps,
 } from "./primitives/Tappable";
 
+export {
+  NativeAlert,
+  type NativeAlertAction,
+  type NativeAlertProps,
+} from "./components/NativeAlert";
 export { CodeSlots, type CodeSlotsProps } from "./components/CodeSlots";
 export {
   Field,
@@ -118,12 +123,6 @@ export {
   type StatCellProps,
   type StatRowProps,
 } from "./components/StatCell";
-export {
-  TabBar,
-  useTabBarSpace,
-  type TabBarItem,
-  type TabBarProps,
-} from "./components/TabBar";
 export { TextLink, type TextLinkProps } from "./components/TextLink";
 export {
   Toggle,
@@ -135,6 +134,7 @@ export {
 export {
   Screen,
   useScreenBottom,
+  useTabBarSpace,
   useScreenTop,
   type ScreenProps,
 } from "./layout/Screen";

@@ -51,6 +51,9 @@ function RootNavigator() {
           <Stack.Screen name="auth" />
           <Stack.Screen name="verify" />
         </Stack.Protected>
+        <Stack.Protected guard={session !== null}>
+          <Stack.Screen name="(tabs)" options={{ animation: "none" }} />
+        </Stack.Protected>
       </Stack>
     </>
   );

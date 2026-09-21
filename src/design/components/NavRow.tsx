@@ -3,6 +3,7 @@ import { View } from "react-native";
 import { layout } from "../tokens";
 import { T } from "../primitives/T";
 import { Tappable } from "../primitives/Tappable";
+import { GlassSurface } from "../primitives/GlassSurface";
 import { IconButton } from "./IconButton";
 import type { IconSource } from "../types";
 
@@ -45,20 +46,22 @@ export function NavRow({
       {action === undefined ? (
         <View />
       ) : (
-        <Tappable
-          onPress={action.onPress}
-          accessibilityRole="button"
-          accessibilityLabel={action.title}
-          style={{
-            height: layout.hit,
-            justifyContent: "center",
-            marginVertical: -10,
-          }}
-        >
-          <T style="filter" color="ink2">
-            {action.title}
-          </T>
-        </Tappable>
+        <GlassSurface radius={layout.navRow.height / 2} interactive>
+          <Tappable
+            onPress={action.onPress}
+            accessibilityRole="button"
+            accessibilityLabel={action.title}
+            style={{
+              height: layout.navRow.height,
+              paddingHorizontal: layout.navRow.actionPadding,
+              justifyContent: "center",
+            }}
+          >
+            <T style="filter" color="ink">
+              {action.title}
+            </T>
+          </Tappable>
+        </GlassSurface>
       )}
     </View>
   );

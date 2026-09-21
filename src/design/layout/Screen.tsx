@@ -9,7 +9,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { layout } from "../tokens";
 import { useTheme } from "../theme/useTheme";
-import { useTabBarSpace } from "../components/TabBar";
 
 export function useScreenTop(): number {
   const insets = useSafeAreaInsets();
@@ -19,6 +18,11 @@ export function useScreenTop(): number {
 export function useScreenBottom(): number {
   const insets = useSafeAreaInsets();
   return layout.bottom + insets.bottom;
+}
+
+export function useTabBarSpace(): number {
+  const insets = useSafeAreaInsets();
+  return layout.tabBar.height + layout.tabBar.bottom + insets.bottom;
 }
 
 export type ScreenProps = {
@@ -59,6 +63,7 @@ export function Screen({
           flexGrow: fill ? 1 : undefined,
         }}
         showsVerticalScrollIndicator={false}
+        contentInsetAdjustmentBehavior="never"
         keyboardShouldPersistTaps={keyboard ? "handled" : undefined}
         keyboardDismissMode={keyboard ? "interactive" : undefined}
         {...scrollViewProps}

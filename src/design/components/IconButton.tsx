@@ -1,4 +1,5 @@
 import { iconSizes, layout } from "../tokens";
+import { GlassSurface } from "../primitives/GlassSurface";
 import { Icon, type IconColorToken } from "../primitives/Icon";
 import { Tappable } from "../primitives/Tappable";
 import type { IconSource } from "../types";
@@ -20,25 +21,28 @@ export function IconButton({
   size = iconSizes.bar,
   disabled = false,
 }: IconButtonProps) {
-  const margin = -(layout.hit - size) / 2;
-
   return (
-    <Tappable
-      onPress={onPress}
-      disabled={disabled}
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
-      accessibilityState={{ disabled }}
-      style={{
-        width: layout.hit,
-        height: layout.hit,
-        margin,
-        alignItems: "center",
-        justifyContent: "center",
-        opacity: disabled ? 0.4 : 1,
-      }}
+    <GlassSurface
+      radius={layout.hit / 2}
+      interactive
+      plain={disabled}
+      style={{ opacity: disabled ? 0.4 : 1 }}
     >
-      <Icon name={icon} size={size} color={color} />
-    </Tappable>
+      <Tappable
+        onPress={onPress}
+        disabled={disabled}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+        accessibilityState={{ disabled }}
+        style={{
+          width: layout.hit,
+          height: layout.hit,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Icon name={icon} size={size} color={color} />
+      </Tappable>
+    </GlassSurface>
   );
 }

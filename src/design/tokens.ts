@@ -205,7 +205,8 @@ export const layout = {
     trailingGap: 12,
     noteGap: 10,
   },
-  auth: { navGap: 64, fieldGap: 28 },
+  auth: { navGap: 44, fieldGap: 28, forgotGap: 18 },
+  nativeAlert: { host: 1 },
   codeSlot: {
     height: 56,
     gap: 10,
@@ -220,18 +221,8 @@ export const layout = {
   stat: { gap: 16, valueGap: 6 },
   filterTabs: { gap: 24, height: 24 },
   settingsRow: { chevronGap: 10, chevron: 16 },
-  navRow: { height: 24 },
-  tabBar: {
-    height: 62,
-    bottom: 26,
-    inset: 20,
-    radius: 31,
-    padding: 6,
-    item: { height: 50, radius: 25, icon: 22, gap: 3 },
-    blur: 28,
-    saturate: 1.7,
-    reduceTransparency: { paperOpacity: 0.96, blur: 0 },
-  },
+  navRow: { height: 44, actionPadding: 16 },
+  tabBar: { height: 62, bottom: 26 },
 } as const;
 
 export const icons = {

@@ -10,6 +10,28 @@ export const authCopy = {
     primary: "Continue",
     secondary: "Already have an account? Sign in",
   },
+  signIn: {
+    title: "Welcome back.",
+    body: "Sign in to your ledger.",
+    emailLabel: "Email",
+    passwordLabel: "Password",
+    show: "Show",
+    hide: "Hide",
+    forgot: "Forgot password?",
+    primary: "Sign in",
+    secondary: "New here? Create an account",
+  },
+  unverified: {
+    title: "Email not verified",
+    messageLead: "Check your inbox for the six-digit code we sent to ",
+    messageTail: ".",
+    cancel: "Cancel",
+    confirm: "Verify now",
+  },
+  forgotSoon: {
+    title: "Coming soon",
+    message: "Password reset is not available yet.",
+  },
   verify: {
     title: "Check your inbox.",
     bodyLead: "Six digits, sent to ",
@@ -21,6 +43,7 @@ export const authCopy = {
   },
   errors: {
     invalidEmail: "That email does not look right.",
+    invalidCredentials: "Email or password is incorrect.",
     invalidCode: "That code is wrong or has expired.",
     rateLimited: "Too many attempts. Wait a minute and try again.",
     alertTitle: "Something went wrong",
