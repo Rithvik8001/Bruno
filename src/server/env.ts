@@ -21,3 +21,22 @@ export function readServerEnv() {
     ),
   };
 }
+
+const defaultFrom = "Bruno <hello@notifications.bruno.vin>";
+
+export function readMailerEnv() {
+  const replyTo = process.env.RESEND_REPLY_TO;
+  return {
+    resendApiKey:
+      process.env.RESEND_API_KEY === undefined ||
+      process.env.RESEND_API_KEY.length === 0
+        ? null
+        : process.env.RESEND_API_KEY,
+    from: process.env.RESEND_FROM ?? defaultFrom,
+    replyTo: replyTo === undefined || replyTo.length === 0 ? null : replyTo,
+  };
+}
+
+export function readCronEnv() {
+  return { cronSecret: required("CRON_SECRET", process.env.CRON_SECRET) };
+}

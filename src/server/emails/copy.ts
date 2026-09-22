@@ -1,0 +1,79 @@
+export const emailCopy = {
+  wordmark: "Bruno",
+  footer:
+    "You are getting this because you have a Bruno account. Reminders can be turned off in settings.",
+  code: {
+    subject: "Your Bruno code",
+    preview: "Your six-digit code",
+    lead: "Here is your code.",
+    expiry:
+      "It works for ten minutes. If you did not ask to sign in, you can ignore this.",
+  },
+  reset: {
+    subject: "Reset your Bruno password",
+    preview: "Your password reset code",
+    lead: "Use this code to set a new password.",
+    expiry:
+      "It works for ten minutes. If you did not ask for this, nothing has changed and you can ignore it.",
+  },
+  alreadyRegistered: {
+    subject: "You already have a Bruno account",
+    preview: "No new account was created",
+    body: "Someone tried to sign up with this address. You already have an account, so nothing was created.",
+    hint: "If that was you, open Bruno and sign in instead. If you cannot remember your password, choose forgot password on the sign-in screen.",
+  },
+  passwordChanged: {
+    subject: "Your Bruno password was changed",
+    preview: "Every device was signed out",
+    body: "Your password was changed just now, and every device has been signed out.",
+    hint: "If that was not you, set a new password straight away.",
+  },
+  welcome: {
+    subject: "Welcome to Bruno",
+    preview: "Your account is ready",
+    body: "Your email is verified and your account is ready.",
+    hint: "Add the first thing you pay for, and Bruno keeps the dates and the totals for you. Reminders arrive in the morning, and you can turn any of them off in settings.",
+  },
+  accountDeleted: {
+    subject: "Your Bruno account is deleted",
+    preview: "Everything has been erased",
+    body: "Your account and every subscription in it have been erased. There is nothing left to recover.",
+    hint: "Thank you for giving Bruno a try.",
+  },
+  relative: { one: "tomorrow", three: "in three days", seven: "in a week" },
+  renewal: {
+    subject: "{name} renews {when}",
+    preview: "{amount} on {date}",
+    body: "{name} renews on {date} for {amount}.",
+    renews: "Renews",
+    amount: "Amount",
+    every: "Every",
+    hint: "If you no longer want it, cancel with the service before that date.",
+  },
+  trial: {
+    subject: "{name} trial ends {when}",
+    preview: "{amount} after {date}",
+    body: "The free trial for {name} ends on {date}.",
+    after: "After that it costs {amount} {per}.",
+    hint: "If you do not want to keep it, cancel with the service before then.",
+  },
+  today: {
+    subject: "{name} renews today",
+    preview: "{amount} today",
+    body: "{name} renews today for {amount}.",
+  },
+  digest: {
+    subject: "{month} at a glance",
+    preview: "{count} due this month, {total} in all",
+    leadOne: "1 subscription is due this month, {total} in all.",
+    leadMany: "{count} subscriptions are due this month, {total} in all.",
+    leadNone: "Nothing is due this month.",
+    more: "and {count} more",
+    monthly: "Your monthly total is {monthly}.",
+    top: "The biggest share is {category}, at {amount} a month.",
+  },
+  per: { day: "a day", week: "a week", month: "a month", year: "a year" },
+  every: "every {count} {unit}",
+  units: { day: "days", week: "weeks", month: "months", year: "years" },
+  cycleOne: { day: "Day", week: "Week", month: "Month", year: "Year" },
+} as const;

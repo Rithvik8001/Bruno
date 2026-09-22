@@ -32,8 +32,21 @@ export const homeCopy = {
   },
   settings: {
     title: "Settings",
+    notifications: "Notifications",
+    renewalReminders: "Renewal reminders",
+    trialReminders: "Trial reminders",
+    renewsToday: "Renews today",
+    monthlyDigest: "Monthly digest",
+    remindMe: "Remind me",
+    leadDays: { "1": "1 day before", "3": "3 days before", "7": "1 week before" },
     account: "Account",
     email: "Email",
     signOut: "Sign out",
+    deleteAccount: "Delete account",
+    deleteTitle: "Delete your account?",
+    deleteMessage:
+      "Every subscription you have added will be erased. This cannot be undone.",
+    deleteCancel: "Keep account",
+    deleteConfirm: "Delete",
   },
 } as const;

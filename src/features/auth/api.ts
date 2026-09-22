@@ -80,6 +80,20 @@ export async function confirmPasswordReset(
   return signIn(email, password);
 }
 
+async function announceVerified(): Promise<void> {
+  try {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (token === undefined) {
+      return;
+    }
+    await fetch("/api/auth/welcome", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch {}
+}
+
 export async function verifyCode(
   email: string,
   token: string,
@@ -92,6 +106,7 @@ export async function verifyCode(
     });
 
     if (error === null) {
+      void announceVerified();
       return success;
     }
     if (__DEV__) {
@@ -146,4 +161,30 @@ export async function signIn(
 
 export async function signOut(): Promise<void> {
   await supabase.auth.signOut();
+}
+
+export async function deleteAccount(): Promise<AuthResult> {
+  try {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (token === undefined) {
+      return failure("unknown");
+    }
+
+    const response = await fetch("/api/auth/delete", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (response.status === 429) {
+      return failure("rateLimited");
+    }
+    if (!response.ok) {
+      return failure("unknown");
+    }
+    await supabase.auth.signOut({ scope: "local" });
+    return success;
+  } catch {
+    return failure("network");
+  }
 }

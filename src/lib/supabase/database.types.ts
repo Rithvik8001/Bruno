@@ -12,23 +12,76 @@ export type Database = {
   };
   public: {
     Tables: {
+      notification_sends: {
+        Row: {
+          created_at: string;
+          due_on: string;
+          id: string;
+          kind: string;
+          subscription_id: string | null;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          due_on: string;
+          id?: string;
+          kind: string;
+          subscription_id?: string | null;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          due_on?: string;
+          id?: string;
+          kind?: string;
+          subscription_id?: string | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "notification_sends_subscription_id_fkey";
+            columns: ["subscription_id"];
+            isOneToOne: false;
+            referencedRelation: "subscriptions";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       profiles: {
         Row: {
           created_at: string;
           currency: string;
           id: string;
+          monthly_digest: boolean;
+          reminder_lead_days: number;
+          renewal_reminders: boolean;
+          renews_today: boolean;
+          timezone: string | null;
+          trial_reminders: boolean;
           updated_at: string;
         };
         Insert: {
           created_at?: string;
           currency: string;
           id: string;
+          monthly_digest?: boolean;
+          reminder_lead_days?: number;
+          renewal_reminders?: boolean;
+          renews_today?: boolean;
+          timezone?: string | null;
+          trial_reminders?: boolean;
           updated_at?: string;
         };
         Update: {
           created_at?: string;
           currency?: string;
           id?: string;
+          monthly_digest?: boolean;
+          reminder_lead_days?: number;
+          renewal_reminders?: boolean;
+          renews_today?: boolean;
+          timezone?: string | null;
+          trial_reminders?: boolean;
           updated_at?: string;
         };
         Relationships: [];
@@ -95,7 +148,24 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      claim_notification: {
+        Args: {
+          p_due_on: string;
+          p_kind: string;
+          p_subscription_id: string | null;
+          p_user_id: string;
+        };
+        Returns: boolean;
+      };
+      release_notification: {
+        Args: {
+          p_due_on: string;
+          p_kind: string;
+          p_subscription_id: string | null;
+          p_user_id: string;
+        };
+        Returns: undefined;
+      };
     };
     Enums: {
       [_ in never]: never;

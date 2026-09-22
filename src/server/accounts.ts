@@ -1,7 +1,25 @@
-import { deliverAlreadyRegistered, deliverCode } from "./mailer";
+import {
+  deliverAccountDeleted,
+  deliverAlreadyRegistered,
+  deliverPasswordChanged,
+  deliverResetCode,
+  deliverSignupCode,
+  deliverWelcome,
+} from "./mailer";
 import { supabaseAdmin, supabaseVerifier } from "./supabaseAdmin";
 
+export class UnauthorizedError extends Error {}
+
+export class MailFailedError extends Error {}
+
 const existingAccountCodes = ["email_exists", "user_already_exists"];
+const welcomeSentinel = "2000-01-01";
+
+async function sendCodeOrThrow(delivery: Promise<boolean>): Promise<void> {
+  if (!(await delivery)) {
+    throw new MailFailedError();
+  }
+}
 const signupMarker = { signup_started: true };
 const strayWindowMs = 30 * 1000;
 
@@ -41,7 +59,7 @@ async function issueCodeForExisting(
   }
 
   if (password === null) {
-    await deliverCode(email, data.properties.email_otp);
+    await sendCodeOrThrow(deliverSignupCode(email, data.properties.email_otp));
     return;
   }
 
@@ -56,7 +74,9 @@ async function issueCodeForExisting(
   if (issued.error !== null) {
     throw issued.error;
   }
-  await deliverCode(email, issued.data.properties.email_otp);
+  await sendCodeOrThrow(
+    deliverSignupCode(email, issued.data.properties.email_otp),
+  );
 }
 
 export async function startSignUp(
@@ -82,7 +102,9 @@ export async function startSignUp(
     if (issued.error !== null) {
       throw issued.error;
     }
-    await deliverCode(email, issued.data.properties.email_otp);
+    await sendCodeOrThrow(
+      deliverSignupCode(email, issued.data.properties.email_otp),
+    );
     return;
   }
 
@@ -108,7 +130,7 @@ export async function startPasswordReset(email: string): Promise<void> {
     }
     throw error;
   }
-  await deliverCode(email, data.properties.email_otp);
+  await sendCodeOrThrow(deliverResetCode(email, data.properties.email_otp));
 }
 
 export class InvalidResetCodeError extends Error {}
@@ -135,4 +157,44 @@ export async function confirmPasswordReset(
     throw update.error;
   }
   await admin.signOut(data.session.access_token, "global");
+  await deliverPasswordChanged(email);
+}
+
+
+export async function deleteAccount(accessToken: string): Promise<void> {
+  const auth = supabaseAdmin().auth;
+  const { data, error } = await auth.getUser(accessToken);
+  if (error !== null || data.user === null) {
+    throw new UnauthorizedError();
+  }
+  const email = data.user.email ?? null;
+  const removed = await auth.admin.deleteUser(data.user.id);
+  if (removed.error !== null) {
+    throw removed.error;
+  }
+  if (email !== null) {
+    await deliverAccountDeleted(email);
+  }
+}
+
+export async function sendWelcome(accessToken: string): Promise<void> {
+  const client = supabaseAdmin();
+  const { data, error } = await client.auth.getUser(accessToken);
+  if (error !== null || data.user === null || data.user.email === undefined) {
+    throw new UnauthorizedError();
+  }
+
+  const claim = await client.rpc("claim_notification", {
+    p_user_id: data.user.id,
+    p_subscription_id: null,
+    p_kind: "welcome",
+    p_due_on: welcomeSentinel,
+  });
+  if (claim.error !== null) {
+    throw claim.error;
+  }
+  if (claim.data !== true) {
+    return;
+  }
+  await deliverWelcome(data.user.email, data.user.id);
 }

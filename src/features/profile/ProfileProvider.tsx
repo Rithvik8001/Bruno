@@ -7,17 +7,19 @@ import {
 } from "react";
 
 import { useSession } from "@/features/auth";
-import type { DataFailure } from "@/lib/supabase";
+import { dataFailure, type DataFailure, type DataResult } from "@/lib/supabase";
 
-import { ensureProfile } from "./api";
+import { ensureProfile, updatePreferences } from "./api";
 import { getDeviceCurrency } from "./deviceCurrency";
-import type { Profile, ProfileStatus } from "./types";
+import { getDeviceTimeZone } from "./deviceTimeZone";
+import type { Profile, ProfilePreferences, ProfileStatus } from "./types";
 
 export type ProfileState = {
   profile: Profile | null;
   status: ProfileStatus;
   failure: DataFailure | null;
   retry: () => void;
+  update: (patch: Partial<ProfilePreferences>) => Promise<DataResult<null>>;
 };
 
 type Loaded = {
@@ -41,7 +43,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     }
 
     let active = true;
-    ensureProfile(userId, getDeviceCurrency()).then((result) => {
+    ensureProfile(userId, getDeviceCurrency(), getDeviceTimeZone()).then((result) => {
       if (!active) {
         return;
       }
@@ -59,6 +61,25 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
   const current = loaded !== null && loaded.userId === userId ? loaded : null;
 
+  const update = async (
+    patch: Partial<ProfilePreferences>,
+  ): Promise<DataResult<null>> => {
+    if (userId === null || current === null || current.profile === null) {
+      return dataFailure("session");
+    }
+    const previous = current.profile;
+    setLoaded({ ...current, profile: { ...previous, ...patch } });
+    const result = await updatePreferences(userId, patch);
+    if (!result.ok) {
+      setLoaded((latest) =>
+        latest !== null && latest.userId === userId
+          ? { ...latest, profile: previous }
+          : latest,
+      );
+    }
+    return result;
+  };
+
   const state: ProfileState = {
     profile: current?.profile ?? null,
     status:
@@ -72,6 +93,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       setLoaded(null);
       setAttempt((value) => value + 1);
     },
+    update,
   };
 
   return <ProfileContext value={state}>{children}</ProfileContext>;

@@ -7,7 +7,8 @@ export {
 } from "./types";
 export { authCopy } from "./copy";
 export { parseEmailParam } from "./validation";
-export { signOut } from "./api";
+export { deleteAccount, signOut } from "./api";
+export { useAuthAlert } from "./useAuthAlert";
 export {
   SessionProvider,
   useSession,

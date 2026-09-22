@@ -29,3 +29,27 @@ export function readString(
   const value = body[key];
   return typeof value === "string" ? value : null;
 }
+
+const bearerPrefix = "Bearer ";
+
+export function bearerToken(request: Request): string | null {
+  const header = request.headers.get("authorization");
+  if (header === null || !header.startsWith(bearerPrefix)) {
+    return null;
+  }
+  const token = header.slice(bearerPrefix.length).trim();
+  return token.length > 0 ? token : null;
+}
+
+export function secretMatches(given: string, expected: string): boolean {
+  const a = new TextEncoder().encode(given);
+  const b = new TextEncoder().encode(expected);
+  if (a.length !== b.length) {
+    return false;
+  }
+  let diff = 0;
+  for (let i = 0; i < a.length; i += 1) {
+    diff |= a[i] ^ b[i];
+  }
+  return diff === 0;
+}
