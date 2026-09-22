@@ -1,9 +1,7 @@
 import { View } from "react-native";
 
 import { layout } from "../tokens";
-import { T } from "../primitives/T";
-import { Tappable } from "../primitives/Tappable";
-import { GlassSurface } from "../primitives/GlassSurface";
+import { GlassButton } from "./GlassButton";
 import { IconButton } from "./IconButton";
 import type { IconSource } from "../types";
 
@@ -46,22 +44,7 @@ export function NavRow({
       {action === undefined ? (
         <View />
       ) : (
-        <GlassSurface radius={layout.navRow.height / 2} interactive>
-          <Tappable
-            onPress={action.onPress}
-            accessibilityRole="button"
-            accessibilityLabel={action.title}
-            style={{
-              height: layout.navRow.height,
-              paddingHorizontal: layout.navRow.actionPadding,
-              justifyContent: "center",
-            }}
-          >
-            <T style="filter" color="ink">
-              {action.title}
-            </T>
-          </Tappable>
-        </GlassSurface>
+        <GlassButton title={action.title} onPress={action.onPress} />
       )}
     </View>
   );

@@ -213,7 +213,7 @@ export const layout = {
     caretHeight: 30,
     count: 6,
   },
-  ledger: { noteGap: 2, datePadding: 8 },
+  ledger: { noteGap: 2, datePadding: 8, rowInset: 14 },
   onboarding: { lede: 236 },
   plan: { gap: 14, subGap: 2 },
   stat: { gap: 16, valueGap: 6 },

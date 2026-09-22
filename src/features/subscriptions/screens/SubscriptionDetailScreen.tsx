@@ -1,15 +1,16 @@
 import { router } from "expo-router";
 import { useState } from "react";
+import { View } from "react-native";
 
 import {
   Gap,
+  GlassButton,
   Label,
   NavRow,
   Screen,
   SettingsRow,
   Spacer,
   T,
-  TextLink,
 } from "@/design";
 import { nextRenewal, today } from "@/lib/calendar";
 import { formatMoney } from "@/lib/money";
@@ -155,7 +156,13 @@ function Detail({ subscription }: { subscription: Subscription }) {
 
       <Spacer grow />
       <Gap size="s36" />
-      <TextLink title={copy.delete} onPress={askDelete} disabled={deleting} />
+      <View style={{ alignItems: "center" }}>
+        <GlassButton
+          title={copy.delete}
+          onPress={askDelete}
+          disabled={deleting}
+        />
+      </View>
       {alert}
     </>
   );

@@ -1,4 +1,4 @@
-import { DatePicker, Host } from "@expo/ui/swift-ui";
+import { DatePicker, HStack, Host, Spacer } from "@expo/ui/swift-ui";
 import { datePickerStyle, labelsHidden } from "@expo/ui/swift-ui/modifiers";
 
 import { useTheme, useThemeName } from "../theme/useTheme";
@@ -27,19 +27,22 @@ export function DateField({
   return (
     <FieldShell label={label} last={last}>
       <Host
-        matchContents
+        matchContents={{ vertical: true }}
         colorScheme={themeName}
         seedColor={theme.accent}
-        style={{ alignSelf: "flex-start" }}
+        style={{ alignSelf: "stretch" }}
       >
-        <DatePicker
-          title={label}
-          selection={value}
-          range={{ start: minimumDate, end: maximumDate }}
-          displayedComponents={["date"]}
-          onDateChange={onChange}
-          modifiers={[datePickerStyle("compact"), labelsHidden()]}
-        />
+        <HStack alignment="center">
+          <DatePicker
+            title={label}
+            selection={value}
+            range={{ start: minimumDate, end: maximumDate }}
+            displayedComponents={["date"]}
+            onDateChange={onChange}
+            modifiers={[datePickerStyle("compact"), labelsHidden()]}
+          />
+          <Spacer />
+        </HStack>
       </Host>
     </FieldShell>
   );
