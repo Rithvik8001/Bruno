@@ -42,6 +42,8 @@ export function SubscriptionsScreen() {
 
   const items = sortByNextRenewal(subscriptions, today());
   const openAdd = () => router.push("/add-subscription");
+  const openDetail = (id: string) =>
+    router.push({ pathname: "/subscription", params: { id } });
 
   const pull = async () => {
     setRefreshing(true);
@@ -100,6 +102,7 @@ export function SubscriptionsScreen() {
             note={rowNote(item)}
             noteTone={item.status === "trial" ? "accent" : "ink3"}
             last={index === items.length - 1}
+            onPress={() => openDetail(item.subscription.id)}
           />
         ))
       )}

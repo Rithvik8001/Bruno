@@ -92,6 +92,16 @@ export function toMajor(amountMinor: number, currency: string): number {
   return amountMinor / 10 ** fractionDigits(currency);
 }
 
+export function toAmountInput(amountMinor: number, currency: string): string {
+  const digits = fractionDigits(currency);
+  if (digits === 0) {
+    return String(amountMinor);
+  }
+  const padded = String(amountMinor).padStart(digits + 1, "0");
+  const split = padded.length - digits;
+  return `${padded.slice(0, split)}.${padded.slice(split)}`;
+}
+
 const formatters = new Map<string, Intl.NumberFormat>();
 
 function formatter(

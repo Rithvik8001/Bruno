@@ -43,6 +43,27 @@ export function presetCycle(preset: CyclePreset): BillingCycle {
   return presetCycles[preset];
 }
 
+export function cyclePresetFor(cycle: BillingCycle): CyclePreset | null {
+  return (
+    cyclePresets.find((preset) => {
+      const candidate = presetCycles[preset];
+      return candidate.unit === cycle.unit && candidate.count === cycle.count;
+    }) ?? null
+  );
+}
+
+const uuidPattern =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function parseSubscriptionId(
+  value: string | string[] | undefined,
+): string | null {
+  const candidate = Array.isArray(value) ? value[0] : value;
+  return typeof candidate === "string" && uuidPattern.test(candidate)
+    ? candidate
+    : null;
+}
+
 export function isCategory(value: unknown): value is Category {
   return (
     typeof value === "string" &&

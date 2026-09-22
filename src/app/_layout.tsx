@@ -37,6 +37,14 @@ function RootNavigator() {
     return null;
   }
 
+  const modalOptions = {
+    presentation: "fullScreenModal",
+    headerShown: true,
+    headerTitle: "",
+    headerShadowVisible: false,
+    headerStyle: { backgroundColor: theme.paper },
+  } as const;
+
   return (
     <>
       <StatusBar style={themeName === "dark" ? "light" : "dark"} />
@@ -54,16 +62,9 @@ function RootNavigator() {
         </Stack.Protected>
         <Stack.Protected guard={session !== null}>
           <Stack.Screen name="(tabs)" options={{ animation: "none" }} />
-          <Stack.Screen
-            name="add-subscription"
-            options={{
-              presentation: "fullScreenModal",
-              headerShown: true,
-              headerTitle: "",
-              headerShadowVisible: false,
-              headerStyle: { backgroundColor: theme.paper },
-            }}
-          />
+          <Stack.Screen name="subscription" />
+          <Stack.Screen name="add-subscription" options={modalOptions} />
+          <Stack.Screen name="edit-subscription" options={modalOptions} />
         </Stack.Protected>
       </Stack>
     </>

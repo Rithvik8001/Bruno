@@ -8,6 +8,7 @@ export {
   monthlyAmountMinor,
   parseAmount,
   resolveCurrency,
+  toAmountInput,
   toMajor,
   type FractionDigits,
 } from "./money";

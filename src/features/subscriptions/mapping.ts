@@ -16,6 +16,8 @@ export type SubscriptionRow =
 export type SubscriptionInsert =
   Database["public"]["Tables"]["subscriptions"]["Insert"];
 
+export type SubscriptionUpdate = Omit<SubscriptionInsert, "currency">;
+
 export const subscriptionColumns =
   "id, name, amount_minor, currency, cycle_unit, cycle_count, anchor_date, trial_ends_on, status, category, payment_method, notes, created_at";
 
@@ -76,16 +78,12 @@ export function fromRows(rows: readonly SubscriptionSelection[]): Subscription[]
     .filter((subscription) => subscription !== null);
 }
 
-export function toInsert(
-  input: NewSubscription,
-  currency: string,
-): SubscriptionInsert {
+export function toUpdate(input: NewSubscription): SubscriptionUpdate {
   const anchor = toDbDate(input.anchorDate);
 
   return {
     name: normalizeName(input.name),
     amount_minor: input.amountMinor,
-    currency,
     cycle_unit: input.cycle.unit,
     cycle_count: input.cycle.count,
     anchor_date: anchor,
@@ -94,4 +92,11 @@ export function toInsert(
     payment_method: normalizeOptional(input.paymentMethod),
     notes: normalizeOptional(input.notes),
   };
+}
+
+export function toInsert(
+  input: NewSubscription,
+  currency: string,
+): SubscriptionInsert {
+  return { ...toUpdate(input), currency };
 }

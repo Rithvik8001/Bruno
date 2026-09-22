@@ -1,29 +1,48 @@
 import { useState } from "react";
 
-import { NativeAlert } from "@/design";
+import { NativeAlert, type NativeAlertAction } from "@/design";
 import type { DataFailure } from "@/lib/supabase";
 
 import { subscriptionsCopy } from "./copy";
 import { failureMessage } from "./errors";
 
+export type SubscriptionAlertConfig = {
+  title: string;
+  message?: string;
+  actions: readonly NativeAlertAction[];
+};
+
+const emptyConfig: SubscriptionAlertConfig = {
+  title: "",
+  actions: [{ title: subscriptionsCopy.errors.dismiss }],
+};
+
 export function useSubscriptionAlert() {
   const [visible, setVisible] = useState(false);
-  const [message, setMessage] = useState("");
+  const [config, setConfig] = useState<SubscriptionAlertConfig>(emptyConfig);
+
+  const show = (next: SubscriptionAlertConfig) => {
+    setConfig(next);
+    setVisible(true);
+  };
 
   const showFailure = (reason: DataFailure) => {
-    setMessage(failureMessage(reason));
-    setVisible(true);
+    show({
+      title: subscriptionsCopy.errors.alertTitle,
+      message: failureMessage(reason),
+      actions: [{ title: subscriptionsCopy.errors.dismiss, role: "cancel" }],
+    });
   };
 
   const alert = (
     <NativeAlert
       visible={visible}
-      title={subscriptionsCopy.errors.alertTitle}
-      message={message}
-      actions={[{ title: subscriptionsCopy.errors.dismiss, role: "cancel" }]}
+      title={config.title}
+      message={config.message}
+      actions={config.actions}
       onDismiss={() => setVisible(false)}
     />
   );
 
-  return { alert, showFailure };
+  return { alert, show, showFailure };
 }

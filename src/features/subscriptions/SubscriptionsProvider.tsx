@@ -10,7 +10,12 @@ import { useSession } from "@/features/auth";
 import { useProfile } from "@/features/profile";
 import { dataFailure, type DataFailure, type DataResult } from "@/lib/supabase";
 
-import { createSubscription, listSubscriptions } from "./api";
+import {
+  createSubscription,
+  deleteSubscription,
+  listSubscriptions,
+  updateSubscription,
+} from "./api";
 import type { NewSubscription, Subscription } from "./types";
 
 export type SubscriptionsStatus = "loading" | "ready" | "error";
@@ -21,6 +26,11 @@ export type SubscriptionsState = {
   subscriptions: readonly Subscription[];
   refresh: () => Promise<void>;
   add: (input: NewSubscription) => Promise<DataResult<Subscription>>;
+  update: (
+    id: string,
+    input: NewSubscription,
+  ) => Promise<DataResult<Subscription>>;
+  remove: (id: string) => Promise<DataResult<void>>;
 };
 
 type Loaded = {
@@ -105,6 +115,57 @@ export function SubscriptionsProvider({ children }: { children: ReactNode }) {
     return result;
   };
 
+  const update = async (
+    id: string,
+    input: NewSubscription,
+  ): Promise<DataResult<Subscription>> => {
+    if (userId === null) {
+      return dataFailure("session");
+    }
+
+    const result = await updateSubscription(id, input);
+    if (result.ok) {
+      setLoaded((previous) => {
+        if (previous === null || previous.userId !== userId) {
+          return { userId, subscriptions: [result.data], failure: null };
+        }
+        const exists = previous.subscriptions.some((item) => item.id === id);
+        return {
+          userId,
+          subscriptions: exists
+            ? previous.subscriptions.map((item) =>
+                item.id === id ? result.data : item,
+              )
+            : [...previous.subscriptions, result.data],
+          failure: null,
+        };
+      });
+    }
+    return result;
+  };
+
+  const remove = async (id: string): Promise<DataResult<void>> => {
+    if (userId === null) {
+      return dataFailure("session");
+    }
+
+    const result = await deleteSubscription(id);
+    if (result.ok) {
+      setLoaded((previous) =>
+        previous !== null && previous.userId === userId
+          ? {
+              userId,
+              subscriptions: previous.subscriptions.filter(
+                (item) => item.id !== id,
+              ),
+              failure: null,
+            }
+          : previous,
+      );
+    }
+    return result;
+  };
+
   const state: SubscriptionsState = {
     status:
       current === null
@@ -116,6 +177,8 @@ export function SubscriptionsProvider({ children }: { children: ReactNode }) {
     subscriptions: current?.subscriptions ?? none,
     refresh,
     add,
+    update,
+    remove,
   };
 
   return <SubscriptionsContext value={state}>{children}</SubscriptionsContext>;
