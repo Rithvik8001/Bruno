@@ -1,6 +1,8 @@
 import { View } from "react-native";
 
+import { layout } from "../tokens";
 import { T } from "../primitives/T";
+import { Tappable } from "../primitives/Tappable";
 
 export type LabelProps = {
   children: string;
@@ -17,9 +19,17 @@ export function Label({ children }: LabelProps) {
 export type LabelRowProps = {
   label: string;
   caption?: string;
+  onPressCaption?: () => void;
 };
 
-export function LabelRow({ label, caption }: LabelRowProps) {
+const captionHitSlop = {
+  top: layout.sectionHeader.captionHitSlop,
+  bottom: layout.sectionHeader.captionHitSlop,
+  left: layout.sectionHeader.captionHitSlop,
+  right: layout.sectionHeader.captionHitSlop,
+};
+
+export function LabelRow({ label, caption, onPressCaption }: LabelRowProps) {
   return (
     <View
       style={{
@@ -29,10 +39,21 @@ export function LabelRow({ label, caption }: LabelRowProps) {
       }}
     >
       <Label>{label}</Label>
-      {caption === undefined ? null : (
-        <T style="caption" color="ink3">
+      {caption === undefined ? null : onPressCaption === undefined ? (
+        <T style="labelValue" color="ink3">
           {caption}
         </T>
+      ) : (
+        <Tappable
+          onPress={onPressCaption}
+          accessibilityRole="button"
+          accessibilityLabel={caption}
+          hitSlop={captionHitSlop}
+        >
+          <T style="labelValue" color="ink2">
+            {caption}
+          </T>
+        </Tappable>
       )}
     </View>
   );

@@ -1,24 +1,29 @@
 import { router } from "expo-router";
 import { useState } from "react";
-import { View } from "react-native";
 
 import {
+  EmptyState,
   Gap,
-  GlassButton,
-  Label,
+  MoneyHero,
   NavRow,
   Screen,
+  SectionHeader,
   SettingsRow,
   Spacer,
-  heroMinimumFontScale,
   T,
 } from "@/design";
-import { nextRenewal, today } from "@/lib/calendar";
+import { fromLocalDate, nextRenewal, today } from "@/lib/calendar";
 import { formatMoney } from "@/lib/money";
 
 import { subscriptionsCopy } from "../copy";
-import { formatCycle, formatLongDate } from "../format";
-import { derivedStatus } from "../selectors";
+import {
+  formatCycleAdverb,
+  formatMonthYear,
+  formatPer,
+  formatRelativeDay,
+  formatWeekdayDate,
+} from "../format";
+import { derivedStatus, isBilling } from "../selectors";
 import { useSubscriptions } from "../SubscriptionsProvider";
 import type { Subscription, SubscriptionStatus } from "../types";
 import {
@@ -27,6 +32,7 @@ import {
 } from "../useSubscriptionAlert";
 
 const copy = subscriptionsCopy.detail;
+const separator = " · ";
 
 type StatusAction = {
   title: string;
@@ -87,20 +93,27 @@ function statusActions(status: SubscriptionStatus): readonly StatusAction[] {
   }
 }
 
-function statusLine(
-  subscription: Subscription,
-  renewal: string,
-): string | null {
-  switch (derivedStatus(subscription, today())) {
-    case "trial":
-      return `${copy.trialUntil} ${renewal}`;
-    case "paused":
-      return copy.paused;
-    case "cancelled":
-      return copy.cancelled;
-    case "active":
-      return null;
+function captionLine(subscription: Subscription): string {
+  const parts: string[] = [];
+  if (subscription.status === "paused") {
+    parts.push(copy.paused);
+  } else if (subscription.status === "cancelled") {
+    parts.push(copy.cancelled);
   }
+  if (subscription.category !== null) {
+    parts.push(subscriptionsCopy.categories[subscription.category]);
+  }
+  parts.push(formatCycleAdverb(subscription.cycle));
+  if (subscription.paymentMethod !== null) {
+    parts.push(subscription.paymentMethod);
+  }
+  parts.push(
+    copy.since.replace(
+      "{month}",
+      formatMonthYear(fromLocalDate(new Date(subscription.createdAt))),
+    ),
+  );
+  return parts.join(separator);
 }
 
 function Detail({ subscription }: { subscription: Subscription }) {
@@ -108,27 +121,10 @@ function Detail({ subscription }: { subscription: Subscription }) {
   const { alert, show, showFailure } = useSubscriptionAlert();
   const [busy, setBusy] = useState(false);
 
-  const renewal = formatLongDate(
-    nextRenewal(subscription.anchorDate, subscription.cycle, today()),
-  );
-  const cycle = formatCycle(subscription.cycle);
-
-  const status = statusLine(subscription, renewal);
-
-  const facts = [
-    { label: copy.nextPayment, value: renewal },
-    ...(subscription.category === null
-      ? []
-      : [
-          {
-            label: copy.category,
-            value: subscriptionsCopy.categories[subscription.category],
-          },
-        ]),
-    ...(subscription.paymentMethod === null
-      ? []
-      : [{ label: copy.paymentMethod, value: subscription.paymentMethod }]),
-  ];
+  const now = today();
+  const renewal = nextRenewal(subscription.anchorDate, subscription.cycle, now);
+  const status = derivedStatus(subscription, now);
+  const actions = statusActions(subscription.status);
 
   const openEdit = () =>
     router.push({
@@ -192,51 +188,47 @@ function Detail({ subscription }: { subscription: Subscription }) {
   return (
     <>
       <NavRow
+        plain
         onBack={() => router.back()}
         backAccessibilityLabel={copy.back}
         action={{ title: copy.edit, onPress: openEdit }}
       />
-      <Gap size="s32" />
+      <Gap size="s48" />
       <T style="title">{subscription.name}</T>
-      {status === null ? null : (
+      <Gap size="s12" />
+      <T style="caption" color="ink3">
+        {captionLine(subscription)}
+      </T>
+
+      <Gap size="s32" />
+      <MoneyHero
+        size="s"
+        inline
+        amount={formatMoney(subscription.amountMinor, subscription.currency)}
+        caption={formatPer(subscription.cycle)}
+      />
+      {isBilling(status) ? (
         <>
-          <Gap size="s8" />
-          <T style="body" color="accent">
-            {status}
+          <Gap size="s16" />
+          <T style="body" color="ink2">
+            {status === "trial"
+              ? copy.trialUntil.replace("{date}", formatWeekdayDate(renewal))
+              : copy.nextPayment.replace(
+                  "{date}",
+                  formatWeekdayDate(renewal),
+                )}
+            {status === "trial" ? null : (
+              <T style="body" color="accent">
+                {formatRelativeDay(renewal, now)}
+              </T>
+            )}
           </T>
         </>
-      )}
-
-      <Gap size="s36" />
-      <T
-        style="moneyM"
-        numberOfLines={1}
-        adjustsFontSizeToFit
-        minimumFontScale={heroMinimumFontScale}
-      >
-        {formatMoney(subscription.amountMinor, subscription.currency)}
-      </T>
-      <Gap size="s8" />
-      <T style="body" color="ink3">
-        {`${copy.every} ${cycle.toLowerCase()}`}
-      </T>
-
-      <Gap size="s36" />
-      {facts.map((fact, index) => (
-        <SettingsRow
-          key={fact.label}
-          label={fact.label}
-          value={fact.value}
-          chevron={false}
-          last={index === facts.length - 1}
-        />
-      ))}
+      ) : null}
 
       {subscription.notes === null ? null : (
         <>
-          <Gap size="s24" />
-          <Label>{copy.notes}</Label>
-          <Gap size="s8" />
+          <SectionHeader label={copy.notes} bottom="s8" />
           <T style="body" color="ink2">
             {subscription.notes}
           </T>
@@ -244,27 +236,23 @@ function Detail({ subscription }: { subscription: Subscription }) {
       )}
 
       <Spacer grow />
-      <Gap size="s36" />
-      <View style={{ flexDirection: "row", justifyContent: "center" }}>
-        {statusActions(subscription.status).map((action, index) => (
-          <View key={action.target} style={{ flexDirection: "row" }}>
-            {index === 0 ? null : <Gap size="s12" horizontal />}
-            <GlassButton
-              title={action.title}
-              onPress={() => askStatus(action)}
-              disabled={busy}
-            />
-          </View>
-        ))}
-      </View>
-      <Gap size="s16" />
-      <View style={{ alignItems: "center" }}>
-        <GlassButton
-          title={copy.delete}
-          onPress={askDelete}
-          disabled={busy}
+      <Gap size="s24" />
+      {actions.map((action, index) => (
+        <SettingsRow
+          key={action.target}
+          label={action.title}
+          chevron={false}
+          tone={index === 0 ? "ink" : "ink2"}
+          onPress={busy ? undefined : () => askStatus(action)}
         />
-      </View>
+      ))}
+      <SettingsRow
+        label={copy.delete}
+        chevron={false}
+        tone="ink2"
+        last
+        onPress={busy ? undefined : askDelete}
+      />
       {alert}
     </>
   );
@@ -274,15 +262,14 @@ function NotFound() {
   return (
     <>
       <NavRow
+        plain
         onBack={() => router.back()}
         backAccessibilityLabel={copy.back}
       />
-      <Gap size="s32" />
+      <Gap size="s48" />
       <T style="title">{copy.notFoundTitle}</T>
-      <Gap size="s8" />
-      <T style="body" color="ink2">
-        {copy.notFoundBody}
-      </T>
+      <Gap size="s12" />
+      <EmptyState body={copy.notFoundBody} />
     </>
   );
 }

@@ -2,6 +2,7 @@ import { router, useNavigation } from "expo-router";
 import { useEffect, useLayoutEffect, useState } from "react";
 
 import {
+  EmptyState,
   Gap,
   Pill,
   Screen,
@@ -119,7 +120,7 @@ function EditForm({ subscription }: { subscription: Subscription }) {
   );
 }
 
-function EmptyState({ loading }: { loading: boolean }) {
+function Fallback({ loading }: { loading: boolean }) {
   useModalHeader({ canSave: false, onSave: null });
 
   if (loading) {
@@ -127,9 +128,7 @@ function EmptyState({ loading }: { loading: boolean }) {
       <>
         <T style="title">{copy.title}</T>
         <Gap size="s24" />
-        <T style="body" color="ink3">
-          {subscriptionsCopy.list.loading}
-        </T>
+        <EmptyState tone="ink3" body={subscriptionsCopy.list.loading} />
       </>
     );
   }
@@ -138,12 +137,11 @@ function EmptyState({ loading }: { loading: boolean }) {
     <>
       <T style="title">{copy.notFoundTitle}</T>
       <Gap size="s24" />
-      <T style="body" color="ink2">
-        {copy.notFoundBody}
-      </T>
-      <Spacer grow />
-      <Gap size="s24" />
-      <Pill title={formCopy.cancel} onPress={() => router.back()} />
+      <EmptyState
+        body={copy.notFoundBody}
+        action={{ title: formCopy.cancel, onPress: () => router.back() }}
+        actionAtBottom
+      />
     </>
   );
 }
@@ -173,7 +171,7 @@ export function EditSubscriptionScreen({ id }: { id: string | null }) {
       scrollViewProps={{ alwaysBounceVertical: false }}
     >
       {snapshot === null ? (
-        <EmptyState loading={id !== null && status === "loading"} />
+        <Fallback loading={id !== null && status === "loading"} />
       ) : (
         <EditForm subscription={snapshot} />
       )}

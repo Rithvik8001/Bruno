@@ -149,18 +149,25 @@ export function currencySymbol(currency: string, locale?: string): string {
   return symbol;
 }
 
-export function monthlyAmountMinor(
+export function monthlyAmountExact(
   amountMinor: number,
   cycle: BillingCycle,
 ): number {
   switch (cycle.unit) {
     case "day":
-      return Math.round((amountMinor * daysPerMonth) / cycle.count);
+      return (amountMinor * daysPerMonth) / cycle.count;
     case "week":
-      return Math.round((amountMinor * weeksPerMonth) / cycle.count);
+      return (amountMinor * weeksPerMonth) / cycle.count;
     case "month":
-      return Math.round(amountMinor / cycle.count);
+      return amountMinor / cycle.count;
     case "year":
-      return Math.round(amountMinor / (cycle.count * monthsPerYear));
+      return amountMinor / (cycle.count * monthsPerYear);
   }
+}
+
+export function monthlyAmountMinor(
+  amountMinor: number,
+  cycle: BillingCycle,
+): number {
+  return Math.round(monthlyAmountExact(amountMinor, cycle));
 }

@@ -11,6 +11,7 @@ export type IconButtonProps = {
   color?: IconColorToken;
   size?: number;
   disabled?: boolean;
+  plain?: boolean;
 };
 
 export function IconButton({
@@ -20,7 +21,31 @@ export function IconButton({
   color = "ink",
   size = iconSizes.bar,
   disabled = false,
+  plain = false,
 }: IconButtonProps) {
+  const button = (
+    <Tappable
+      onPress={onPress}
+      disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ disabled }}
+      style={{
+        width: layout.hit,
+        height: layout.hit,
+        alignItems: "center",
+        justifyContent: "center",
+        opacity: plain && disabled ? 0.4 : 1,
+      }}
+    >
+      <Icon name={icon} size={size} color={color} />
+    </Tappable>
+  );
+
+  if (plain) {
+    return button;
+  }
+
   return (
     <GlassSurface
       radius={layout.hit / 2}
@@ -28,21 +53,7 @@ export function IconButton({
       plain={disabled}
       style={{ opacity: disabled ? 0.4 : 1 }}
     >
-      <Tappable
-        onPress={onPress}
-        disabled={disabled}
-        accessibilityRole="button"
-        accessibilityLabel={accessibilityLabel}
-        accessibilityState={{ disabled }}
-        style={{
-          width: layout.hit,
-          height: layout.hit,
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Icon name={icon} size={size} color={color} />
-      </Tappable>
+      {button}
     </GlassSurface>
   );
 }

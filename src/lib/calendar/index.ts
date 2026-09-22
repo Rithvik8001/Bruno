@@ -3,6 +3,7 @@ export {
   addDays,
   compareDates,
   cycleUnits,
+  daysBetween,
   daysInMonth,
   fromLocalDate,
   isCycleUnit,

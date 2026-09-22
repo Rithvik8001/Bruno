@@ -1,6 +1,8 @@
 import { View } from "react-native";
 
 import { layout } from "../tokens";
+import { T } from "../primitives/T";
+import { Tappable } from "../primitives/Tappable";
 import { GlassButton } from "./GlassButton";
 import { IconButton } from "./IconButton";
 import type { IconSource } from "../types";
@@ -15,6 +17,7 @@ export type NavRowProps = {
   backIcon?: IconSource;
   backAccessibilityLabel?: string;
   action?: NavRowAction;
+  plain?: boolean;
 };
 
 export function NavRow({
@@ -22,6 +25,7 @@ export function NavRow({
   backIcon = "back",
   backAccessibilityLabel = "Back",
   action,
+  plain = false,
 }: NavRowProps) {
   return (
     <View
@@ -30,6 +34,7 @@ export function NavRow({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
+        marginHorizontal: plain ? -layout.navRow.plainInset : 0,
       }}
     >
       {onBack === undefined ? (
@@ -39,10 +44,26 @@ export function NavRow({
           icon={backIcon}
           onPress={onBack}
           accessibilityLabel={backAccessibilityLabel}
+          plain={plain}
         />
       )}
       {action === undefined ? (
         <View />
+      ) : plain ? (
+        <Tappable
+          onPress={action.onPress}
+          accessibilityRole="button"
+          accessibilityLabel={action.title}
+          style={{
+            height: layout.hit,
+            paddingHorizontal: layout.navRow.plainInset,
+            justifyContent: "center",
+          }}
+        >
+          <T style="filter" color="ink2">
+            {action.title}
+          </T>
+        </Tappable>
       ) : (
         <GlassButton title={action.title} onPress={action.onPress} />
       )}

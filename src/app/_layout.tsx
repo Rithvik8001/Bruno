@@ -1,3 +1,7 @@
+import { HankenGrotesk_400Regular } from "@expo-google-fonts/hanken-grotesk/400Regular";
+import { HankenGrotesk_500Medium } from "@expo-google-fonts/hanken-grotesk/500Medium";
+import { HankenGrotesk_600SemiBold } from "@expo-google-fonts/hanken-grotesk/600SemiBold";
+import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
@@ -7,6 +11,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import {
   ThemeProvider,
+  fonts,
   readStoredPreference,
   useTheme,
   useThemeName,
@@ -21,7 +26,13 @@ SplashScreen.preventAutoHideAsync();
 function RootNavigator() {
   const theme = useTheme();
   const themeName = useThemeName();
-  const { session, loading } = useSession();
+  const { session, loading: sessionLoading } = useSession();
+  const [fontsLoaded] = useFonts({
+    [fonts.sans]: HankenGrotesk_400Regular,
+    [fonts.sansMedium]: HankenGrotesk_500Medium,
+    [fonts.sansSemibold]: HankenGrotesk_600SemiBold,
+  });
+  const loading = sessionLoading || !fontsLoaded;
 
   useEffect(() => {
     SystemUI.setBackgroundColorAsync(theme.paper);

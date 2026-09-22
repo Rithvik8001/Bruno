@@ -5,6 +5,7 @@ export {
   fractionDigits,
   isCurrencyCode,
   maxAmountMinor,
+  monthlyAmountExact,
   monthlyAmountMinor,
   parseAmount,
   resolveCurrency,

@@ -12,6 +12,7 @@ export type SettingsRowProps = {
   last?: boolean;
   chevron?: boolean;
   onPress?: () => void;
+  tone?: "ink" | "ink2";
 };
 
 export function SettingsRow({
@@ -20,6 +21,7 @@ export function SettingsRow({
   last = false,
   chevron = true,
   onPress,
+  tone = "ink",
 }: SettingsRowProps) {
   const theme = useTheme();
 
@@ -37,7 +39,7 @@ export function SettingsRow({
         borderBottomColor: theme.hair,
       }}
     >
-      <T style="row" override={{ flex: 1 }} numberOfLines={1}>
+      <T style="row" color={tone} override={{ flex: 1 }} numberOfLines={1}>
         {label}
       </T>
       {value === undefined ? null : (

@@ -121,6 +121,10 @@ export function addDays(date: CalendarDate, days: number): CalendarDate {
   return fromEpochDay(toEpochDay(date) + days);
 }
 
+export function daysBetween(from: CalendarDate, to: CalendarDate): number {
+  return toEpochDay(to) - toEpochDay(from);
+}
+
 export function addCycles(
   anchor: CalendarDate,
   cycle: BillingCycle,

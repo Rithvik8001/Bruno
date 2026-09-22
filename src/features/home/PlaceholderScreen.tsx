@@ -1,4 +1,4 @@
-import { Gap, Screen, T } from "@/design";
+import { EmptyState, Gap, Screen, T } from "@/design";
 
 import { homeCopy } from "./copy";
 
@@ -11,9 +11,7 @@ export function PlaceholderScreen({ title }: PlaceholderScreenProps) {
     <Screen scroll withTabBar>
       <T style="title">{title}</T>
       <Gap size="s16" />
-      <T style="body" color="ink2">
-        {homeCopy.placeholder}
-      </T>
+      <EmptyState body={homeCopy.placeholder} />
     </Screen>
   );
 }

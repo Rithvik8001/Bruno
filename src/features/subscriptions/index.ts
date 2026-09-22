@@ -1,4 +1,40 @@
 export { subscriptionsCopy } from "./copy";
+export { failureMessage } from "./errors";
+export {
+  formatCycle,
+  formatCycleAdverb,
+  formatLedgerDate,
+  formatLongDate,
+  formatMonth,
+  formatMonthYear,
+  formatPer,
+  formatRelativeDay,
+  formatWeekdayDate,
+} from "./format";
+export {
+  applyListFilter,
+  categoryBreakdown,
+  derivedStatus,
+  displayAmountMinor,
+  dueWithin,
+  groupLedger,
+  isBilling,
+  listFilters,
+  sortByNextRenewal,
+  statusCounts,
+  summarize,
+  type CategoryShare,
+  type DueWindow,
+  type LedgerGroup,
+  type ListFilter,
+  type OverviewSummary,
+  type StatusCounts,
+  type UpcomingSubscription,
+} from "./selectors";
+export {
+  useSubscriptionAlert,
+  type SubscriptionAlertConfig,
+} from "./useSubscriptionAlert";
 export {
   SubscriptionsProvider,
   useSubscriptions,
