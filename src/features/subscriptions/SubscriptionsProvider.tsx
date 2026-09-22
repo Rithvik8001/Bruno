@@ -8,15 +8,25 @@ import {
 
 import { useSession } from "@/features/auth";
 import { useProfile } from "@/features/profile";
-import { dataFailure, type DataFailure, type DataResult } from "@/lib/supabase";
+import {
+  dataFailure,
+  dataSuccess,
+  type DataFailure,
+  type DataResult,
+} from "@/lib/supabase";
 
 import {
   createSubscription,
   deleteSubscription,
   listSubscriptions,
   updateSubscription,
+  updateSubscriptionStatus,
 } from "./api";
-import type { NewSubscription, Subscription } from "./types";
+import type {
+  NewSubscription,
+  Subscription,
+  SubscriptionStatus,
+} from "./types";
 
 export type SubscriptionsStatus = "loading" | "ready" | "error";
 
@@ -24,11 +34,15 @@ export type SubscriptionsState = {
   status: SubscriptionsStatus;
   failure: DataFailure | null;
   subscriptions: readonly Subscription[];
-  refresh: () => Promise<void>;
+  refresh: () => Promise<DataResult<void>>;
   add: (input: NewSubscription) => Promise<DataResult<Subscription>>;
   update: (
     id: string,
     input: NewSubscription,
+  ) => Promise<DataResult<Subscription>>;
+  setStatus: (
+    id: string,
+    status: SubscriptionStatus,
   ) => Promise<DataResult<Subscription>>;
   remove: (id: string) => Promise<DataResult<void>>;
 };
@@ -74,9 +88,9 @@ export function SubscriptionsProvider({ children }: { children: ReactNode }) {
 
   const current = loaded !== null && loaded.userId === userId ? loaded : null;
 
-  const refresh = async () => {
+  const refresh = async (): Promise<DataResult<void>> => {
     if (userId === null) {
-      return;
+      return dataFailure("session");
     }
     const result = await listSubscriptions();
     setLoaded((previous) => {
@@ -88,6 +102,7 @@ export function SubscriptionsProvider({ children }: { children: ReactNode }) {
       }
       return { userId, subscriptions: none, failure: result.reason };
     });
+    return result.ok ? dataSuccess(undefined) : result;
   };
 
   const add = async (
@@ -115,6 +130,28 @@ export function SubscriptionsProvider({ children }: { children: ReactNode }) {
     return result;
   };
 
+  const replace = (
+    userId: string,
+    id: string,
+    subscription: Subscription,
+  ) => {
+    setLoaded((previous) => {
+      if (previous === null || previous.userId !== userId) {
+        return { userId, subscriptions: [subscription], failure: null };
+      }
+      const exists = previous.subscriptions.some((item) => item.id === id);
+      return {
+        userId,
+        subscriptions: exists
+          ? previous.subscriptions.map((item) =>
+              item.id === id ? subscription : item,
+            )
+          : [...previous.subscriptions, subscription],
+        failure: null,
+      };
+    });
+  };
+
   const update = async (
     id: string,
     input: NewSubscription,
@@ -125,21 +162,22 @@ export function SubscriptionsProvider({ children }: { children: ReactNode }) {
 
     const result = await updateSubscription(id, input);
     if (result.ok) {
-      setLoaded((previous) => {
-        if (previous === null || previous.userId !== userId) {
-          return { userId, subscriptions: [result.data], failure: null };
-        }
-        const exists = previous.subscriptions.some((item) => item.id === id);
-        return {
-          userId,
-          subscriptions: exists
-            ? previous.subscriptions.map((item) =>
-                item.id === id ? result.data : item,
-              )
-            : [...previous.subscriptions, result.data],
-          failure: null,
-        };
-      });
+      replace(userId, id, result.data);
+    }
+    return result;
+  };
+
+  const setStatus = async (
+    id: string,
+    status: SubscriptionStatus,
+  ): Promise<DataResult<Subscription>> => {
+    if (userId === null) {
+      return dataFailure("session");
+    }
+
+    const result = await updateSubscriptionStatus(id, status);
+    if (result.ok) {
+      replace(userId, id, result.data);
     }
     return result;
   };
@@ -178,6 +216,7 @@ export function SubscriptionsProvider({ children }: { children: ReactNode }) {
     refresh,
     add,
     update,
+    setStatus,
     remove,
   };
 

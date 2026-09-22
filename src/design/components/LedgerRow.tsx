@@ -1,6 +1,7 @@
 import { View } from "react-native";
 
 import { layout } from "../tokens";
+import { ledgerDateMinimumFontScale } from "../typography";
 import { useTheme } from "../theme/useTheme";
 import { T } from "../primitives/T";
 import { Tappable } from "../primitives/Tappable";
@@ -51,7 +52,7 @@ export function LedgerRow({
         }}
         numberOfLines={1}
         adjustsFontSizeToFit
-        minimumFontScale={0.75}
+        minimumFontScale={ledgerDateMinimumFontScale}
       >
         {date}
       </T>

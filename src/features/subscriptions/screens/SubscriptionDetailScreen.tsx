@@ -10,6 +10,7 @@ import {
   Screen,
   SettingsRow,
   Spacer,
+  heroMinimumFontScale,
   T,
 } from "@/design";
 import { nextRenewal, today } from "@/lib/calendar";
@@ -19,10 +20,72 @@ import { subscriptionsCopy } from "../copy";
 import { formatCycle, formatLongDate } from "../format";
 import { derivedStatus } from "../selectors";
 import { useSubscriptions } from "../SubscriptionsProvider";
-import type { Subscription } from "../types";
-import { useSubscriptionAlert } from "../useSubscriptionAlert";
+import type { Subscription, SubscriptionStatus } from "../types";
+import {
+  useSubscriptionAlert,
+  type SubscriptionAlertConfig,
+} from "../useSubscriptionAlert";
 
 const copy = subscriptionsCopy.detail;
+
+type StatusAction = {
+  title: string;
+  target: SubscriptionStatus;
+  prompt: Pick<SubscriptionAlertConfig, "title" | "message"> & {
+    confirm: string;
+  };
+};
+
+const pauseAction: StatusAction = {
+  title: copy.pause,
+  target: "paused",
+  prompt: {
+    title: copy.pauseTitle,
+    message: copy.pauseMessage,
+    confirm: copy.pauseConfirm,
+  },
+};
+
+const resumeAction: StatusAction = {
+  title: copy.resume,
+  target: "active",
+  prompt: {
+    title: copy.resumeTitle,
+    message: copy.resumeMessage,
+    confirm: copy.resumeConfirm,
+  },
+};
+
+const cancelAction: StatusAction = {
+  title: copy.cancel,
+  target: "cancelled",
+  prompt: {
+    title: copy.cancelTitle,
+    message: copy.cancelMessage,
+    confirm: copy.cancelConfirm,
+  },
+};
+
+const reactivateAction: StatusAction = {
+  title: copy.reactivate,
+  target: "active",
+  prompt: {
+    title: copy.reactivateTitle,
+    message: copy.reactivateMessage,
+    confirm: copy.reactivateConfirm,
+  },
+};
+
+function statusActions(status: SubscriptionStatus): readonly StatusAction[] {
+  switch (status) {
+    case "active":
+      return [pauseAction, cancelAction];
+    case "paused":
+      return [resumeAction, cancelAction];
+    case "cancelled":
+      return [reactivateAction];
+  }
+}
 
 function statusLine(
   subscription: Subscription,
@@ -41,9 +104,9 @@ function statusLine(
 }
 
 function Detail({ subscription }: { subscription: Subscription }) {
-  const { remove } = useSubscriptions();
+  const { remove, setStatus } = useSubscriptions();
   const { alert, show, showFailure } = useSubscriptionAlert();
-  const [deleting, setDeleting] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   const renewal = formatLongDate(
     nextRenewal(subscription.anchorDate, subscription.cycle, today()),
@@ -74,15 +137,41 @@ function Detail({ subscription }: { subscription: Subscription }) {
     });
 
   const confirmDelete = async () => {
-    setDeleting(true);
+    setBusy(true);
     const result = await remove(subscription.id);
-    setDeleting(false);
+    setBusy(false);
 
     if (result.ok) {
       router.back();
       return;
     }
     showFailure(result.reason);
+  };
+
+  const confirmStatus = async (target: SubscriptionStatus) => {
+    setBusy(true);
+    const result = await setStatus(subscription.id, target);
+    setBusy(false);
+
+    if (!result.ok) {
+      showFailure(result.reason);
+    }
+  };
+
+  const askStatus = (action: StatusAction) => {
+    show({
+      title: action.prompt.title,
+      message: action.prompt.message,
+      actions: [
+        { title: copy.keep, role: "cancel" },
+        {
+          title: action.prompt.confirm,
+          onPress: () => {
+            void confirmStatus(action.target);
+          },
+        },
+      ],
+    });
   };
 
   const askDelete = () => {
@@ -123,7 +212,7 @@ function Detail({ subscription }: { subscription: Subscription }) {
         style="moneyM"
         numberOfLines={1}
         adjustsFontSizeToFit
-        minimumFontScale={0.7}
+        minimumFontScale={heroMinimumFontScale}
       >
         {formatMoney(subscription.amountMinor, subscription.currency)}
       </T>
@@ -156,11 +245,24 @@ function Detail({ subscription }: { subscription: Subscription }) {
 
       <Spacer grow />
       <Gap size="s36" />
+      <View style={{ flexDirection: "row", justifyContent: "center" }}>
+        {statusActions(subscription.status).map((action, index) => (
+          <View key={action.target} style={{ flexDirection: "row" }}>
+            {index === 0 ? null : <Gap size="s12" horizontal />}
+            <GlassButton
+              title={action.title}
+              onPress={() => askStatus(action)}
+              disabled={busy}
+            />
+          </View>
+        ))}
+      </View>
+      <Gap size="s16" />
       <View style={{ alignItems: "center" }}>
         <GlassButton
           title={copy.delete}
           onPress={askDelete}
-          disabled={deleting}
+          disabled={busy}
         />
       </View>
       {alert}

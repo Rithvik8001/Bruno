@@ -19,6 +19,7 @@ import { failureMessage } from "../errors";
 import { formatLedgerDate } from "../format";
 import { sortByNextRenewal, type UpcomingSubscription } from "../selectors";
 import { useSubscriptions } from "../SubscriptionsProvider";
+import { useSubscriptionAlert } from "../useSubscriptionAlert";
 
 function rowNote(item: UpcomingSubscription): string | undefined {
   switch (item.status) {
@@ -36,9 +37,16 @@ function rowNote(item: UpcomingSubscription): string | undefined {
 export function SubscriptionsScreen() {
   const copy = subscriptionsCopy.list;
   const { status, failure, subscriptions, refresh } = useSubscriptions();
+  const { alert, showFailure } = useSubscriptionAlert();
 
   const items = sortByNextRenewal(subscriptions, today());
   const openAdd = () => router.push("/add-subscription");
+  const pullToRefresh = async () => {
+    const result = await refresh();
+    if (!result.ok) {
+      showFailure(result.reason);
+    }
+  };
   const openDetail = (id: string) =>
     router.push({ pathname: "/subscription", params: { id } });
 
@@ -62,7 +70,7 @@ export function SubscriptionsScreen() {
             {failureMessage(failure ?? "unknown")}
           </T>
           <Gap size="s8" />
-          <TextLink title={copy.retry} onPress={refresh} />
+          <TextLink title={copy.retry} onPress={pullToRefresh} />
         </View>
       ) : items.length === 0 ? (
         <View style={{ paddingHorizontal: layout.margin }}>
@@ -74,7 +82,7 @@ export function SubscriptionsScreen() {
         </View>
       ) : (
         <LedgerList
-          onRefresh={refresh}
+          onRefresh={pullToRefresh}
           items={items.map((item) => ({
             id: item.subscription.id,
             date: formatLedgerDate(item.nextRenewal),
@@ -89,6 +97,7 @@ export function SubscriptionsScreen() {
           }))}
         />
       )}
+      {alert}
     </Screen>
   );
 }

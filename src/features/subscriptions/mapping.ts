@@ -7,6 +7,7 @@ import {
   isSubscriptionStatus,
   type NewSubscription,
   type Subscription,
+  type SubscriptionStatus,
 } from "./types";
 import { normalizeName, normalizeOptional } from "./validation";
 
@@ -17,6 +18,8 @@ export type SubscriptionInsert =
   Database["public"]["Tables"]["subscriptions"]["Insert"];
 
 export type SubscriptionUpdate = Omit<SubscriptionInsert, "currency">;
+
+export type SubscriptionStatusUpdate = Pick<SubscriptionUpdate, "status">;
 
 export const subscriptionColumns =
   "id, name, amount_minor, currency, cycle_unit, cycle_count, anchor_date, trial_ends_on, status, category, payment_method, notes, created_at";
@@ -92,6 +95,12 @@ export function toUpdate(input: NewSubscription): SubscriptionUpdate {
     payment_method: normalizeOptional(input.paymentMethod),
     notes: normalizeOptional(input.notes),
   };
+}
+
+export function toStatusUpdate(
+  status: SubscriptionStatus,
+): SubscriptionStatusUpdate {
+  return { status };
 }
 
 export function toInsert(

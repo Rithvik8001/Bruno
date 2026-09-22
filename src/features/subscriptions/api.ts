@@ -11,9 +11,14 @@ import {
   fromRows,
   subscriptionColumns,
   toInsert,
+  toStatusUpdate,
   toUpdate,
 } from "./mapping";
-import type { NewSubscription, Subscription } from "./types";
+import type {
+  NewSubscription,
+  Subscription,
+  SubscriptionStatus,
+} from "./types";
 
 export async function listSubscriptions(): Promise<DataResult<Subscription[]>> {
   try {
@@ -86,6 +91,42 @@ export async function updateSubscription(
         );
       }
       return dataFailure(mapDataFailure(error, status));
+    }
+
+    const subscription = fromRow(data);
+    return subscription === null
+      ? dataFailure("unknown")
+      : dataSuccess(subscription);
+  } catch {
+    return dataFailure("network");
+  }
+}
+
+export async function updateSubscriptionStatus(
+  id: string,
+  status: SubscriptionStatus,
+): Promise<DataResult<Subscription>> {
+  try {
+    const {
+      data,
+      error,
+      status: httpStatus,
+    } = await supabase
+      .from("subscriptions")
+      .update(toStatusUpdate(status))
+      .eq("id", id)
+      .select(subscriptionColumns)
+      .single();
+
+    if (error !== null) {
+      if (__DEV__) {
+        console.log(
+          "[bruno subscriptions] status update failed",
+          error.code,
+          error.message,
+        );
+      }
+      return dataFailure(mapDataFailure(error, httpStatus));
     }
 
     const subscription = fromRow(data);

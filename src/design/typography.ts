@@ -13,6 +13,7 @@ export const dynamicTypeRange = {
 export const numericVariant = ["lining-nums", "tabular-nums"] as const;
 
 export const heroMinimumFontScale = 0.7;
+export const ledgerDateMinimumFontScale = 0.75;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);

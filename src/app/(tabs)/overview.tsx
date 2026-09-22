@@ -21,6 +21,7 @@ import {
   T,
   TextLink,
   ToggleRow,
+  heroMinimumFontScale,
   useAppearance,
   type FilterOption,
 } from "@/design";
@@ -69,7 +70,7 @@ export default function ShowcaseScreen() {
         style="moneyXL"
         numberOfLines={1}
         adjustsFontSizeToFit
-        minimumFontScale={0.7}
+        minimumFontScale={heroMinimumFontScale}
       >
         $161.88
       </T>

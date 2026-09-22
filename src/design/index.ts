@@ -29,6 +29,7 @@ export {
 export {
   dynamicTypeRange,
   heroMinimumFontScale,
+  ledgerDateMinimumFontScale,
   isDisplay,
   numericVariant,
   scaleTypeStyle,
