@@ -15,5 +15,9 @@ export function readServerEnv() {
       "SUPABASE_SECRET_KEY",
       process.env.SUPABASE_SECRET_KEY,
     ),
+    supabasePublishableKey: required(
+      "EXPO_PUBLIC_SUPABASE_KEY",
+      process.env.EXPO_PUBLIC_SUPABASE_KEY,
+    ),
   };
 }

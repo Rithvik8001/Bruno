@@ -40,6 +40,9 @@ async function post(
     if (response.status === 400) {
       return failure("invalid");
     }
+    if (response.status === 401) {
+      return failure("invalidCode");
+    }
     if (response.status === 429) {
       return failure("rateLimited");
     }
@@ -55,6 +58,26 @@ export function signUp(email: string, password: string): Promise<AuthResult> {
 
 export function resendCode(email: string): Promise<AuthResult> {
   return post("/api/auth/resend", { email });
+}
+
+export function requestPasswordReset(email: string): Promise<AuthResult> {
+  return post("/api/auth/reset", { email });
+}
+
+export async function confirmPasswordReset(
+  email: string,
+  code: string,
+  password: string,
+): Promise<AuthResult> {
+  const confirmed = await post("/api/auth/reset-confirm", {
+    email,
+    code,
+    password,
+  });
+  if (!confirmed.ok) {
+    return confirmed;
+  }
+  return signIn(email, password);
 }
 
 export async function verifyCode(

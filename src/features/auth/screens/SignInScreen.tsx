@@ -123,10 +123,11 @@ export function SignInScreen() {
       <Spacer height={layout.auth.forgotGap} />
       <Tappable
         onPress={() =>
-          show({
-            title: authCopy.forgotSoon.title,
-            message: authCopy.forgotSoon.message,
-            actions: [{ title: authCopy.errors.dismiss, role: "cancel" }],
+          router.push({
+            pathname: "/reset",
+            params: isValidEmail(normalizedEmail)
+              ? { email: normalizedEmail }
+              : {},
           })
         }
         accessibilityRole="button"

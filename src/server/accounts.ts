@@ -1,5 +1,5 @@
 import { deliverAlreadyRegistered, deliverCode } from "./mailer";
-import { supabaseAdmin } from "./supabaseAdmin";
+import { supabaseAdmin, supabaseVerifier } from "./supabaseAdmin";
 
 const existingAccountCodes = ["email_exists", "user_already_exists"];
 const signupMarker = { signup_started: true };
@@ -96,4 +96,43 @@ export async function startSignUp(
 
 export async function resendSignUpCode(email: string): Promise<void> {
   await issueCodeForExisting(email, null);
+}
+
+export async function startPasswordReset(email: string): Promise<void> {
+  const admin = supabaseAdmin().auth.admin;
+  const { data, error } = await admin.generateLink({ type: "recovery", email });
+
+  if (error !== null) {
+    if (error.code === "user_not_found") {
+      return;
+    }
+    throw error;
+  }
+  await deliverCode(email, data.properties.email_otp);
+}
+
+export class InvalidResetCodeError extends Error {}
+
+export async function confirmPasswordReset(
+  email: string,
+  token: string,
+  password: string,
+): Promise<void> {
+  const verifier = supabaseVerifier();
+  const { data, error } = await verifier.auth.verifyOtp({
+    email,
+    token,
+    type: "recovery",
+  });
+
+  if (error !== null || data.session === null) {
+    throw new InvalidResetCodeError();
+  }
+
+  const admin = supabaseAdmin().auth.admin;
+  const update = await admin.updateUserById(data.session.user.id, { password });
+  if (update.error !== null) {
+    throw update.error;
+  }
+  await admin.signOut(data.session.access_token, "global");
 }

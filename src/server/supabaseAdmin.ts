@@ -17,3 +17,14 @@ export function supabaseAdmin(): SupabaseClient {
   }
   return client;
 }
+
+export function supabaseVerifier(): SupabaseClient {
+  const env = readServerEnv();
+  return createClient(env.supabaseUrl, env.supabasePublishableKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+  });
+}
