@@ -12,6 +12,15 @@ export type GlassShadow = {
   readonly offsetY: number;
 };
 
+export type ChartPalette = readonly [
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+];
+
 export type Theme = {
   readonly paper: string;
   readonly ink: string;
@@ -24,9 +33,11 @@ export type Theme = {
   readonly glassBorder: string;
   readonly glassPill: string;
   readonly glassShadow: GlassShadow;
+  readonly chart: ChartPalette;
+  readonly chartBar: string;
 };
 
-export type ColorToken = Exclude<keyof Theme, "glassShadow">;
+export type ColorToken = Exclude<keyof Theme, "glassShadow" | "chart">;
 
 export type TypeToken = keyof typeof type;
 
@@ -49,7 +60,7 @@ export type ResolvedTextStyle = Pick<
 >;
 
 export const colorTokens = Object.keys(themes.light).filter(
-  (key): key is ColorToken => key !== "glassShadow",
+  (key): key is ColorToken => key !== "glassShadow" && key !== "chart",
 );
 
 export const typeTokens = Object.keys(type) as readonly TypeToken[];

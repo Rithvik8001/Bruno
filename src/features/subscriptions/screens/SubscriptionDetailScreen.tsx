@@ -188,7 +188,7 @@ function Detail({ subscription }: { subscription: Subscription }) {
   return (
     <>
       <NavRow
-        plain
+        native
         onBack={() => router.back()}
         backAccessibilityLabel={copy.back}
         action={{ title: copy.edit, onPress: openEdit }}
@@ -262,7 +262,7 @@ function NotFound() {
   return (
     <>
       <NavRow
-        plain
+        native
         onBack={() => router.back()}
         backAccessibilityLabel={copy.back}
       />

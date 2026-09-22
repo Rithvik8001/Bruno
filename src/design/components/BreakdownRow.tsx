@@ -9,6 +9,7 @@ export type BreakdownRowProps = {
   share: string;
   amount: string;
   last?: boolean;
+  swatch?: string;
 };
 
 export function BreakdownRow({
@@ -16,6 +17,7 @@ export function BreakdownRow({
   share,
   amount,
   last = false,
+  swatch,
 }: BreakdownRowProps) {
   const theme = useTheme();
 
@@ -29,6 +31,17 @@ export function BreakdownRow({
         borderBottomColor: theme.hair,
       }}
     >
+      {swatch === undefined ? null : (
+        <View
+          style={{
+            width: layout.chart.swatch,
+            height: layout.chart.swatch,
+            borderRadius: layout.chart.swatch / 2,
+            backgroundColor: swatch,
+            marginRight: layout.chart.swatchGap,
+          }}
+        />
+      )}
       <T style="filter" override={{ flex: 1 }} numberOfLines={1}>
         {name}
       </T>

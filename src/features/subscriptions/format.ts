@@ -10,6 +10,7 @@ import { subscriptionsCopy } from "./copy";
 let ledgerDateFormat: Intl.DateTimeFormat | undefined;
 let longDateFormat: Intl.DateTimeFormat | undefined;
 let monthFormat: Intl.DateTimeFormat | undefined;
+let monthShortFormat: Intl.DateTimeFormat | undefined;
 let monthYearFormat: Intl.DateTimeFormat | undefined;
 let weekdayDateFormat: Intl.DateTimeFormat | undefined;
 
@@ -18,6 +19,16 @@ export function formatMonth(date: CalendarDate): string {
   try {
     monthFormat ??= new Intl.DateTimeFormat(undefined, { month: "long" });
     return monthFormat.format(local);
+  } catch {
+    return String(date.month);
+  }
+}
+
+export function formatMonthShort(date: CalendarDate): string {
+  const local = toLocalDate(date);
+  try {
+    monthShortFormat ??= new Intl.DateTimeFormat(undefined, { month: "short" });
+    return monthShortFormat.format(local);
   } catch {
     return String(date.month);
   }

@@ -15,6 +15,8 @@ export const themes = {
     glassBorder: "rgba(26,25,23,0.08)",
     glassPill: "rgba(26,25,23,0.07)",
     glassShadow: { color: "#1A1917", opacity: 0.1, radius: 30, offsetY: 10 },
+    chart: ["#1E9A86", "#E0742A", "#3A6FE0", "#93A81C", "#DA4F84", "#D6A20E"],
+    chartBar: "#A7B2AD",
   },
   dark: {
     paper: "#0F0F0E",
@@ -28,6 +30,8 @@ export const themes = {
     glassBorder: "rgba(237,235,230,0.10)",
     glassPill: "rgba(237,235,230,0.10)",
     glassShadow: { color: "#000000", opacity: 0.45, radius: 30, offsetY: 10 },
+    chart: ["#35A894", "#D97634", "#5486DA", "#88961F", "#D6648C", "#B88A16"],
+    chartBar: "#4E5C58",
   },
 } as const satisfies Record<ThemeName, Theme>;
 
@@ -236,7 +240,21 @@ export const layout = {
   list: { captionGap: 10 },
   breakdown: { height: 44, column: 72 },
   hero: { captionGap: 10, lineGap: 10 },
-  navRow: { height: 44, actionPadding: 16, plainInset: 11 },
+  chart: {
+    donutHeight: 200,
+    donutInner: 0.7,
+    angularInset: 1.5,
+    centerWidth: 150,
+    barHeight: 168,
+    barCorner: 3,
+    barWidth: 14,
+    barLabelGap: 8,
+    swatch: 8,
+    swatchGap: 10,
+    ruleWidth: 1,
+    ruleDash: [3, 4],
+  },
+  navRow: { height: 44, actionPadding: 16 },
   tabBar: { height: 62, bottom: 26 },
 } as const;
 

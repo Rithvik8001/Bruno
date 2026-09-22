@@ -1,5 +1,5 @@
-import { PlaceholderScreen, homeCopy } from "@/features/home";
+import { InsightsScreen } from "@/features/home";
 
 export default function InsightsRoute() {
-  return <PlaceholderScreen title={homeCopy.tabs.insights} />;
+  return <InsightsScreen />;
 }

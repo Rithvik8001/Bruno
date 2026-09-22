@@ -1,4 +1,5 @@
 import {
+  addCycles,
   compareDates,
   daysBetween,
   isInTrial,
@@ -66,6 +67,11 @@ export function sortByNextRenewal(
 }
 
 const monthsPerYear = 12;
+const maxCharges = 400;
+
+function monthIndex(date: CalendarDate): number {
+  return date.year * monthsPerYear + (date.month - 1);
+}
 
 export type OverviewSummary = {
   monthlyMinor: number;
@@ -249,4 +255,118 @@ export function groupLedger(
   }
 
   return [...months.values(), ...statuses.values()];
+}
+
+export function categorySplit(
+  billing: readonly UpcomingSubscription[],
+  limit: number,
+): CategoryShare[] {
+  const totals = new Map<Category, number>();
+  for (const item of billing) {
+    const category = item.subscription.category ?? "other";
+    const exact = monthlyAmountExact(
+      item.subscription.amountMinor,
+      item.subscription.cycle,
+    );
+    totals.set(category, (totals.get(category) ?? 0) + exact);
+  }
+  const overall = [...totals.values()].reduce((sum, value) => sum + value, 0);
+  if (overall <= 0) {
+    return [];
+  }
+  const sorted = [...totals.entries()].sort((a, b) => b[1] - a[1]);
+  const head = sorted.slice(0, limit);
+  const remainder = sorted
+    .slice(limit)
+    .reduce((sum, [, value]) => sum + value, 0);
+  if (remainder > 0) {
+    const existing = head.findIndex(([category]) => category === "other");
+    if (existing === -1) {
+      head.push(["other", remainder]);
+    } else {
+      const [, value] = head[existing];
+      head.splice(existing, 1);
+      head.push(["other", value + remainder]);
+    }
+  }
+  return head.map(([category, exact]) => ({
+    category,
+    monthlyMinor: Math.round(exact),
+    share: exact / overall,
+  }));
+}
+
+export function mostExpensive(
+  billing: readonly UpcomingSubscription[],
+): UpcomingSubscription | null {
+  let best: UpcomingSubscription | null = null;
+  let bestExact = 0;
+  for (const item of billing) {
+    const exact = monthlyAmountExact(
+      item.subscription.amountMinor,
+      item.subscription.cycle,
+    );
+    if (
+      best === null ||
+      exact > bestExact ||
+      (exact === bestExact &&
+        item.subscription.name.localeCompare(best.subscription.name) < 0)
+    ) {
+      best = item;
+      bestExact = exact;
+    }
+  }
+  return best;
+}
+
+export function yearlyAmountMinor(subscription: Subscription): number {
+  return Math.round(
+    monthlyAmountExact(subscription.amountMinor, subscription.cycle) *
+      monthsPerYear,
+  );
+}
+
+export type MonthTotal = {
+  month: CalendarDate;
+  totalMinor: number;
+};
+
+export type MonthlyProjection = {
+  months: MonthTotal[];
+  averageMinor: number;
+};
+
+export function projectMonthly(
+  billing: readonly UpcomingSubscription[],
+  today: CalendarDate,
+  months: number,
+): MonthlyProjection {
+  const startIndex = monthIndex(today);
+  const endIndex = startIndex + months;
+  const buckets: MonthTotal[] = Array.from({ length: months }, (_, i) => {
+    const index = startIndex + i;
+    return {
+      month: {
+        year: Math.floor(index / monthsPerYear),
+        month: (index % monthsPerYear) + 1,
+        day: 1,
+      },
+      totalMinor: 0,
+    };
+  });
+
+  for (const item of billing) {
+    const first = item.nextRenewal;
+    for (let k = 0; k < maxCharges; k += 1) {
+      const date = addCycles(first, item.subscription.cycle, k);
+      const index = monthIndex(date);
+      if (index >= endIndex) {
+        break;
+      }
+      buckets[index - startIndex].totalMinor += item.subscription.amountMinor;
+    }
+  }
+
+  const total = buckets.reduce((sum, bucket) => sum + bucket.totalMinor, 0);
+  return { months: buckets, averageMinor: Math.round(total / months) };
 }

@@ -1,10 +1,10 @@
 import { View } from "react-native";
 
 import { layout } from "../tokens";
-import { T } from "../primitives/T";
-import { Tappable } from "../primitives/Tappable";
 import { GlassButton } from "./GlassButton";
 import { IconButton } from "./IconButton";
+import { NativeButton } from "./NativeButton";
+import { NativeIconButton } from "./NativeIconButton";
 import type { IconSource } from "../types";
 
 export type NavRowAction = {
@@ -17,7 +17,7 @@ export type NavRowProps = {
   backIcon?: IconSource;
   backAccessibilityLabel?: string;
   action?: NavRowAction;
-  plain?: boolean;
+  native?: boolean;
 };
 
 export function NavRow({
@@ -25,7 +25,7 @@ export function NavRow({
   backIcon = "back",
   backAccessibilityLabel = "Back",
   action,
-  plain = false,
+  native = false,
 }: NavRowProps) {
   return (
     <View
@@ -34,36 +34,27 @@ export function NavRow({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        marginHorizontal: plain ? -layout.navRow.plainInset : 0,
       }}
     >
       {onBack === undefined ? (
         <View />
+      ) : native ? (
+        <NativeIconButton
+          icon={backIcon}
+          onPress={onBack}
+          accessibilityLabel={backAccessibilityLabel}
+        />
       ) : (
         <IconButton
           icon={backIcon}
           onPress={onBack}
           accessibilityLabel={backAccessibilityLabel}
-          plain={plain}
         />
       )}
       {action === undefined ? (
         <View />
-      ) : plain ? (
-        <Tappable
-          onPress={action.onPress}
-          accessibilityRole="button"
-          accessibilityLabel={action.title}
-          style={{
-            height: layout.hit,
-            paddingHorizontal: layout.navRow.plainInset,
-            justifyContent: "center",
-          }}
-        >
-          <T style="filter" color="ink2">
-            {action.title}
-          </T>
-        </Tappable>
+      ) : native ? (
+        <NativeButton title={action.title} onPress={action.onPress} />
       ) : (
         <GlassButton title={action.title} onPress={action.onPress} />
       )}

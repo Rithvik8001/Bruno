@@ -11,7 +11,6 @@ export type IconButtonProps = {
   color?: IconColorToken;
   size?: number;
   disabled?: boolean;
-  plain?: boolean;
 };
 
 export function IconButton({
@@ -21,7 +20,6 @@ export function IconButton({
   color = "ink",
   size = iconSizes.bar,
   disabled = false,
-  plain = false,
 }: IconButtonProps) {
   const button = (
     <Tappable
@@ -35,16 +33,11 @@ export function IconButton({
         height: layout.hit,
         alignItems: "center",
         justifyContent: "center",
-        opacity: plain && disabled ? 0.4 : 1,
       }}
     >
       <Icon name={icon} size={size} color={color} />
     </Tappable>
   );
-
-  if (plain) {
-    return button;
-  }
 
   return (
     <GlassSurface

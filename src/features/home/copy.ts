@@ -5,7 +5,6 @@ export const homeCopy = {
     insights: "Insights",
     settings: "Settings",
   },
-  placeholder: "Nothing here yet.",
   overview: {
     perMonth: "a month",
     nextSevenDays: "Next seven days",
@@ -17,6 +16,18 @@ export const homeCopy = {
     closingPaused: "{count} paused.",
     closingCancelled: "{count} cancelled.",
     emptyBody: "Nothing to track yet.\nAdd the first thing you pay for.",
+    emptyAction: "Add a subscription",
+  },
+  insights: {
+    title: "Insights",
+    byCategory: "Where it goes",
+    byMonth: "Next twelve months",
+    average: "average",
+    perYear: "Per year",
+    active: "Active",
+    shareLine: "{category} is {share}% of it.",
+    saveLine: "Dropping {name} would save {amount} a year.",
+    emptyBody: "Nothing to measure yet.\nAdd the first thing you pay for.",
     emptyAction: "Add a subscription",
   },
   settings: {
