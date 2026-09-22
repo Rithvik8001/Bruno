@@ -31,6 +31,7 @@ export type ScreenProps = {
   fill?: boolean;
   padded?: boolean;
   withTabBar?: boolean;
+  header?: boolean;
   keyboard?: boolean;
   scrollViewProps?: Omit<ScrollViewProps, "children" | "contentContainerStyle">;
 };
@@ -41,6 +42,7 @@ export function Screen({
   fill = false,
   padded = true,
   withTabBar = false,
+  header = false,
   keyboard = false,
   scrollViewProps,
 }: ScreenProps) {
@@ -49,6 +51,7 @@ export function Screen({
   const bottom = useScreenBottom();
   const tabBarSpace = useTabBarSpace();
 
+  const paddingTop = header ? layout.margin : top;
   const paddingHorizontal = padded ? layout.margin : 0;
   const paddingBottom = withTabBar ? tabBarSpace + layout.bottom : bottom;
 
@@ -57,7 +60,7 @@ export function Screen({
       <ScrollView
         style={{ flex: 1, backgroundColor: theme.paper }}
         contentContainerStyle={{
-          paddingTop: top,
+          paddingTop,
           paddingBottom,
           paddingHorizontal,
           flexGrow: fill ? 1 : undefined,
@@ -91,7 +94,7 @@ export function Screen({
       style={{
         flex: 1,
         backgroundColor: theme.paper,
-        paddingTop: top,
+        paddingTop,
         paddingBottom,
         paddingHorizontal,
       }}

@@ -124,6 +124,21 @@ export function formatMoney(
   }
 }
 
+const symbols = new Map<string, string>();
+const numeric = /[0-9\u0660-\u0669\u06F0-\u06F9.,\s\u00A0\u202F]/g;
+
+export function currencySymbol(currency: string, locale?: string): string {
+  const key = `${locale ?? ""}|${currency}`;
+  const cached = symbols.get(key);
+  if (cached !== undefined) {
+    return cached;
+  }
+  const stripped = formatMoney(0, currency, locale).replace(numeric, "");
+  const symbol = stripped.length === 0 ? currency : stripped;
+  symbols.set(key, symbol);
+  return symbol;
+}
+
 export function monthlyAmountMinor(
   amountMinor: number,
   cycle: BillingCycle,

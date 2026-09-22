@@ -1,4 +1,5 @@
 export {
+  currencySymbol,
   fallbackCurrency,
   formatMoney,
   fractionDigits,

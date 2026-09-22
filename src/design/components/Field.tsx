@@ -10,7 +10,7 @@ import { T } from "../primitives/T";
 import { Tappable } from "../primitives/Tappable";
 import { Label } from "./Label";
 
-export type FieldSize = "field" | "input";
+export type FieldSize = "amount" | "field" | "input";
 
 export type FieldTrailing = {
   title: string;
@@ -20,6 +20,7 @@ export type FieldTrailing = {
 export type FieldProps = Omit<TextInputProps, "style" | "allowFontScaling"> & {
   label: string;
   size?: FieldSize;
+  prefix?: string;
   hint?: string;
   error?: string;
   trailing?: FieldTrailing;
@@ -29,6 +30,7 @@ export type FieldProps = Omit<TextInputProps, "style" | "allowFontScaling"> & {
 export function Field({
   label,
   size = "input",
+  prefix,
   hint,
   error,
   trailing,
@@ -41,62 +43,76 @@ export function Field({
   const typeStyle = useTypeStyle(size);
   const [focused, setFocused] = useState(false);
   const note = error ?? hint;
+  const empty = typeof rest.value === "string" && rest.value.length === 0;
 
   return (
     <View>
-      <Label>{label}</Label>
-      <Gap size="s8" />
       <View
         style={{
-          flexDirection: "row",
-          alignItems: "flex-end",
-          gap: layout.field.trailingGap,
+          paddingTop: layout.field.paddingTop,
+          paddingBottom: layout.field.paddingBottom,
           borderBottomWidth: layout.hairline,
           borderBottomColor: focused ? theme.accent : theme.hair,
         }}
       >
-        <TextInput
-          ref={ref}
-          allowFontScaling={false}
-          accessibilityLabel={label}
-          placeholderTextColor={theme.ink3}
-          selectionColor={theme.accent}
-          onFocus={(event) => {
-            setFocused(true);
-            onFocus?.(event);
+        <Label>{label}</Label>
+        <Gap size="s8" />
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "flex-end",
           }}
-          onBlur={(event) => {
-            setFocused(false);
-            onBlur?.(event);
-          }}
-          style={[
-            typeStyle,
-            {
-              flex: 1,
-              minWidth: 0,
-              color: theme.ink,
-              paddingTop: layout.field.paddingTop,
-              paddingBottom: layout.field.paddingBottom,
-            },
-          ]}
-          {...rest}
-        />
-        {trailing === undefined ? null : (
-          <Tappable
-            onPress={trailing.onPress}
-            accessibilityRole="button"
-            accessibilityLabel={trailing.title}
-            style={{
-              minHeight: layout.hit,
-              justifyContent: "flex-end",
-              paddingBottom: layout.field.paddingBottom,
-            }}
-          >
-            <T style="filter" color="ink3">
-              {trailing.title}
+        >
+          {prefix === undefined ? null : (
+            <T
+              style={size}
+              color={empty ? "ink3" : "ink"}
+              override={{ letterSpacing: 0 }}
+            >
+              {prefix}
             </T>
-          </Tappable>
-        )}
+          )}
+          <TextInput
+            ref={ref}
+            allowFontScaling={false}
+            accessibilityLabel={label}
+            placeholderTextColor={theme.ink3}
+            selectionColor={theme.accent}
+            onFocus={(event) => {
+              setFocused(true);
+              onFocus?.(event);
+            }}
+            onBlur={(event) => {
+              setFocused(false);
+              onBlur?.(event);
+            }}
+            style={[
+              typeStyle,
+              {
+                flex: 1,
+                minWidth: 0,
+                padding: 0,
+                color: theme.ink,
+              },
+            ]}
+            {...rest}
+          />
+          {trailing === undefined ? null : (
+            <Tappable
+              onPress={trailing.onPress}
+              accessibilityRole="button"
+              accessibilityLabel={trailing.title}
+              style={{
+                justifyContent: "flex-end",
+                marginLeft: layout.field.trailingGap,
+              }}
+            >
+              <T style="filter" color="ink3">
+                {trailing.title}
+              </T>
+            </Tappable>
+          )}
+        </View>
       </View>
       {note === undefined ? null : (
         <>

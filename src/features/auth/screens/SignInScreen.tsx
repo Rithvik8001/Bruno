@@ -99,7 +99,6 @@ export function SignInScreen() {
         submitBehavior="submit"
         onSubmitEditing={() => passwordInput.current?.focus()}
       />
-      <Spacer height={layout.auth.fieldGap} />
       <Field
         ref={passwordInput}
         label={authCopy.signIn.passwordLabel}

@@ -8,7 +8,6 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import {
   ThemeProvider,
   readStoredPreference,
-  useBrunoFonts,
   useTheme,
   useThemeName,
   writeStoredPreference,
@@ -57,7 +56,13 @@ function RootNavigator() {
           <Stack.Screen name="(tabs)" options={{ animation: "none" }} />
           <Stack.Screen
             name="add-subscription"
-            options={{ presentation: "fullScreenModal" }}
+            options={{
+              presentation: "fullScreenModal",
+              headerShown: true,
+              headerTitle: "",
+              headerShadowVisible: false,
+              headerStyle: { backgroundColor: theme.paper },
+            }}
           />
         </Stack.Protected>
       </Stack>
@@ -66,12 +71,7 @@ function RootNavigator() {
 }
 
 export default function RootLayout() {
-  const [loaded, error] = useBrunoFonts();
   const initialPreference = useMemo(readStoredPreference, []);
-
-  if (!loaded && !error) {
-    return null;
-  }
 
   return (
     <SafeAreaProvider>

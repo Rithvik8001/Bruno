@@ -63,7 +63,6 @@ export function SignUpScreen() {
         submitBehavior="submit"
         onSubmitEditing={() => passwordInput.current?.focus()}
       />
-      <Spacer height={layout.auth.fieldGap} />
       <Field
         ref={passwordInput}
         label={authCopy.signUp.passwordLabel}

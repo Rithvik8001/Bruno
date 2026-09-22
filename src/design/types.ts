@@ -40,7 +40,7 @@ export type IconSource = IconToken | SFSymbol;
 
 export type ResolvedTextStyle = Pick<
   TextStyle,
-  | "fontFamily"
+  | "fontWeight"
   | "fontSize"
   | "lineHeight"
   | "letterSpacing"

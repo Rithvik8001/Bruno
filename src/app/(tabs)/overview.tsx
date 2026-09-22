@@ -3,7 +3,8 @@ import { View } from "react-native";
 
 import {
   CodeSlots,
-  DateRow,
+  DateField,
+  Disclosure,
   Field,
   NativeAlert,
   FilterTabs,
@@ -11,7 +12,7 @@ import {
   LabelRow,
   LedgerRow,
   NavRow,
-  PickerRow,
+  SelectField,
   Pill,
   PlanRow,
   Screen,
@@ -48,6 +49,7 @@ export default function ShowcaseScreen() {
   const { session } = useSession();
   const [alertVisible, setAlertVisible] = useState(false);
   const [renewal, setRenewal] = useState(() => new Date());
+  const [expanded, setExpanded] = useState(false);
 
   return (
     <Screen scroll withTabBar>
@@ -125,15 +127,25 @@ export default function ShowcaseScreen() {
       />
 
       <Gap size="s36" />
-      <LabelRow label="Native rows · picker · date" />
+      <LabelRow label="Select field · date field · disclosure" />
       <Gap size="s12" />
-      <PickerRow
-        label="Billing cycle"
+      <SelectField
+        label="Every"
         options={filters}
         value={filter}
         onChange={setFilter}
       />
-      <DateRow label="Next renewal" value={renewal} onChange={setRenewal} last />
+      <DateField
+        label="First payment"
+        value={renewal}
+        onChange={setRenewal}
+      />
+      <Gap size="s20" />
+      <Disclosure
+        title="Free trial, payment method, notes"
+        expanded={expanded}
+        onToggle={() => setExpanded((current) => !current)}
+      />
 
       <Gap size="s36" />
       <LabelRow label="Filter · text with underline" />
@@ -178,7 +190,7 @@ export default function ShowcaseScreen() {
       />
 
       <Gap size="s36" />
-      <LabelRow label="Code slots · serif digits" />
+      <LabelRow label="Code slots · tabular digits" />
       <Gap size="s12" />
       <CodeSlots value={code} onChangeValue={setCode} />
 

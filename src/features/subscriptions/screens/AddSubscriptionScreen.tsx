@@ -1,24 +1,25 @@
-import { router } from "expo-router";
-import { useRef, useState } from "react";
+import { router, useNavigation } from "expo-router";
+import { useLayoutEffect, useRef, useState } from "react";
 import type { TextInput } from "react-native";
 
 import {
-  DateRow,
+  DateField,
+  Disclosure,
   Field,
   Gap,
-  NavRow,
   Pill,
-  PickerRow,
   Screen,
+  SelectField,
   Spacer,
   T,
+  Tappable,
   ToggleRow,
   layout,
-  type PickerOption,
+  type SelectOption,
 } from "@/design";
 import { useProfile } from "@/features/profile";
 import { fromLocalDate, toLocalDate, today } from "@/lib/calendar";
-import { parseAmount } from "@/lib/money";
+import { currencySymbol, parseAmount } from "@/lib/money";
 
 import { subscriptionsCopy } from "../copy";
 import { useSubscriptions } from "../SubscriptionsProvider";
@@ -47,12 +48,14 @@ const noCategory = "none";
 
 type CategoryChoice = (typeof categories)[number] | typeof noCategory;
 
-const cycleOptions: readonly PickerOption<CyclePreset>[] = cyclePresets.map(
+const copy = subscriptionsCopy.form;
+
+const cycleOptions: readonly SelectOption<CyclePreset>[] = cyclePresets.map(
   (preset) => ({ value: preset, label: subscriptionsCopy.cycles[preset] }),
 );
 
-const categoryOptions: readonly PickerOption<CategoryChoice>[] = [
-  { value: noCategory, label: subscriptionsCopy.form.categoryNone },
+const categoryOptions: readonly SelectOption<CategoryChoice>[] = [
+  { value: noCategory, label: copy.categoryNone },
   ...categories.map((category) => ({
     value: category,
     label: subscriptionsCopy.categories[category],
@@ -60,7 +63,6 @@ const categoryOptions: readonly PickerOption<CategoryChoice>[] = [
 ];
 
 export function AddSubscriptionScreen() {
-  const copy = subscriptionsCopy.form;
   const amountInput = useRef<TextInput>(null);
   const { profile } = useProfile();
   const { add } = useSubscriptions();
@@ -71,9 +73,10 @@ export function AddSubscriptionScreen() {
   const [amount, setAmount] = useState("");
   const [amountError, setAmountError] = useState<string | undefined>();
   const [cycle, setCycle] = useState<CyclePreset>(defaultCyclePreset);
-  const [trial, setTrial] = useState(false);
   const [date, setDate] = useState(() => toLocalDate(start));
   const [category, setCategory] = useState<CategoryChoice>(noCategory);
+  const [expanded, setExpanded] = useState(false);
+  const [trial, setTrial] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -81,9 +84,6 @@ export function AddSubscriptionScreen() {
   const currency = profile?.currency ?? null;
   const amountMinor = currency === null ? null : parseAmount(amount, currency);
   const anchorDate = fromLocalDate(date);
-  const paymentMethodError = looksLikeCardNumber(paymentMethod)
-    ? subscriptionsCopy.errors.paymentMethodDigits
-    : undefined;
 
   const canSubmit =
     !submitting &&
@@ -119,28 +119,52 @@ export function AddSubscriptionScreen() {
     showFailure(result.reason);
   };
 
-  const amountHint =
-    currency === null
-      ? undefined
-      : `${trial ? copy.trialAmountHintLead : copy.amountHintLead}${currency}${copy.amountHintTail}`;
+  const navigation = useNavigation();
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => (
+        <Tappable
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel={copy.cancel}
+          style={{ paddingHorizontal: layout.navRow.actionPadding }}
+        >
+          <T style="row" color="ink2">
+            {copy.cancel}
+          </T>
+        </Tappable>
+      ),
+      headerRight: () => (
+        <Tappable
+          onPress={submit}
+          disabled={!canSubmit}
+          accessibilityRole="button"
+          accessibilityLabel={copy.confirm}
+          style={{ paddingHorizontal: layout.navRow.actionPadding }}
+        >
+          <T style="button" color={canSubmit ? "ink" : "ink3"}>
+            {copy.confirm}
+          </T>
+        </Tappable>
+      ),
+    });
+  }, [navigation, canSubmit, submit]);
 
   return (
     <Screen
       scroll
       fill
       keyboard
+      header
       scrollViewProps={{ alwaysBounceVertical: false }}
     >
-      <NavRow
-        onBack={() => router.back()}
-        backIcon="close"
-        backAccessibilityLabel={copy.close}
-      />
-      <Gap size="s32" />
       <T style="title">{copy.title}</T>
-      <Gap size="s40" />
+      <Gap size="s24" />
+
       <Field
         label={copy.name}
+        size="field"
         value={name}
         onChangeText={setName}
         placeholder={copy.namePlaceholder}
@@ -152,10 +176,11 @@ export function AddSubscriptionScreen() {
         submitBehavior="submit"
         onSubmitEditing={() => amountInput.current?.focus()}
       />
-      <Spacer height={layout.form.fieldGap} />
       <Field
         ref={amountInput}
         label={copy.amount}
+        size="amount"
+        prefix={currency === null ? undefined : currencySymbol(currency)}
         value={amount}
         onChangeText={(value) => {
           setAmount(value);
@@ -168,55 +193,78 @@ export function AddSubscriptionScreen() {
         }}
         placeholder={copy.amountPlaceholder}
         keyboardType="decimal-pad"
-        hint={amountHint}
         error={amountError}
       />
-      <Gap size="s24" />
-      <PickerRow
-        label={copy.cycle}
+      <SelectField
+        label={copy.every}
         options={cycleOptions}
         value={cycle}
         onChange={setCycle}
       />
-      <ToggleRow
-        label={copy.trial}
-        value={trial}
-        onValueChange={setTrial}
-        last={false}
-      />
-      <DateRow
-        label={trial ? copy.trialEnds : copy.nextRenewal}
+      <DateField
+        label={copy.firstPayment}
         value={date}
         minimumDate={toLocalDate(start)}
         maximumDate={toLocalDate(renewalHorizon(start))}
         onChange={setDate}
       />
-      <PickerRow
+      <SelectField
         label={copy.category}
         options={categoryOptions}
         value={category}
         onChange={setCategory}
-        last
+        placeholder={category === noCategory}
       />
-      <Spacer height={layout.form.fieldGap} />
-      <Field
-        label={copy.paymentMethod}
-        value={paymentMethod}
-        onChangeText={setPaymentMethod}
-        placeholder={copy.paymentMethodPlaceholder}
-        maxLength={paymentMethodMaxLength}
-        autoCorrect={false}
-        hint={copy.paymentMethodHint}
-        error={paymentMethodError}
+
+      <Gap size="s20" />
+      <Disclosure
+        title={copy.more}
+        expanded={expanded}
+        onToggle={() => setExpanded((current) => !current)}
       />
-      <Spacer height={layout.form.fieldGap} />
-      <Field
-        label={copy.notes}
-        value={notes}
-        onChangeText={setNotes}
-        maxLength={notesMaxLength}
-        size="field"
-      />
+
+      {expanded ? (
+        <>
+          <ToggleRow
+            label={copy.trial}
+            value={trial}
+            onValueChange={setTrial}
+            last={false}
+          />
+          {trial ? (
+            <>
+              <Spacer height={layout.field.noteGap} />
+              <T style="caption" color="ink3">
+                {copy.trialHint}
+              </T>
+            </>
+          ) : null}
+          <Field
+            label={copy.paymentMethod}
+            size="field"
+            value={paymentMethod}
+            onChangeText={setPaymentMethod}
+            placeholder={copy.paymentMethodPlaceholder}
+            maxLength={paymentMethodMaxLength}
+            autoCorrect={false}
+            hint={copy.paymentMethodHint}
+            error={
+              looksLikeCardNumber(paymentMethod)
+                ? subscriptionsCopy.errors.paymentMethodDigits
+                : undefined
+            }
+          />
+          <Field
+            label={copy.notes}
+            size="field"
+            value={notes}
+            onChangeText={setNotes}
+            placeholder={copy.notesPlaceholder}
+            maxLength={notesMaxLength}
+          />
+        </>
+      ) : null}
+
       <Spacer grow />
       <Gap size="s24" />
       <Pill title={copy.save} onPress={submit} disabled={!canSubmit} />
