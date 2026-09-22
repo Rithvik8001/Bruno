@@ -19,10 +19,9 @@ export function TextLink({ title, onPress, disabled = false }: TextLinkProps) {
         height: layout.link.height,
         alignItems: "center",
         justifyContent: "center",
-        opacity: disabled ? 0.4 : 1,
       }}
     >
-      <T style="filter" color="ink2" numberOfLines={1}>
+      <T style="caption" color={disabled ? "ink4" : "ink3"} numberOfLines={1}>
         {title}
       </T>
     </Tappable>

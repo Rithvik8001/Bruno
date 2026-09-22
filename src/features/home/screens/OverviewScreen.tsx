@@ -3,13 +3,15 @@ import { useState } from "react";
 import { RefreshControl } from "react-native";
 
 import {
-  BreakdownRow,
+  BarList,
+  Container,
   EmptyState,
   Gap,
-  LedgerRow,
-  MoneyHero,
+  ListRow,
+  Loading,
+  Money,
   Screen,
-  SectionHeader,
+  SectionLabel,
   T,
   useTheme,
 } from "@/design";
@@ -27,7 +29,7 @@ import {
   useSubscriptionAlert,
   useSubscriptions,
 } from "@/features/subscriptions";
-import { daysBetween, today } from "@/lib/calendar";
+import { today } from "@/lib/calendar";
 import { fallbackCurrency, formatMoney } from "@/lib/money";
 
 import { homeCopy } from "../copy";
@@ -35,8 +37,8 @@ import { homeCopy } from "../copy";
 const copy = homeCopy.overview;
 const windowDays = 7;
 const breakdownLimit = 3;
-const accentWithinDays = 1;
 const percent = 100;
+const loadingRows = 3;
 
 function closingLine(counts: ReturnType<typeof statusCounts>): string {
   const parts = [
@@ -65,7 +67,7 @@ export function OverviewScreen() {
   const now = today();
   const currency =
     profile?.currency ?? subscriptions[0]?.currency ?? fallbackCurrency;
-  const { monthlyMinor, billing } = summarize(subscriptions, now, currency);
+  const { monthlyMinor, billing, count } = summarize(subscriptions, now, currency);
   const due = dueWithin(billing, now, windowDays);
   const breakdown = categoryBreakdown(billing, breakdownLimit);
   const counts = statusCounts(subscriptions);
@@ -81,6 +83,7 @@ export function OverviewScreen() {
 
   const openAdd = () => router.push("/add-subscription");
   const openInsights = () => router.navigate("/insights");
+  const openList = () => router.navigate("/subscriptions");
   const openDetail = (id: string) =>
     router.push({ pathname: "/subscription", params: { id } });
 
@@ -98,93 +101,88 @@ export function OverviewScreen() {
         ),
       }}
     >
-      <T style="title">{formatMonthYear(now)}</T>
+      <T style="label" color="ink3">
+        {formatMonthYear(now)}
+      </T>
+      <Gap size="s8" />
       {status === "loading" ? (
         <>
           <Gap size="s16" />
-          <EmptyState tone="ink3" body={subscriptionsCopy.list.loading} />
+          <Loading rows={loadingRows} accessibilityLabel={subscriptionsCopy.list.loading} />
         </>
       ) : status === "error" ? (
         <>
           <Gap size="s16" />
           <EmptyState
+            title={copy.errorTitle}
             body={failureMessage(failure ?? "unknown")}
-            link={{
-              title: subscriptionsCopy.list.retry,
-              onPress: pullToRefresh,
-            }}
+            link={{ title: subscriptionsCopy.list.retry, onPress: pullToRefresh }}
           />
         </>
       ) : subscriptions.length === 0 ? (
         <>
           <Gap size="s16" />
           <EmptyState
+            title={copy.emptyTitle}
             body={copy.emptyBody}
             action={{ title: copy.emptyAction, onPress: openAdd }}
           />
         </>
       ) : (
         <>
-          <Gap size="s32" />
-          <MoneyHero
-            size="s"
-            amount={formatMoney(monthlyMinor, currency)}
-            caption={copy.perMonth}
-          />
-          <SectionHeader
-            top="s36"
-            label={copy.nextSevenDays}
-            caption={
-              due.items.length === 0
-                ? undefined
-                : formatMoney(due.totalMinor, currency)
+          <Money amount={formatMoney(monthlyMinor, currency)} caption={copy.perMonth} />
+          <Gap size="s4" />
+          <T style="caption" color="ink3">
+            {count === 1
+              ? copy.activeOne
+              : copy.activeMany.replace("{count}", String(count))}
+          </T>
+          <SectionLabel
+            title={copy.nextSevenDays}
+            value={
+              due.items.length === 0 ? undefined : formatMoney(due.totalMinor, currency)
             }
           />
           {due.items.length === 0 ? (
-            <T style="body" color="ink3">
+            <T style="caption" color="ink3">
               {copy.nothingDue}
             </T>
           ) : (
-            due.items.map((item, index) => (
-              <LedgerRow
-                key={item.subscription.id}
-                date={formatLedgerDate(item.nextRenewal)}
-                name={item.subscription.name}
-                amount={formatMoney(
-                  item.subscription.amountMinor,
-                  item.subscription.currency,
-                )}
-                note={formatRelativeDay(item.nextRenewal, now)}
-                noteTone={
-                  index === 0 &&
-                  daysBetween(now, item.nextRenewal) <= accentWithinDays
-                    ? "accent"
-                    : "ink3"
-                }
-                last={index === due.items.length - 1}
-                onPress={() => openDetail(item.subscription.id)}
-              />
-            ))
+            <Container>
+              {due.items.map((item, index) => (
+                <ListRow
+                  key={item.subscription.id}
+                  title={item.subscription.name}
+                  subtitle={formatLedgerDate(item.nextRenewal)}
+                  value={formatMoney(
+                    item.subscription.amountMinor,
+                    item.subscription.currency,
+                  )}
+                  valueNote={formatRelativeDay(item.nextRenewal, now)}
+                  last={index === due.items.length - 1}
+                  onPress={() => openDetail(item.subscription.id)}
+                />
+              ))}
+            </Container>
           )}
           {breakdown.length === 0 ? null : (
             <>
-              <SectionHeader
-                label={copy.whereItGoes}
-                caption={copy.insights}
-                onPressCaption={openInsights}
+              <SectionLabel
+                title={copy.whereItGoes}
+                action={{ title: copy.insights, onPress: openInsights }}
               />
-              {breakdown.map((entry, index) => (
-                <BreakdownRow
-                  key={entry.category}
-                  name={subscriptionsCopy.categories[entry.category]}
-                  share={`${Math.round(entry.share * percent)}%`}
-                  amount={formatMoney(entry.monthlyMinor, currency)}
-                  last={index === breakdown.length - 1}
-                />
-              ))}
+              <BarList
+                items={breakdown.map((entry) => ({
+                  key: entry.category,
+                  label: subscriptionsCopy.categories[entry.category],
+                  share: entry.share,
+                  percent: `${Math.round(entry.share * percent)}%`,
+                  amount: formatMoney(entry.monthlyMinor, currency),
+                }))}
+              />
             </>
           )}
-          <Gap size="s16" />
+          <Gap size="s24" />
           <T style="caption" color="ink3">
             {closingLine(counts)}
           </T>

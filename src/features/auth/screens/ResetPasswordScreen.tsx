@@ -1,43 +1,35 @@
 import { router } from "expo-router";
-import { useRef, useState } from "react";
-import type { TextInput } from "react-native";
+import { useState } from "react";
 
-import {
-  CodeSlots,
-  Field,
-  Gap,
-  Pill,
-  Spacer,
-  T,
-  Tappable,
-  TextLink,
-  layout,
-} from "@/design";
+import { Input, T } from "@/design";
 
 import { confirmPasswordReset, requestPasswordReset } from "../api";
 import { authCopy } from "../copy";
 import { failureMessage } from "../errors";
 import { useAuthAlert } from "../useAuthAlert";
-import { formatCountdown, useResendCountdown } from "../useResendCountdown";
+import { useResendCountdown } from "../useResendCountdown";
 import {
   isValidCode,
   isValidEmail,
   isValidPassword,
   normalizeEmail,
 } from "../validation";
-import { AuthShell } from "./AuthShell";
+import { AuthStep } from "./AuthStep";
+import { CodeStep } from "./CodeStep";
 
 const copy = authCopy.reset;
+const step = authCopy.step;
 
 export type ResetPasswordScreenProps = {
   initialEmail: string | null;
 };
 
-type Stage = "form" | "code";
+type Stage = "email" | "password" | "code";
 
 export function ResetPasswordScreen({ initialEmail }: ResetPasswordScreenProps) {
-  const passwordInput = useRef<TextInput>(null);
-  const [stage, setStage] = useState<Stage>("form");
+  const [stage, setStage] = useState<Stage>(
+    initialEmail === null ? "email" : "password",
+  );
   const [email, setEmail] = useState(initialEmail ?? "");
   const [password, setPassword] = useState("");
   const [revealed, setRevealed] = useState(false);
@@ -49,8 +41,8 @@ export function ResetPasswordScreen({ initialEmail }: ResetPasswordScreenProps) 
   const { alert, showFailure } = useAuthAlert();
 
   const normalizedEmail = normalizeEmail(email);
-  const canSend =
-    !submitting && isValidEmail(normalizedEmail) && isValidPassword(password);
+  const emailValid = isValidEmail(normalizedEmail);
+  const canSend = !submitting && emailValid && isValidPassword(password);
 
   const sendCode = async () => {
     if (!canSend) {
@@ -69,6 +61,7 @@ export function ResetPasswordScreen({ initialEmail }: ResetPasswordScreenProps) 
     }
     if (result.reason === "invalid") {
       setEmailError(failureMessage(result.reason));
+      setStage("email");
       return;
     }
     showFailure(result.reason);
@@ -116,90 +109,105 @@ export function ResetPasswordScreen({ initialEmail }: ResetPasswordScreenProps) 
 
   if (stage === "code") {
     return (
-      <AuthShell
+      <CodeStep
         title={copy.codeTitle}
-        body={
+        subtitle={
           <>
             {copy.codeBodyLead}
-            <T style="body" color="ink">
+            <T style="caption" color="ink">
               {normalizedEmail}
             </T>
             {copy.codeBodyTail}
           </>
         }
+        code={code}
+        onChangeCode={(next) => {
+          setCode(next);
+          setCodeError(undefined);
+        }}
+        onSubmit={confirm}
+        submitting={submitting}
+        error={codeError}
+        remaining={countdown.remaining}
+        onResend={resend}
+        resending={submitting}
+        primaryTitle={copy.codePrimary}
+        secondaryTitle={copy.codeSecondary}
+        onSecondary={() => {
+          setCode("");
+          setCodeError(undefined);
+          setStage("password");
+        }}
+        onBack={() => {
+          setCode("");
+          setCodeError(undefined);
+          setStage("password");
+        }}
       >
-        <CodeSlots
-          value={code}
-          onChangeValue={(next) => {
-            setCode(next);
-            setCodeError(undefined);
-          }}
-          onComplete={confirm}
+        {alert}
+      </CodeStep>
+    );
+  }
+
+  if (stage === "password") {
+    return (
+      <AuthStep
+        title={copy.passwordTitle}
+        subtitle={copy.passwordHint}
+        onBack={() => setStage("email")}
+        primary={{
+          title: copy.sendCode,
+          onPress: sendCode,
+          disabled: !canSend,
+          loading: submitting,
+        }}
+        secondary={{ title: copy.backToSignIn, onPress: () => router.back() }}
+      >
+        <Input
+          label={copy.passwordLabel}
+          value={password}
+          onChangeText={setPassword}
           autoFocus
-        />
-        <Gap size="s16" />
-        {codeError === undefined ? null : (
-          <>
-            <T style="caption" color="ink2">
-              {codeError}
-            </T>
-            <Gap size="s8" />
-          </>
-        )}
-        {countdown.remaining > 0 ? (
-          <T style="caption" color="ink3">
-            {authCopy.verify.resendIn}
-            {formatCountdown(countdown.remaining)}
-          </T>
-        ) : (
-          <Tappable
-            onPress={resend}
-            disabled={submitting}
-            accessibilityRole="button"
-            accessibilityLabel={authCopy.verify.resend}
-            style={{
-              minHeight: layout.hit,
-              justifyContent: "center",
-              alignSelf: "flex-start",
-            }}
-          >
-            <T style="caption" color="ink2">
-              {authCopy.verify.resend}
-            </T>
-          </Tappable>
-        )}
-        <Spacer grow />
-        <Gap size="s24" />
-        <Pill
-          title={copy.codePrimary}
-          onPress={() => confirm(code)}
-          disabled={submitting || !isValidCode(code)}
-        />
-        <Gap size="s8" />
-        <TextLink
-          title={copy.codeSecondary}
-          onPress={() => {
-            setCode("");
-            setCodeError(undefined);
-            setStage("form");
+          secureTextEntry={!revealed}
+          autoCapitalize="none"
+          autoCorrect={false}
+          autoComplete="new-password"
+          textContentType="newPassword"
+          passwordRules="minlength: 8; required: digit;"
+          returnKeyType="go"
+          onSubmitEditing={sendCode}
+          suffix={{
+            title: revealed ? step.hide : step.show,
+            onPress: () => setRevealed((current) => !current),
           }}
         />
         {alert}
-      </AuthShell>
+      </AuthStep>
     );
   }
 
   return (
-    <AuthShell title={copy.title} body={copy.body}>
-      <Field
-        label={copy.emailLabel}
+    <AuthStep
+      title={copy.emailTitle}
+      subtitle={copy.emailSubtitle}
+      onClose={() => router.back()}
+      primary={{
+        title: step.continue,
+        onPress: () => setStage("password"),
+        disabled: !emailValid,
+      }}
+      secondary={{ title: copy.backToSignIn, onPress: () => router.back() }}
+    >
+      <Input
+        label={step.emailLabel}
         value={email}
         onChangeText={(next) => {
           setEmail(next);
           setEmailError(undefined);
         }}
         error={emailError}
-        autoFocus={initialEmail === null}
+        placeholder={step.emailPlaceholder}
+        autoFocus
         autoCapitalize="none"
         autoCorrect={false}
         autoComplete="email"
@@ -207,34 +215,13 @@ export function ResetPasswordScreen({ initialEmail }: ResetPasswordScreenProps) 
         textContentType="username"
         returnKeyType="next"
         submitBehavior="submit"
-        onSubmitEditing={() => passwordInput.current?.focus()}
-      />
-      <Field
-        ref={passwordInput}
-        label={copy.passwordLabel}
-        value={password}
-        onChangeText={setPassword}
-        hint={copy.passwordHint}
-        autoFocus={initialEmail !== null}
-        secureTextEntry={!revealed}
-        autoCapitalize="none"
-        autoCorrect={false}
-        autoComplete="new-password"
-        textContentType="newPassword"
-        passwordRules="minlength: 8; required: digit;"
-        returnKeyType="go"
-        onSubmitEditing={sendCode}
-        trailing={{
-          title: revealed ? copy.hide : copy.show,
-          onPress: () => setRevealed((current) => !current),
+        onSubmitEditing={() => {
+          if (emailValid) {
+            setStage("password");
+          }
         }}
       />
-      <Spacer grow />
-      <Gap size="s24" />
-      <Pill title={copy.primary} onPress={sendCode} disabled={!canSend} />
-      <Gap size="s8" />
-      <TextLink title={copy.secondary} onPress={() => router.back()} />
       {alert}
-    </AuthShell>
+    </AuthStep>
   );
 }

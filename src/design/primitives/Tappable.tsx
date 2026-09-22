@@ -6,7 +6,7 @@ import {
 } from "react-native";
 import type { ReactNode } from "react";
 
-export const pressedOpacity = 0.55;
+import { motion } from "../tokens";
 
 export type TappableProps = Omit<PressableProps, "style" | "children"> & {
   children: ReactNode;
@@ -24,7 +24,7 @@ export function Tappable({
       disabled={disabled}
       style={({ pressed }) => [
         style,
-        pressed && !disabled ? { opacity: pressedOpacity } : null,
+        pressed && !disabled ? { opacity: motion.pressedOpacity } : null,
       ]}
       {...rest}
     >

@@ -2,14 +2,14 @@ import { router, useNavigation } from "expo-router";
 import { useEffect, useLayoutEffect, useState } from "react";
 
 import {
+  Button,
   EmptyState,
   Gap,
-  Pill,
+  Loading,
   Screen,
   Spacer,
   T,
-  Tappable,
-  layout,
+  TextAction,
 } from "@/design";
 import { today } from "@/lib/calendar";
 
@@ -22,6 +22,7 @@ import { SubscriptionForm, useSubscriptionForm } from "./SubscriptionForm";
 
 const copy = subscriptionsCopy.edit;
 const formCopy = subscriptionsCopy.form;
+const loadingRows = 4;
 
 type HeaderProps = {
   canSave: boolean;
@@ -34,32 +35,13 @@ function useModalHeader({ canSave, onSave }: HeaderProps) {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerLeft: () => (
-        <Tappable
-          onPress={() => router.back()}
-          accessibilityRole="button"
-          accessibilityLabel={formCopy.cancel}
-          style={{ paddingHorizontal: layout.navRow.actionPadding }}
-        >
-          <T style="row" color="ink2">
-            {formCopy.cancel}
-          </T>
-        </Tappable>
+        <TextAction title={formCopy.cancel} onPress={() => router.back()} />
       ),
       headerRight:
         onSave === null
           ? () => null
           : () => (
-              <Tappable
-                onPress={onSave}
-                disabled={!canSave}
-                accessibilityRole="button"
-                accessibilityLabel={copy.confirm}
-                style={{ paddingHorizontal: layout.navRow.actionPadding }}
-              >
-                <T style="button" color={canSave ? "ink" : "ink3"}>
-                  {copy.confirm}
-                </T>
-              </Tappable>
+              <TextAction title={copy.confirm} onPress={onSave} disabled={!canSave} />
             ),
     });
   }, [navigation, canSave, onSave]);
@@ -105,7 +87,9 @@ function EditForm({ subscription }: { subscription: Subscription }) {
 
   return (
     <>
-      <T style="title">{copy.title}</T>
+      <T style="title" accessibilityRole="header">
+        {copy.title}
+      </T>
       <Gap size="s24" />
       <SubscriptionForm
         form={form}
@@ -113,8 +97,13 @@ function EditForm({ subscription }: { subscription: Subscription }) {
         trialHint={copy.trialHint}
       />
       <Spacer grow />
-      <Gap size="s24" />
-      <Pill title={copy.save} onPress={save} disabled={!canSave} />
+      <Gap size="s32" />
+      <Button
+        title={copy.save}
+        onPress={save}
+        disabled={!canSave}
+        loading={submitting}
+      />
       {alert}
     </>
   );
@@ -126,21 +115,22 @@ function Fallback({ loading }: { loading: boolean }) {
   if (loading) {
     return (
       <>
-        <T style="title">{copy.title}</T>
+        <T style="title" accessibilityRole="header">
+          {copy.title}
+        </T>
         <Gap size="s24" />
-        <EmptyState tone="ink3" body={subscriptionsCopy.list.loading} />
+        <Loading rows={loadingRows} accessibilityLabel={subscriptionsCopy.list.loading} />
       </>
     );
   }
 
   return (
     <>
-      <T style="title">{copy.notFoundTitle}</T>
       <Gap size="s24" />
       <EmptyState
+        title={copy.notFoundTitle}
         body={copy.notFoundBody}
-        action={{ title: formCopy.cancel, onPress: () => router.back() }}
-        actionAtBottom
+        action={{ title: copy.notFoundAction, onPress: () => router.back() }}
       />
     </>
   );

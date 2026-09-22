@@ -1,11 +1,12 @@
 import { useRef, useState } from "react";
-import type { TextInput } from "react-native";
+import { View, type TextInput } from "react-native";
 
 import {
+  Container,
   DateField,
   Disclosure,
-  Field,
   Gap,
+  Input,
   SelectField,
   Spacer,
   T,
@@ -137,10 +138,9 @@ export function SubscriptionForm({
   const { draft, set, currency, start } = form;
 
   return (
-    <>
-      <Field
+    <View>
+      <Input
         label={copy.name}
-        size="field"
         value={draft.name}
         onChangeText={(value) => set("name", value)}
         placeholder={copy.namePlaceholder}
@@ -152,10 +152,11 @@ export function SubscriptionForm({
         submitBehavior="submit"
         onSubmitEditing={() => amountInput.current?.focus()}
       />
-      <Field
+      <Gap size="s16" />
+      <Input
         ref={amountInput}
         label={copy.amount}
-        size="amount"
+        mono
         prefix={currency === null ? undefined : currencySymbol(currency)}
         value={draft.amount}
         onChangeText={(value) => set("amount", value)}
@@ -164,53 +165,57 @@ export function SubscriptionForm({
         keyboardType="decimal-pad"
         error={form.amountError}
       />
-      <SelectField
-        label={copy.every}
-        options={form.cycleOptions}
-        value={draft.cycle}
-        onChange={(value) => set("cycle", value)}
-      />
-      <DateField
-        label={dateLabel}
-        value={draft.date}
-        minimumDate={toLocalDate(start)}
-        maximumDate={toLocalDate(renewalHorizon(start))}
-        onChange={(value) => set("date", value)}
-      />
-      <SelectField
-        label={copy.category}
-        options={categoryOptions}
-        value={draft.category}
-        onChange={(value) => set("category", value)}
-        placeholder={draft.category === noCategory}
-      />
-
-      <Gap size="s20" />
+      <Gap size="s16" />
+      <Container>
+        <SelectField
+          label={copy.every}
+          options={form.cycleOptions}
+          value={draft.cycle}
+          onChange={(value) => set("cycle", value)}
+        />
+        <DateField
+          label={dateLabel}
+          value={draft.date}
+          minimumDate={toLocalDate(start)}
+          maximumDate={toLocalDate(renewalHorizon(start))}
+          onChange={(value) => set("date", value)}
+        />
+        <SelectField
+          label={copy.category}
+          options={categoryOptions}
+          value={draft.category}
+          onChange={(value) => set("category", value)}
+          placeholder={draft.category === noCategory}
+          last
+        />
+      </Container>
+      <Gap size="s16" />
       <Disclosure
         title={copy.more}
         expanded={form.expanded}
         onToggle={form.toggleExpanded}
       />
-
       {form.expanded ? (
-        <>
-          <ToggleRow
-            label={copy.trial}
-            value={draft.trial}
-            onValueChange={(value) => set("trial", value)}
-            last={false}
-          />
+        <View>
+          <Gap size="s8" />
+          <Container>
+            <ToggleRow
+              label={copy.trial}
+              value={draft.trial}
+              onValueChange={(value) => set("trial", value)}
+            />
+          </Container>
           {draft.trial ? (
             <>
-              <Spacer height={layout.field.noteGap} />
+              <Spacer height={layout.input.hintGap} />
               <T style="caption" color="ink3">
                 {trialHint}
               </T>
             </>
           ) : null}
-          <Field
+          <Gap size="s16" />
+          <Input
             label={copy.paymentMethod}
-            size="field"
             value={draft.paymentMethod}
             onChangeText={(value) => set("paymentMethod", value)}
             placeholder={copy.paymentMethodPlaceholder}
@@ -223,16 +228,17 @@ export function SubscriptionForm({
                 : undefined
             }
           />
-          <Field
+          <Gap size="s16" />
+          <Input
             label={copy.notes}
-            size="field"
             value={draft.notes}
             onChangeText={(value) => set("notes", value)}
             placeholder={copy.notesPlaceholder}
             maxLength={notesMaxLength}
+            multiline
           />
-        </>
+        </View>
       ) : null}
-    </>
+    </View>
   );
 }

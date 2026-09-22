@@ -1,6 +1,6 @@
 import { View } from "react-native";
 
-import { iconSizes, layout } from "../tokens";
+import { layout } from "../tokens";
 import { Icon } from "../primitives/Icon";
 import { T } from "../primitives/T";
 import { Tappable } from "../primitives/Tappable";
@@ -28,13 +28,13 @@ export function Disclosure({ title, expanded, onToggle }: DisclosureProps) {
           gap: layout.disclosure.gap,
         }}
       >
-        <T style="filter" color="ink3">
+        <T style="caption" color="ink3">
           {title}
         </T>
         <Icon
           name={expanded ? "collapse" : "disclose"}
-          size={iconSizes.tight}
-          color="ink3"
+          size={layout.row.chevron}
+          color="ink4"
         />
       </View>
     </Tappable>

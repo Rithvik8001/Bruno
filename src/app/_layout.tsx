@@ -1,6 +1,5 @@
-import { HankenGrotesk_400Regular } from "@expo-google-fonts/hanken-grotesk/400Regular";
-import { HankenGrotesk_500Medium } from "@expo-google-fonts/hanken-grotesk/500Medium";
-import { HankenGrotesk_600SemiBold } from "@expo-google-fonts/hanken-grotesk/600SemiBold";
+import { Newsreader_400Regular } from "@expo-google-fonts/newsreader/400Regular";
+import { Newsreader_500Medium } from "@expo-google-fonts/newsreader/500Medium";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -28,15 +27,14 @@ function RootNavigator() {
   const themeName = useThemeName();
   const { session, loading: sessionLoading } = useSession();
   const [fontsLoaded] = useFonts({
-    [fonts.sans]: HankenGrotesk_400Regular,
-    [fonts.sansMedium]: HankenGrotesk_500Medium,
-    [fonts.sansSemibold]: HankenGrotesk_600SemiBold,
+    [fonts.serif]: Newsreader_400Regular,
+    [fonts.serifMedium]: Newsreader_500Medium,
   });
   const loading = sessionLoading || !fontsLoaded;
 
   useEffect(() => {
-    SystemUI.setBackgroundColorAsync(theme.paper);
-  }, [theme.paper]);
+    SystemUI.setBackgroundColorAsync(theme.canvas);
+  }, [theme.canvas]);
 
   useEffect(() => {
     if (!loading) {
@@ -53,7 +51,7 @@ function RootNavigator() {
     headerShown: true,
     headerTitle: "",
     headerShadowVisible: false,
-    headerStyle: { backgroundColor: theme.paper },
+    headerStyle: { backgroundColor: theme.canvas },
   } as const;
 
   return (
@@ -62,7 +60,7 @@ function RootNavigator() {
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: theme.paper },
+          contentStyle: { backgroundColor: theme.canvas },
         }}
       >
         <Stack.Screen name="index" options={{ animation: "none" }} />

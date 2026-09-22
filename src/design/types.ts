@@ -1,47 +1,32 @@
 import type { TextStyle } from "react-native";
 import type { SFSymbol } from "sf-symbols-typescript";
 
-import { icons, iconSizes, space, themes, type } from "./tokens";
+import { icons, iconSizes, radius, space, themes, type } from "./tokens";
 
 export type ThemeName = "light" | "dark";
 
-export type GlassShadow = {
-  readonly color: string;
-  readonly opacity: number;
-  readonly radius: number;
-  readonly offsetY: number;
-};
-
-export type ChartPalette = readonly [
-  string,
-  string,
-  string,
-  string,
-  string,
-  string,
-];
-
 export type Theme = {
-  readonly paper: string;
+  readonly canvas: string;
+  readonly surface: string;
+  readonly surface2: string;
+  readonly border: string;
+  readonly border2: string;
   readonly ink: string;
   readonly ink2: string;
   readonly ink3: string;
-  readonly hair: string;
-  readonly accent: string;
+  readonly ink4: string;
   readonly onInk: string;
-  readonly glass: string;
-  readonly glassBorder: string;
-  readonly glassPill: string;
-  readonly glassShadow: GlassShadow;
-  readonly chart: ChartPalette;
-  readonly chartBar: string;
+  readonly bar: string;
+  readonly barMuted: string;
 };
 
-export type ColorToken = Exclude<keyof Theme, "glassShadow" | "chart">;
+export type ColorToken = keyof Theme;
 
 export type TypeToken = keyof typeof type;
 
 export type SpaceToken = keyof typeof space;
+
+export type RadiusToken = keyof typeof radius;
 
 export type IconToken = keyof typeof icons;
 
@@ -52,6 +37,7 @@ export type IconSource = IconToken | SFSymbol;
 export type ResolvedTextStyle = Pick<
   TextStyle,
   | "fontFamily"
+  | "fontWeight"
   | "fontSize"
   | "lineHeight"
   | "letterSpacing"
@@ -59,9 +45,7 @@ export type ResolvedTextStyle = Pick<
   | "fontVariant"
 >;
 
-export const colorTokens = Object.keys(themes.light).filter(
-  (key): key is ColorToken => key !== "glassShadow" && key !== "chart",
-);
+export const colorTokens = Object.keys(themes.light) as readonly ColorToken[];
 
 export const typeTokens = Object.keys(type) as readonly TypeToken[];
 

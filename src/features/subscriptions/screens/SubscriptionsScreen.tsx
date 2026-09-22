@@ -3,18 +3,19 @@ import { useState } from "react";
 import { RefreshControl, View } from "react-native";
 
 import {
+  Container,
   EmptyState,
-  FilterTabs,
   Gap,
-  LedgerRow,
-  NativeIconButton,
+  IconAction,
+  ListRow,
+  Loading,
   Screen,
-  SectionHeader,
-  Spacer,
+  SectionLabel,
   T,
+  Tabs,
   layout,
   useTheme,
-  type FilterOption,
+  type TabOption,
 } from "@/design";
 import { useProfile } from "@/features/profile";
 import { today } from "@/lib/calendar";
@@ -38,8 +39,9 @@ import { useSubscriptions } from "../SubscriptionsProvider";
 import { useSubscriptionAlert } from "../useSubscriptionAlert";
 
 const copy = subscriptionsCopy.list;
+const loadingRows = 6;
 
-const filterOptions: readonly FilterOption<ListFilter>[] = listFilters.map(
+const filterOptions: readonly TabOption<ListFilter>[] = listFilters.map(
   (value) => ({ value, label: copy.filters[value] }),
 );
 
@@ -110,79 +112,90 @@ export function SubscriptionsScreen() {
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "space-between",
+          marginRight: -layout.nav.side,
         }}
       >
-        <T style="title">{copy.title}</T>
-        <NativeIconButton
-          icon="add"
-          onPress={openAdd}
-          accessibilityLabel={copy.add}
-        />
+        <T style="title" accessibilityRole="header">
+          {copy.title}
+        </T>
+        <IconAction icon="add" onPress={openAdd} accessibilityLabel={copy.add} />
       </View>
       {status === "loading" ? (
         <>
-          <Gap size="s16" />
-          <EmptyState tone="ink3" body={copy.loading} />
+          <Gap size="s24" />
+          <Loading rows={loadingRows} accessibilityLabel={copy.loading} />
         </>
       ) : status === "error" ? (
         <>
-          <Gap size="s16" />
+          <Gap size="s24" />
           <EmptyState
+            title={copy.errorTitle}
             body={failureMessage(failure ?? "unknown")}
             link={{ title: copy.retry, onPress: pullToRefresh }}
           />
         </>
       ) : subscriptions.length === 0 ? (
         <>
-          <Gap size="s16" />
+          <Gap size="s24" />
           <EmptyState
+            title={copy.emptyTitle}
             body={copy.emptyBody}
             action={{ title: copy.emptyAction, onPress: openAdd }}
           />
         </>
       ) : (
         <>
-          <Spacer height={layout.list.captionGap} />
+          <Gap size="s4" />
           <T style="caption" color="ink3">
             {copy.activeCaption
               .replace("{count}", String(count))
               .replace("{amount}", formatMoney(monthlyMinor, currency))}
           </T>
-          <Gap size="s32" />
-          <FilterTabs
-            options={filterOptions}
-            value={filter}
-            onChange={setFilter}
-          />
-          {groups.map((group) => (
-            <View key={group.key}>
-              <SectionHeader
-                top="s24"
-                bottom="tight"
-                label={groupLabel(group)}
-                caption={
-                  group.kind === "month"
-                    ? formatMoney(group.totalMinor, currency)
-                    : undefined
-                }
+          <Gap size="s24" />
+          <Tabs options={filterOptions} value={filter} onChange={setFilter} />
+          {groups.length === 0 ? (
+            <>
+              <Gap size="s24" />
+              <EmptyState
+                title={copy.filterEmpty.replace(
+                  "{filter}",
+                  copy.filters[filter].toLocaleLowerCase(),
+                )}
+                link={{ title: copy.showAll, onPress: () => setFilter("all") }}
               />
-              {group.items.map((item, index) => (
-                <LedgerRow
-                  key={item.subscription.id}
-                  dense
-                  date={formatLedgerDate(item.nextRenewal)}
-                  name={item.subscription.name}
-                  amount={formatMoney(
-                    displayAmountMinor(item.subscription),
-                    item.subscription.currency,
-                  )}
-                  note={rowNote(item)}
-                  last={index === group.items.length - 1}
-                  onPress={() => openDetail(item.subscription.id)}
+            </>
+          ) : (
+            groups.map((group) => (
+              <View key={group.key}>
+                <SectionLabel
+                  top="s24"
+                  title={groupLabel(group)}
+                  value={
+                    group.kind === "month"
+                      ? formatMoney(group.totalMinor, currency)
+                      : undefined
+                  }
                 />
-              ))}
-            </View>
-          ))}
+                <Container>
+                  {group.items.map((item, index) => (
+                    <ListRow
+                      key={item.subscription.id}
+                      title={item.subscription.name}
+                      subtitle={formatLedgerDate(item.nextRenewal)}
+                      value={formatMoney(
+                        displayAmountMinor(item.subscription),
+                        item.subscription.currency,
+                      )}
+                      valueNote={rowNote(item)}
+                      tone={group.kind === "status" ? "ink2" : "ink"}
+                      last={index === group.items.length - 1}
+                      onPress={() => openDetail(item.subscription.id)}
+                    />
+                  ))}
+                </Container>
+              </View>
+            ))
+          )}
         </>
       )}
       {alert}

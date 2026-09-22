@@ -17,50 +17,48 @@ export type BarDatum = {
 export type BarChartProps = {
   bars: readonly BarDatum[];
   average?: number;
+  activeKey?: string;
 };
 
 const averageKey = "average";
 
-export function BarChart({ bars, average }: BarChartProps) {
+export function BarChart({ bars, average, activeKey }: BarChartProps) {
   const theme = useTheme();
   const themeName = useThemeName();
   const reduceMotion = useReduceMotion();
 
   return (
     <View>
-      <Host colorScheme={themeName} style={{ height: layout.chart.barHeight }}>
+      <Host colorScheme={themeName} style={{ height: layout.bar.chartHeight }}>
         <Chart
           type="bar"
           data={bars.map((bar) => ({
             x: bar.key,
             y: bar.value,
-            color: theme.chartBar,
+            color: bar.key === activeKey ? theme.bar : theme.barMuted,
           }))}
           showGrid={false}
           showLegend={false}
           animate={!reduceMotion}
-          barStyle={{
-            cornerRadius: layout.chart.barCorner,
-            width: layout.chart.barWidth,
-          }}
+          barStyle={{ cornerRadius: layout.bar.corner, width: layout.bar.width }}
           referenceLines={
             average === undefined ? [] : [{ x: averageKey, y: average }]
           }
           ruleStyle={{
             color: theme.ink3,
-            lineWidth: layout.chart.ruleWidth,
-            dashArray: [...layout.chart.ruleDash],
+            lineWidth: layout.bar.ruleWidth,
+            dashArray: [...layout.bar.ruleDash],
           }}
-          modifiers={[frame({ height: layout.chart.barHeight })]}
+          modifiers={[frame({ height: layout.bar.chartHeight })]}
         />
       </Host>
-      <Spacer height={layout.chart.barLabelGap} />
+      <Spacer height={layout.bar.labelGap} />
       <View style={{ flexDirection: "row" }}>
         {bars.map((bar) => (
           <T
             key={bar.key}
-            style="sub"
-            color="ink3"
+            style="label"
+            color={bar.key === activeKey ? "ink" : "ink3"}
             align="center"
             override={{ flex: 1 }}
             numberOfLines={1}

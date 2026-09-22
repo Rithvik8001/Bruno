@@ -15,7 +15,7 @@ export function Hairline({ inset = 0 }: HairlineProps) {
       style={{
         height: layout.hairline,
         marginLeft: inset,
-        backgroundColor: theme.hair,
+        backgroundColor: theme.border,
       }}
     />
   );

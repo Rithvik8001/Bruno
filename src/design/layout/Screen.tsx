@@ -12,7 +12,7 @@ import { useTheme } from "../theme/useTheme";
 
 export function useScreenTop(): number {
   const insets = useSafeAreaInsets();
-  return Math.max(layout.top, insets.top + 20);
+  return Math.max(layout.top, insets.top + layout.topInset);
 }
 
 export function useScreenBottom(): number {
@@ -51,49 +51,32 @@ export function Screen({
   const bottom = useScreenBottom();
   const tabBarSpace = useTabBarSpace();
 
-  const paddingTop = header ? layout.margin : top;
+  const paddingTop = header ? layout.topInset : top;
   const paddingHorizontal = padded ? layout.margin : 0;
   const paddingBottom = withTabBar ? tabBarSpace + layout.bottom : bottom;
 
-  if (scroll) {
-    const content = (
-      <ScrollView
-        style={{ flex: 1, backgroundColor: theme.paper }}
-        contentContainerStyle={{
-          paddingTop,
-          paddingBottom,
-          paddingHorizontal,
-          flexGrow: fill ? 1 : undefined,
-        }}
-        showsVerticalScrollIndicator={false}
-        contentInsetAdjustmentBehavior="never"
-        keyboardShouldPersistTaps={keyboard ? "handled" : undefined}
-        keyboardDismissMode={keyboard ? "interactive" : undefined}
-        {...scrollViewProps}
-      >
-        {children}
-      </ScrollView>
-    );
-
-    if (!keyboard) {
-      return content;
-    }
-
-    return (
-      <KeyboardAvoidingView
-        behavior="padding"
-        style={{ flex: 1, backgroundColor: theme.paper }}
-      >
-        {content}
-      </KeyboardAvoidingView>
-    );
-  }
-
-  return (
+  const content = scroll ? (
+    <ScrollView
+      style={{ flex: 1, backgroundColor: theme.canvas }}
+      contentContainerStyle={{
+        paddingTop,
+        paddingBottom,
+        paddingHorizontal,
+        flexGrow: fill ? 1 : undefined,
+      }}
+      showsVerticalScrollIndicator={false}
+      contentInsetAdjustmentBehavior="never"
+      keyboardShouldPersistTaps={keyboard ? "handled" : undefined}
+      keyboardDismissMode={keyboard ? "interactive" : undefined}
+      {...scrollViewProps}
+    >
+      {children}
+    </ScrollView>
+  ) : (
     <View
       style={{
         flex: 1,
-        backgroundColor: theme.paper,
+        backgroundColor: theme.canvas,
         paddingTop,
         paddingBottom,
         paddingHorizontal,
@@ -101,5 +84,18 @@ export function Screen({
     >
       {children}
     </View>
+  );
+
+  if (!keyboard) {
+    return content;
+  }
+
+  return (
+    <KeyboardAvoidingView
+      behavior="padding"
+      style={{ flex: 1, backgroundColor: theme.canvas }}
+    >
+      {content}
+    </KeyboardAvoidingView>
   );
 }

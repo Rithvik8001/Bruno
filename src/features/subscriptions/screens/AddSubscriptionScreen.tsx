@@ -1,7 +1,7 @@
 import { router, useNavigation } from "expo-router";
 import { useLayoutEffect, useState } from "react";
 
-import { Gap, Pill, Screen, Spacer, T, Tappable, layout } from "@/design";
+import { Button, Gap, Screen, Spacer, T, TextAction } from "@/design";
 import { useProfile } from "@/features/profile";
 import { today } from "@/lib/calendar";
 
@@ -49,29 +49,10 @@ export function AddSubscriptionScreen() {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerLeft: () => (
-        <Tappable
-          onPress={() => router.back()}
-          accessibilityRole="button"
-          accessibilityLabel={copy.cancel}
-          style={{ paddingHorizontal: layout.navRow.actionPadding }}
-        >
-          <T style="row" color="ink2">
-            {copy.cancel}
-          </T>
-        </Tappable>
+        <TextAction title={copy.cancel} onPress={() => router.back()} />
       ),
       headerRight: () => (
-        <Tappable
-          onPress={submit}
-          disabled={!canSubmit}
-          accessibilityRole="button"
-          accessibilityLabel={copy.confirm}
-          style={{ paddingHorizontal: layout.navRow.actionPadding }}
-        >
-          <T style="button" color={canSubmit ? "ink" : "ink3"}>
-            {copy.confirm}
-          </T>
-        </Tappable>
+        <TextAction title={copy.confirm} onPress={submit} disabled={!canSubmit} />
       ),
     });
   }, [navigation, canSubmit, submit]);
@@ -84,7 +65,9 @@ export function AddSubscriptionScreen() {
       header
       scrollViewProps={{ alwaysBounceVertical: false }}
     >
-      <T style="title">{copy.title}</T>
+      <T style="title" accessibilityRole="header">
+        {copy.title}
+      </T>
       <Gap size="s24" />
       <SubscriptionForm
         form={form}
@@ -93,8 +76,13 @@ export function AddSubscriptionScreen() {
         autoFocusName
       />
       <Spacer grow />
-      <Gap size="s24" />
-      <Pill title={copy.save} onPress={submit} disabled={!canSubmit} />
+      <Gap size="s32" />
+      <Button
+        title={copy.save}
+        onPress={submit}
+        disabled={!canSubmit}
+        loading={submitting}
+      />
       {alert}
     </Screen>
   );

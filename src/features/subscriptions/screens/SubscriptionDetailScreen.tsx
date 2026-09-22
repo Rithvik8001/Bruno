@@ -1,16 +1,20 @@
 import { router } from "expo-router";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 import {
+  Container,
   EmptyState,
   Gap,
-  MoneyHero,
-  NavRow,
+  IconAction,
+  ListRow,
+  Loading,
+  Money,
+  NavBar,
   Screen,
-  SectionHeader,
-  SettingsRow,
+  SectionLabel,
   Spacer,
   T,
+  TextAction,
 } from "@/design";
 import { fromLocalDate, nextRenewal, today } from "@/lib/calendar";
 import { formatMoney } from "@/lib/money";
@@ -33,6 +37,7 @@ import {
 
 const copy = subscriptionsCopy.detail;
 const separator = " · ";
+const loadingRows = 4;
 
 type StatusAction = {
   title: string;
@@ -93,27 +98,48 @@ function statusActions(status: SubscriptionStatus): readonly StatusAction[] {
   }
 }
 
-function captionLine(subscription: Subscription): string {
+function captionLine(subscription: Subscription, trial: boolean): string {
   const parts: string[] = [];
   if (subscription.status === "paused") {
     parts.push(copy.paused);
   } else if (subscription.status === "cancelled") {
     parts.push(copy.cancelled);
+  } else if (trial) {
+    parts.push(copy.trial);
   }
   if (subscription.category !== null) {
     parts.push(subscriptionsCopy.categories[subscription.category]);
   }
   parts.push(formatCycleAdverb(subscription.cycle));
-  if (subscription.paymentMethod !== null) {
-    parts.push(subscription.paymentMethod);
-  }
-  parts.push(
-    copy.since.replace(
-      "{month}",
-      formatMonthYear(fromLocalDate(new Date(subscription.createdAt))),
-    ),
-  );
   return parts.join(separator);
+}
+
+function Shell({
+  children,
+  action,
+}: {
+  children: ReactNode;
+  action?: { title: string; onPress: () => void };
+}) {
+  return (
+    <Screen scroll fill scrollViewProps={{ alwaysBounceVertical: false }}>
+      <NavBar
+        left={
+          <IconAction
+            icon="back"
+            onPress={() => router.back()}
+            accessibilityLabel={copy.back}
+          />
+        }
+        right={
+          action === undefined ? null : (
+            <TextAction title={action.title} onPress={action.onPress} />
+          )
+        }
+      />
+      {children}
+    </Screen>
+  );
 }
 
 function Detail({ subscription }: { subscription: Subscription }) {
@@ -185,107 +211,118 @@ function Detail({ subscription }: { subscription: Subscription }) {
     });
   };
 
-  return (
-    <>
-      <NavRow
-        native
-        onBack={() => router.back()}
-        backAccessibilityLabel={copy.back}
-        action={{ title: copy.edit, onPress: openEdit }}
-      />
-      <Gap size="s48" />
-      <T style="title">{subscription.name}</T>
-      <Gap size="s12" />
-      <T style="caption" color="ink3">
-        {captionLine(subscription)}
-      </T>
+  const nextLine = !isBilling(status)
+    ? undefined
+    : status === "trial"
+      ? copy.trialUntil.replace("{date}", formatWeekdayDate(renewal))
+      : `${copy.nextPayment.replace("{date}", formatWeekdayDate(renewal))}${separator}${formatRelativeDay(renewal, now)}`;
 
-      <Gap size="s32" />
-      <MoneyHero
-        size="s"
-        inline
+  return (
+    <Shell action={{ title: copy.edit, onPress: openEdit }}>
+      <Gap size="s24" />
+      <T style="title" accessibilityRole="header">
+        {subscription.name}
+      </T>
+      <Gap size="s4" />
+      <T style="caption" color="ink3">
+        {captionLine(subscription, status === "trial")}
+      </T>
+      <Gap size="s24" />
+      <Money
         amount={formatMoney(subscription.amountMinor, subscription.currency)}
         caption={formatPer(subscription.cycle)}
       />
-      {isBilling(status) ? (
+      {nextLine === undefined ? null : (
         <>
-          <Gap size="s16" />
-          <T style="body" color="ink2">
-            {status === "trial"
-              ? copy.trialUntil.replace("{date}", formatWeekdayDate(renewal))
-              : copy.nextPayment.replace(
-                  "{date}",
-                  formatWeekdayDate(renewal),
-                )}
-            {status === "trial" ? null : (
-              <T style="body" color="accent">
-                {formatRelativeDay(renewal, now)}
-              </T>
-            )}
+          <Gap size="s8" />
+          <T style="caption" color="ink2">
+            {nextLine}
           </T>
         </>
-      ) : null}
-
+      )}
+      <SectionLabel title={copy.details} />
+      <Container>
+        {subscription.category === null ? null : (
+          <ListRow
+            title={copy.category}
+            value={subscriptionsCopy.categories[subscription.category]}
+            mono={false}
+          />
+        )}
+        <ListRow title={copy.billing} value={formatCycleAdverb(subscription.cycle)} mono={false} />
+        {subscription.paymentMethod === null ? null : (
+          <ListRow title={copy.paymentMethod} value={subscription.paymentMethod} mono={false} />
+        )}
+        <ListRow
+          title={copy.sinceLabel}
+          value={formatMonthYear(fromLocalDate(new Date(subscription.createdAt)))}
+          mono={false}
+          last
+        />
+      </Container>
       {subscription.notes === null ? null : (
         <>
-          <SectionHeader label={copy.notes} bottom="s8" />
+          <SectionLabel title={copy.notes} />
           <T style="body" color="ink2">
             {subscription.notes}
           </T>
         </>
       )}
-
       <Spacer grow />
-      <Gap size="s24" />
-      {actions.map((action, index) => (
-        <SettingsRow
-          key={action.target}
-          label={action.title}
-          chevron={false}
-          tone={index === 0 ? "ink" : "ink2"}
-          onPress={busy ? undefined : () => askStatus(action)}
+      <Gap size="s32" />
+      <Container>
+        {actions.map((action, index) => (
+          <ListRow
+            key={action.target}
+            title={action.title}
+            tone={index === 0 ? "ink" : "ink2"}
+            onPress={busy ? undefined : () => askStatus(action)}
+          />
+        ))}
+        <ListRow
+          title={copy.delete}
+          tone="ink2"
+          last
+          onPress={busy ? undefined : askDelete}
         />
-      ))}
-      <SettingsRow
-        label={copy.delete}
-        chevron={false}
-        tone="ink2"
-        last
-        onPress={busy ? undefined : askDelete}
-      />
+      </Container>
       {alert}
-    </>
+    </Shell>
+  );
+}
+
+function LoadingDetail() {
+  return (
+    <Shell>
+      <Gap size="s24" />
+      <Loading rows={loadingRows} accessibilityLabel={copy.loading} />
+    </Shell>
   );
 }
 
 function NotFound() {
   return (
-    <>
-      <NavRow
-        native
-        onBack={() => router.back()}
-        backAccessibilityLabel={copy.back}
+    <Shell>
+      <Gap size="s24" />
+      <EmptyState
+        title={copy.notFoundTitle}
+        body={copy.notFoundBody}
+        action={{ title: copy.notFoundAction, onPress: () => router.back() }}
       />
-      <Gap size="s48" />
-      <T style="title">{copy.notFoundTitle}</T>
-      <Gap size="s12" />
-      <EmptyState body={copy.notFoundBody} />
-    </>
+    </Shell>
   );
 }
 
 export function SubscriptionDetailScreen({ id }: { id: string | null }) {
-  const { subscriptions } = useSubscriptions();
+  const { status, subscriptions } = useSubscriptions();
   const subscription =
     id === null ? undefined : subscriptions.find((item) => item.id === id);
 
-  return (
-    <Screen scroll fill scrollViewProps={{ alwaysBounceVertical: false }}>
-      {subscription === undefined ? (
-        <NotFound />
-      ) : (
-        <Detail subscription={subscription} />
-      )}
-    </Screen>
-  );
+  if (subscription !== undefined) {
+    return <Detail subscription={subscription} />;
+  }
+  if (id !== null && status === "loading") {
+    return <LoadingDetail />;
+  }
+  return <NotFound />;
 }

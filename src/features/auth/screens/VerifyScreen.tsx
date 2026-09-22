@@ -1,24 +1,15 @@
 import { router } from "expo-router";
 import { useState } from "react";
 
-import {
-  CodeSlots,
-  Gap,
-  Pill,
-  Spacer,
-  T,
-  Tappable,
-  TextLink,
-  layout,
-} from "@/design";
+import { T } from "@/design";
 
 import { resendCode, verifyCode } from "../api";
 import { authCopy } from "../copy";
 import { failureMessage } from "../errors";
 import { useAuthAlert } from "../useAuthAlert";
-import { formatCountdown, useResendCountdown } from "../useResendCountdown";
+import { useResendCountdown } from "../useResendCountdown";
 import { isValidCode } from "../validation";
-import { AuthShell } from "./AuthShell";
+import { CodeStep } from "./CodeStep";
 
 export type VerifyScreenProps = {
   email: string;
@@ -73,71 +64,34 @@ export function VerifyScreen({ email }: VerifyScreenProps) {
   };
 
   return (
-    <AuthShell
+    <CodeStep
       title={authCopy.verify.title}
-      body={
+      subtitle={
         <>
           {authCopy.verify.bodyLead}
-          <T style="body" color="ink">
+          <T style="caption" color="ink">
             {email}
           </T>
           {authCopy.verify.bodyTail}
         </>
       }
+      code={code}
+      onChangeCode={(next) => {
+        setCode(next);
+        setError(undefined);
+      }}
+      onSubmit={submit}
+      submitting={submitting}
+      error={error}
+      remaining={countdown.remaining}
+      onResend={resend}
+      resending={resending}
+      primaryTitle={authCopy.verify.primary}
+      secondaryTitle={authCopy.verify.secondary}
+      onSecondary={() => router.back()}
+      onBack={() => router.back()}
     >
-      <CodeSlots
-        value={code}
-        onChangeValue={(next) => {
-          setCode(next);
-          setError(undefined);
-        }}
-        onComplete={submit}
-        autoFocus
-      />
-      <Gap size="s16" />
-      {error === undefined ? null : (
-        <>
-          <T style="caption" color="ink2">
-            {error}
-          </T>
-          <Gap size="s8" />
-        </>
-      )}
-      {countdown.remaining > 0 ? (
-        <T style="caption" color="ink3">
-          {authCopy.verify.resendIn}
-          {formatCountdown(countdown.remaining)}
-        </T>
-      ) : (
-        <Tappable
-          onPress={resend}
-          disabled={resending}
-          accessibilityRole="button"
-          accessibilityLabel={authCopy.verify.resend}
-          style={{
-            minHeight: layout.hit,
-            justifyContent: "center",
-            alignSelf: "flex-start",
-          }}
-        >
-          <T style="caption" color="ink2">
-            {authCopy.verify.resend}
-          </T>
-        </Tappable>
-      )}
-      <Spacer grow />
-      <Gap size="s24" />
-      <Pill
-        title={authCopy.verify.primary}
-        onPress={() => submit(code)}
-        disabled={submitting || !isValidCode(code)}
-      />
-      <Gap size="s8" />
-      <TextLink
-        title={authCopy.verify.secondary}
-        onPress={() => router.back()}
-      />
       {alert}
-    </AuthShell>
+    </CodeStep>
   );
 }

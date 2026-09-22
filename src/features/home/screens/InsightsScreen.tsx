@@ -4,12 +4,12 @@ import { RefreshControl } from "react-native";
 
 import {
   BarChart,
-  BreakdownRow,
-  DonutChart,
+  BarList,
   EmptyState,
   Gap,
+  Loading,
   Screen,
-  SectionHeader,
+  SectionLabel,
   StatRow,
   T,
   useTheme,
@@ -42,6 +42,7 @@ const copy = homeCopy.insights;
 const categoryLimit = 5;
 const projectionMonths = 12;
 const percent = 100;
+const loadingRows = 4;
 
 function closingLine(
   count: number,
@@ -88,6 +89,7 @@ export function InsightsScreen() {
   const split = categorySplit(billing, categoryLimit);
   const projection = projectMonthly(billing, now, projectionMonths);
   const priciest = mostExpensive(billing);
+  const currentKey = `${now.year}-${now.month}`;
 
   const pullToRefresh = async () => {
     setRefreshing(true);
@@ -114,55 +116,49 @@ export function InsightsScreen() {
         ),
       }}
     >
-      <T style="title">{copy.title}</T>
+      <T style="title" accessibilityRole="header">
+        {copy.title}
+      </T>
       {status === "loading" ? (
         <>
-          <Gap size="s16" />
-          <EmptyState tone="ink3" body={subscriptionsCopy.list.loading} />
+          <Gap size="s24" />
+          <Loading rows={loadingRows} accessibilityLabel={subscriptionsCopy.list.loading} />
         </>
       ) : status === "error" ? (
         <>
-          <Gap size="s16" />
+          <Gap size="s24" />
           <EmptyState
+            title={copy.errorTitle}
             body={failureMessage(failure ?? "unknown")}
-            link={{
-              title: subscriptionsCopy.list.retry,
-              onPress: pullToRefresh,
-            }}
+            link={{ title: subscriptionsCopy.list.retry, onPress: pullToRefresh }}
           />
         </>
       ) : billing.length === 0 ? (
         <>
-          <Gap size="s16" />
+          <Gap size="s24" />
           <EmptyState
+            title={copy.emptyTitle}
             body={copy.emptyBody}
             action={{ title: copy.emptyAction, onPress: openAdd }}
           />
         </>
       ) : (
         <>
-          <SectionHeader top="s24" label={copy.byCategory} />
-          <DonutChart
-            slices={split.map((entry, index) => ({
-              key: entry.category,
-              value: entry.monthlyMinor,
-              color: theme.chart[index] ?? theme.chart[theme.chart.length - 1],
-            }))}
-            amount={formatMoney(monthlyMinor, currency)}
-            caption={homeCopy.overview.perMonth}
+          <SectionLabel
+            top="s24"
+            title={copy.byCategory}
+            value={formatMoney(monthlyMinor, currency)}
           />
-          <Gap size="s16" />
-          {split.map((entry, index) => (
-            <BreakdownRow
-              key={entry.category}
-              swatch={theme.chart[index] ?? theme.chart[theme.chart.length - 1]}
-              name={subscriptionsCopy.categories[entry.category]}
-              share={`${Math.round(entry.share * percent)}%`}
-              amount={formatMoney(entry.monthlyMinor, currency)}
-              last={index === split.length - 1}
-            />
-          ))}
-          <Gap size="s24" />
+          <BarList
+            items={split.map((entry) => ({
+              key: entry.category,
+              label: subscriptionsCopy.categories[entry.category],
+              share: entry.share,
+              percent: `${Math.round(entry.share * percent)}%`,
+              amount: formatMoney(entry.monthlyMinor, currency),
+            }))}
+          />
+          <SectionLabel title={copy.atAGlance} />
           <StatRow
             cells={[
               { value: formatMoney(yearlyMinor, currency), label: copy.perYear },
@@ -183,9 +179,9 @@ export function InsightsScreen() {
               { value: String(count), label: copy.active },
             ]}
           />
-          <SectionHeader
-            label={copy.byMonth}
-            caption={`${formatMoney(projection.averageMinor, currency)} ${copy.average}`}
+          <SectionLabel
+            title={copy.byMonth}
+            value={`${formatMoney(projection.averageMinor, currency)} ${copy.average}`}
           />
           <BarChart
             bars={projection.months.map((entry) => ({
@@ -193,11 +189,10 @@ export function InsightsScreen() {
               label: formatMonthShort(entry.month),
               value: entry.totalMinor,
             }))}
-            average={
-              projection.averageMinor > 0 ? projection.averageMinor : undefined
-            }
+            average={projection.averageMinor > 0 ? projection.averageMinor : undefined}
+            activeKey={currentKey}
           />
-          <Gap size="s16" />
+          <Gap size="s24" />
           <T style="caption" color="ink3">
             {closingLine(count, split, priciest, currency)}
           </T>

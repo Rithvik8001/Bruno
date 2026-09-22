@@ -1,15 +1,9 @@
-import { useEffect, useRef } from "react";
-import { Animated, Pressable, View } from "react-native";
+import { Pressable, View } from "react-native";
 
 import { layout } from "../tokens";
 import { useTheme } from "../theme/useTheme";
-import { useReduceMotion } from "../theme/useAccessibility";
+import { Hairline } from "../primitives/Hairline";
 import { T } from "../primitives/T";
-
-const toggleDuration = 160;
-
-const travel =
-  layout.toggle.width - layout.toggle.knob - layout.toggle.knobInset * 2;
 
 export type ToggleProps = {
   value: boolean;
@@ -25,21 +19,7 @@ export function Toggle({
   accessibilityLabel,
 }: ToggleProps) {
   const theme = useTheme();
-  const reduceMotion = useReduceMotion();
-  const progress = useRef(new Animated.Value(value ? 1 : 0)).current;
-
-  useEffect(() => {
-    Animated.timing(progress, {
-      toValue: value ? 1 : 0,
-      duration: reduceMotion ? 0 : toggleDuration,
-      useNativeDriver: true,
-    }).start();
-  }, [value, reduceMotion, progress]);
-
-  const translateX = progress.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, travel],
-  });
+  const travel = layout.toggle.width - layout.toggle.knob - layout.toggle.inset * 2;
 
   return (
     <Pressable
@@ -51,26 +31,30 @@ export function Toggle({
       hitSlop={{
         top: (layout.hit - layout.toggle.height) / 2,
         bottom: (layout.hit - layout.toggle.height) / 2,
-        left: (layout.hit - layout.toggle.width) / 2,
-        right: (layout.hit - layout.toggle.width) / 2,
+        left: 0,
+        right: 0,
       }}
       style={{
         width: layout.toggle.width,
         height: layout.toggle.height,
         borderRadius: layout.toggle.radius,
-        padding: layout.toggle.knobInset,
+        padding: layout.toggle.inset,
         justifyContent: "center",
-        backgroundColor: value ? theme.ink : theme.hair,
-        opacity: disabled ? 0.4 : 1,
+        backgroundColor: value ? theme.ink : theme.surface2,
+        borderWidth: value ? 0 : layout.hairline,
+        borderColor: theme.border2,
+        opacity: disabled ? layout.money.minimumScale : 1,
       }}
     >
-      <Animated.View
+      <View
         style={{
-          width: layout.toggle.knob,
-          height: layout.toggle.knob,
+          width: layout.toggle.knob - (value ? 0 : layout.hairline * 2),
+          height: layout.toggle.knob - (value ? 0 : layout.hairline * 2),
           borderRadius: layout.toggle.knob / 2,
-          backgroundColor: theme.paper,
-          transform: [{ translateX }],
+          backgroundColor: value ? theme.onInk : theme.canvas,
+          borderWidth: value ? 0 : layout.hairline,
+          borderColor: theme.border2,
+          transform: [{ translateX: value ? travel : 0 }],
         }}
       />
     </Pressable>
@@ -92,27 +76,28 @@ export function ToggleRow({
   disabled,
   last = true,
 }: ToggleRowProps) {
-  const theme = useTheme();
-
   return (
-    <View
-      style={{
-        height: layout.row,
-        flexDirection: "row",
-        alignItems: "center",
-        borderBottomWidth: last ? 0 : layout.hairline,
-        borderBottomColor: theme.hair,
-      }}
-    >
-      <T style="row" override={{ flex: 1 }} numberOfLines={1}>
-        {label}
-      </T>
-      <Toggle
-        value={value}
-        onValueChange={onValueChange}
-        disabled={disabled}
-        accessibilityLabel={label}
-      />
-    </View>
+    <>
+      <View
+        style={{
+          minHeight: layout.row.minHeight,
+          paddingHorizontal: layout.row.paddingHorizontal,
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <T style="bodyMedium" override={{ flex: 1 }} numberOfLines={1}>
+          {label}
+        </T>
+        <Toggle
+          value={value}
+          onValueChange={onValueChange}
+          disabled={disabled}
+          accessibilityLabel={label}
+        />
+      </View>
+      {last ? null : <Hairline />}
+    </>
   );
 }

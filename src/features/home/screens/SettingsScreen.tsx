@@ -1,13 +1,19 @@
 import { useState } from "react";
 
 import {
+  Container,
+  EmptyState,
   Gap,
+  ListRow,
+  Loading,
   Screen,
-  SectionHeader,
+  SectionLabel,
   SelectField,
-  SettingsRow,
   T,
   ToggleRow,
+  appearancePreferences,
+  useAppearance,
+  type AppearancePreference,
   type SelectOption,
 } from "@/design";
 import {
@@ -26,6 +32,7 @@ import {
 import { homeCopy } from "../copy";
 
 const copy = homeCopy.settings;
+const loadingRows = 5;
 
 type LeadValue = `${(typeof reminderLeadOptions)[number]}`;
 
@@ -33,9 +40,16 @@ const leadOptions: readonly SelectOption<LeadValue>[] = reminderLeadOptions.map(
   (days) => ({ value: `${days}` as LeadValue, label: copy.leadDays[`${days}`] }),
 );
 
+const appearanceOptions: readonly SelectOption<AppearancePreference>[] =
+  appearancePreferences.map((value) => ({
+    value,
+    label: copy.appearanceOptions[value],
+  }));
+
 export function SettingsScreen() {
   const { session } = useSession();
-  const { profile, update } = useProfile();
+  const { profile, status, retry, update } = useProfile();
+  const { preference, setPreference: setAppearance } = useAppearance();
   const { alert, show, showFailure } = useAuthAlert();
   const [busy, setBusy] = useState(false);
   const email = session?.user.email;
@@ -76,10 +90,19 @@ export function SettingsScreen() {
 
   return (
     <Screen scroll withTabBar>
-      <T style="title">{copy.title}</T>
-      {profile === null ? null : (
-        <>
-          <SectionHeader top="s24" label={copy.notifications} />
+      <T style="title" accessibilityRole="header">
+        {copy.title}
+      </T>
+      <SectionLabel top="s24" title={copy.notifications} />
+      {status === "loading" ? (
+        <Loading rows={loadingRows} />
+      ) : profile === null ? (
+        <EmptyState
+          title={copy.loadErrorTitle}
+          link={{ title: copy.retry, onPress: retry }}
+        />
+      ) : (
+        <Container>
           <ToggleRow
             label={copy.renewalReminders}
             value={profile.renewalReminders}
@@ -102,8 +125,8 @@ export function SettingsScreen() {
             label={copy.monthlyDigest}
             value={profile.monthlyDigest}
             onValueChange={(value) => setPreference({ monthlyDigest: value })}
+            last={false}
           />
-          <Gap size="s16" />
           <SelectField
             label={copy.remindMe}
             options={leadOptions}
@@ -116,25 +139,32 @@ export function SettingsScreen() {
             }}
             last
           />
-        </>
+        </Container>
       )}
-      <SectionHeader top="s24" label={copy.account} />
-      {email === undefined ? null : (
-        <SettingsRow label={copy.email} value={email} chevron={false} />
-      )}
-      <SettingsRow
-        label={copy.signOut}
-        chevron={false}
-        onPress={busy ? undefined : signOut}
-      />
-      <SettingsRow
-        label={copy.deleteAccount}
-        chevron={false}
-        tone="ink2"
-        last
-        onPress={busy ? undefined : askDelete}
-      />
-      <Gap size="s36" />
+      <SectionLabel title={copy.appearance} />
+      <Container>
+        <SelectField
+          label={copy.theme}
+          options={appearanceOptions}
+          value={preference}
+          onChange={setAppearance}
+          last
+        />
+      </Container>
+      <SectionLabel title={copy.account} />
+      <Container>
+        {email === undefined ? null : (
+          <ListRow title={copy.email} value={email} mono={false} />
+        )}
+        <ListRow title={copy.signOut} onPress={busy ? undefined : signOut} />
+        <ListRow
+          title={copy.deleteAccount}
+          tone="ink2"
+          last
+          onPress={busy ? undefined : askDelete}
+        />
+      </Container>
+      <Gap size="s32" />
       {alert}
     </Screen>
   );

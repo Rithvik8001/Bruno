@@ -1,12 +1,4 @@
-import {
-  Host,
-  HStack,
-  Image,
-  Menu,
-  Picker,
-  Spacer,
-  Text,
-} from "@expo/ui/swift-ui";
+import { Host, HStack, Image, Menu, Picker, Spacer, Text } from "@expo/ui/swift-ui";
 import {
   contentShape,
   font,
@@ -15,10 +7,12 @@ import {
   shapes,
   tag,
 } from "@expo/ui/swift-ui/modifiers";
+import { View } from "react-native";
 
-import { iconSizes, icons, type } from "../tokens";
+import { icons, layout, type } from "../tokens";
 import { useTheme, useThemeName } from "../theme/useTheme";
-import { FieldShell } from "./FieldShell";
+import { Hairline } from "../primitives/Hairline";
+import { T } from "../primitives/T";
 
 export type SelectOption<TValue extends string> = {
   value: TValue;
@@ -47,49 +41,63 @@ export function SelectField<TValue extends string>({
   const selected = options.find((option) => option.value === value);
 
   return (
-    <FieldShell label={label} last={last}>
-      <Host
-        matchContents={{ vertical: true }}
-        colorScheme={themeName}
-        seedColor={theme.accent}
-        style={{ alignSelf: "stretch" }}
+    <>
+      <View
+        style={{
+          minHeight: layout.row.minHeight,
+          paddingHorizontal: layout.row.paddingHorizontal,
+          flexDirection: "row",
+          alignItems: "center",
+        }}
       >
-        <Menu
-          label={
-            <HStack
-              alignment="center"
-              modifiers={[contentShape(shapes.rectangle())]}
-            >
-              <Text
-                modifiers={[
-                  font({ size: type.field.fontSize, weight: "medium" }),
-                  foregroundStyle(placeholder ? theme.ink3 : theme.ink),
-                ]}
-              >
-                {selected?.label ?? ""}
-              </Text>
-              <Spacer />
-              <Image
-                systemName={icons.disclose}
-                size={iconSizes.inline}
-                color={theme.ink3}
-              />
-            </HStack>
-          }
+        <T style="bodyMedium" numberOfLines={1}>
+          {label}
+        </T>
+        <Host
+          matchContents={{ vertical: true }}
+          colorScheme={themeName}
+          seedColor={theme.ink}
+          style={{ flex: 1, minHeight: layout.row.minHeight, justifyContent: "center" }}
         >
-          <Picker<TValue>
-            selection={value}
-            onSelectionChange={onChange}
-            modifiers={[pickerStyle("inline")]}
+          <Menu
+            label={
+              <HStack
+                alignment="center"
+                spacing={layout.select.gap}
+                modifiers={[contentShape(shapes.rectangle())]}
+              >
+                <Spacer />
+                <Text
+                  modifiers={[
+                    font({ size: type.body.fontSize }),
+                    foregroundStyle(placeholder ? theme.ink4 : theme.ink2),
+                  ]}
+                >
+                  {selected?.label ?? ""}
+                </Text>
+                <Image
+                  systemName={icons.select}
+                  size={layout.select.chevron}
+                  color={theme.ink4}
+                />
+              </HStack>
+            }
           >
-            {options.map((option) => (
-              <Text key={option.value} modifiers={[tag(option.value)]}>
-                {option.label}
-              </Text>
-            ))}
-          </Picker>
-        </Menu>
-      </Host>
-    </FieldShell>
+            <Picker<TValue>
+              selection={value}
+              onSelectionChange={onChange}
+              modifiers={[pickerStyle("inline")]}
+            >
+              {options.map((option) => (
+                <Text key={option.value} modifiers={[tag(option.value)]}>
+                  {option.label}
+                </Text>
+              ))}
+            </Picker>
+          </Menu>
+        </Host>
+      </View>
+      {last ? null : <Hairline />}
+    </>
   );
 }

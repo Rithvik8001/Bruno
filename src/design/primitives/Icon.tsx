@@ -3,14 +3,12 @@ import type { SFSymbol } from "sf-symbols-typescript";
 
 import { icons, iconSizes, symbolWeight } from "../tokens";
 import { useTheme } from "../theme/useTheme";
-import type { IconSizeToken, IconSource, IconToken } from "../types";
-
-export type IconColorToken = "ink" | "ink2" | "ink3" | "onInk" | "paper";
+import type { ColorToken, IconSizeToken, IconSource, IconToken } from "../types";
 
 export type IconProps = {
   name: IconSource;
   size?: number | IconSizeToken;
-  color?: IconColorToken;
+  color?: ColorToken;
 };
 
 function isIconToken(name: IconSource): name is IconToken {

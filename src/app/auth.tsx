@@ -1,10 +1,9 @@
 import { useLocalSearchParams } from "expo-router";
 
-import { SignInScreen, SignUpScreen, parseAuthMode } from "@/features/auth";
+import { AuthScreen, parseAuthMode } from "@/features/auth";
 
-export default function AuthScreen() {
+export default function AuthRoute() {
   const params = useLocalSearchParams<{ mode?: string }>();
-  const mode = parseAuthMode(params.mode);
 
-  return mode === "signUp" ? <SignUpScreen /> : <SignInScreen />;
+  return <AuthScreen mode={parseAuthMode(params.mode)} />;
 }
