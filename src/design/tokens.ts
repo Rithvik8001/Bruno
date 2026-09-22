@@ -163,7 +163,6 @@ export const layout = {
   button: { height: 44, heightSmall: 36, paddingHorizontal: 16, fillWidth: 10000 },
   input: {
     height: 44,
-    paddingHorizontal: 16,
     labelGap: 6,
     hintGap: 6,
     prefixGap: 6,
@@ -173,7 +172,6 @@ export const layout = {
   },
   row: {
     minHeight: 52,
-    paddingHorizontal: 16,
     paddingVertical: 12,
     gap: 12,
     subGap: 2,
@@ -205,6 +203,7 @@ export const layout = {
   disclosure: { height: 32, gap: 6 },
   loading: { bar: 12, long: 0.6, short: 0.35, rows: 4, gap: 8 },
   link: { height: 44 },
+  list: { rowHeight: 60 },
   select: { chevron: 12, gap: 6 },
   nativeAlert: { host: 1 },
 } as const;

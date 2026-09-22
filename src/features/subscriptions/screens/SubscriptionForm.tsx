@@ -2,7 +2,6 @@ import { useRef, useState } from "react";
 import { View } from "react-native";
 
 import {
-  Container,
   DateField,
   Disclosure,
   Gap,
@@ -15,7 +14,11 @@ import {
   type InputRef,
   type SelectOption,
 } from "@/design";
-import { toLocalDate, type BillingCycle, type CalendarDate } from "@/lib/calendar";
+import {
+  toLocalDate,
+  type BillingCycle,
+  type CalendarDate,
+} from "@/lib/calendar";
 import { currencySymbol, parseAmount } from "@/lib/money";
 
 import { subscriptionsCopy } from "../copy";
@@ -28,7 +31,12 @@ import {
   type SubscriptionDraft,
 } from "../form";
 import { formatCycle } from "../format";
-import { categories, cyclePresetFor, cyclePresets, type NewSubscription } from "../types";
+import {
+  categories,
+  cyclePresetFor,
+  cyclePresets,
+  type NewSubscription,
+} from "../types";
 import {
   looksLikeCardNumber,
   nameMaxLength,
@@ -105,7 +113,10 @@ export function useSubscriptionForm({
 
   const cycleOptions: readonly SelectOption<CycleChoice>[] =
     baseCycle !== undefined && cyclePresetFor(baseCycle) === null
-      ? [...presetOptions, { value: customCycle, label: formatCycle(baseCycle) }]
+      ? [
+          ...presetOptions,
+          { value: customCycle, label: formatCycle(baseCycle) },
+        ]
       : presetOptions;
 
   return {
@@ -166,29 +177,26 @@ export function SubscriptionForm({
         error={form.amountError}
       />
       <Gap size="s16" />
-      <Container>
-        <SelectField
-          label={copy.every}
-          options={form.cycleOptions}
-          value={draft.cycle}
-          onChange={(value) => set("cycle", value)}
-        />
-        <DateField
-          label={dateLabel}
-          value={draft.date}
-          minimumDate={toLocalDate(start)}
-          maximumDate={toLocalDate(renewalHorizon(start))}
-          onChange={(value) => set("date", value)}
-        />
-        <SelectField
-          label={copy.category}
-          options={categoryOptions}
-          value={draft.category}
-          onChange={(value) => set("category", value)}
-          placeholder={draft.category === noCategory}
-          last
-        />
-      </Container>
+      <SelectField
+        label={copy.every}
+        options={form.cycleOptions}
+        value={draft.cycle}
+        onChange={(value) => set("cycle", value)}
+      />
+      <DateField
+        label={dateLabel}
+        value={draft.date}
+        minimumDate={toLocalDate(start)}
+        maximumDate={toLocalDate(renewalHorizon(start))}
+        onChange={(value) => set("date", value)}
+      />
+      <SelectField
+        label={copy.category}
+        options={categoryOptions}
+        value={draft.category}
+        onChange={(value) => set("category", value)}
+        placeholder={draft.category === noCategory}
+      />
       <Gap size="s16" />
       <Disclosure
         title={copy.more}
@@ -198,13 +206,11 @@ export function SubscriptionForm({
       {form.expanded ? (
         <View>
           <Gap size="s8" />
-          <Container>
-            <ToggleRow
-              label={copy.trial}
-              value={draft.trial}
-              onValueChange={(value) => set("trial", value)}
-            />
-          </Container>
+          <ToggleRow
+            label={copy.trial}
+            value={draft.trial}
+            onValueChange={(value) => set("trial", value)}
+          />
           {draft.trial ? (
             <>
               <Spacer height={layout.input.hintGap} />

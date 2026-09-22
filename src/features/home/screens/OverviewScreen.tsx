@@ -4,10 +4,9 @@ import { RefreshControl } from "react-native";
 
 import {
   BarList,
-  Container,
   EmptyState,
   Gap,
-  ListRow,
+  NativeList,
   Loading,
   Money,
   Screen,
@@ -148,22 +147,19 @@ export function OverviewScreen() {
               {copy.nothingDue}
             </T>
           ) : (
-            <Container>
-              {due.items.map((item, index) => (
-                <ListRow
-                  key={item.subscription.id}
-                  title={item.subscription.name}
-                  subtitle={formatLedgerDate(item.nextRenewal)}
-                  value={formatMoney(
-                    item.subscription.amountMinor,
-                    item.subscription.currency,
-                  )}
-                  valueNote={formatRelativeDay(item.nextRenewal, now)}
-                  last={index === due.items.length - 1}
-                  onPress={() => openDetail(item.subscription.id)}
-                />
-              ))}
-            </Container>
+            <NativeList
+              items={due.items.map((item) => ({
+                key: item.subscription.id,
+                title: item.subscription.name,
+                subtitle: formatLedgerDate(item.nextRenewal),
+                value: formatMoney(
+                  item.subscription.amountMinor,
+                  item.subscription.currency,
+                ),
+                valueNote: formatRelativeDay(item.nextRenewal, now),
+                onPress: () => openDetail(item.subscription.id),
+              }))}
+            />
           )}
           {breakdown.length === 0 ? null : (
             <>

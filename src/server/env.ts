@@ -22,7 +22,7 @@ export function readServerEnv() {
   };
 }
 
-const defaultFrom = "Bruno <hello@notifications.bruno.vin>";
+const defaultFrom = "Bruno <no-reply@notifications.bruno.vin>";
 
 export function readMailerEnv() {
   const replyTo = process.env.RESEND_REPLY_TO;

@@ -46,7 +46,7 @@ export function SectionLabel({
             onPress={action.onPress}
             accessibilityRole="button"
             accessibilityLabel={action.title}
-            hitSlop={layout.row.paddingHorizontal}
+            hitSlop={layout.row.gap}
             style={{
               flexDirection: "row",
               alignItems: "center",

@@ -1,4 +1,12 @@
-import { Host, HStack, Image, Menu, Picker, Spacer, Text } from "@expo/ui/swift-ui";
+import {
+  Host,
+  HStack,
+  Image,
+  Menu,
+  Picker,
+  Spacer,
+  Text,
+} from "@expo/ui/swift-ui";
 import {
   contentShape,
   font,
@@ -25,7 +33,6 @@ export type SelectFieldProps<TValue extends string> = {
   value: TValue;
   onChange: (value: TValue) => void;
   placeholder?: boolean;
-  last?: boolean;
 };
 
 export function SelectField<TValue extends string>({
@@ -34,7 +41,6 @@ export function SelectField<TValue extends string>({
   value,
   onChange,
   placeholder = false,
-  last = false,
 }: SelectFieldProps<TValue>) {
   const theme = useTheme();
   const themeName = useThemeName();
@@ -45,7 +51,6 @@ export function SelectField<TValue extends string>({
       <View
         style={{
           minHeight: layout.row.minHeight,
-          paddingHorizontal: layout.row.paddingHorizontal,
           flexDirection: "row",
           alignItems: "center",
         }}
@@ -57,7 +62,11 @@ export function SelectField<TValue extends string>({
           matchContents={{ vertical: true }}
           colorScheme={themeName}
           seedColor={theme.ink}
-          style={{ flex: 1, minHeight: layout.row.minHeight, justifyContent: "center" }}
+          style={{
+            flex: 1,
+            minHeight: layout.row.minHeight,
+            justifyContent: "center",
+          }}
         >
           <Menu
             label={
@@ -97,7 +106,7 @@ export function SelectField<TValue extends string>({
           </Menu>
         </Host>
       </View>
-      {last ? null : <Hairline />}
+      <Hairline />
     </>
   );
 }

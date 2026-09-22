@@ -18,7 +18,6 @@ export type ListRowProps = {
   trailing?: ReactNode;
   onPress?: () => void;
   chevron?: boolean;
-  last?: boolean;
   tone?: ListRowTone;
   accessibilityLabel?: string;
 };
@@ -32,7 +31,6 @@ export function ListRow({
   trailing,
   onPress,
   chevron = false,
-  last = false,
   tone = "ink",
   accessibilityLabel,
 }: ListRowProps) {
@@ -53,12 +51,12 @@ export function ListRow({
         }
         style={({ pressed }) => ({
           minHeight: layout.row.minHeight,
-          paddingHorizontal: layout.row.paddingHorizontal,
           paddingVertical: layout.row.paddingVertical,
           flexDirection: "row",
           alignItems: "center",
           gap: layout.row.gap,
-          backgroundColor: pressed && interactive ? theme.surface2 : "transparent",
+          backgroundColor:
+            pressed && interactive ? theme.surface2 : "transparent",
         })}
       >
         <View style={{ flex: 1 }}>
@@ -100,7 +98,7 @@ export function ListRow({
           </View>
         ) : null}
       </Pressable>
-      {last ? null : <Hairline />}
+      <Hairline />
     </>
   );
 }

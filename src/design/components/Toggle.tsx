@@ -19,7 +19,8 @@ export function Toggle({
   accessibilityLabel,
 }: ToggleProps) {
   const theme = useTheme();
-  const travel = layout.toggle.width - layout.toggle.knob - layout.toggle.inset * 2;
+  const travel =
+    layout.toggle.width - layout.toggle.knob - layout.toggle.inset * 2;
 
   return (
     <Pressable
@@ -66,7 +67,6 @@ export type ToggleRowProps = {
   value: boolean;
   onValueChange: (value: boolean) => void;
   disabled?: boolean;
-  last?: boolean;
 };
 
 export function ToggleRow({
@@ -74,14 +74,12 @@ export function ToggleRow({
   value,
   onValueChange,
   disabled,
-  last = true,
 }: ToggleRowProps) {
   return (
     <>
       <View
         style={{
           minHeight: layout.row.minHeight,
-          paddingHorizontal: layout.row.paddingHorizontal,
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "space-between",
@@ -97,7 +95,7 @@ export function ToggleRow({
           accessibilityLabel={label}
         />
       </View>
-      {last ? null : <Hairline />}
+      <Hairline />
     </>
   );
 }

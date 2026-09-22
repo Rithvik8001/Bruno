@@ -13,7 +13,6 @@ export type DateFieldProps = {
   minimumDate?: Date;
   maximumDate?: Date;
   onChange: (value: Date) => void;
-  last?: boolean;
 };
 
 export function DateField({
@@ -22,7 +21,6 @@ export function DateField({
   minimumDate,
   maximumDate,
   onChange,
-  last = false,
 }: DateFieldProps) {
   const theme = useTheme();
   const themeName = useThemeName();
@@ -32,8 +30,6 @@ export function DateField({
       <View
         style={{
           minHeight: layout.row.minHeight,
-          paddingLeft: layout.row.paddingHorizontal,
-          paddingRight: layout.row.paddingHorizontal,
           flexDirection: "row",
           alignItems: "center",
         }}
@@ -45,7 +41,11 @@ export function DateField({
           matchContents={{ vertical: true }}
           colorScheme={themeName}
           seedColor={theme.ink}
-          style={{ flex: 1, minHeight: layout.row.minHeight, justifyContent: "center" }}
+          style={{
+            flex: 1,
+            minHeight: layout.row.minHeight,
+            justifyContent: "center",
+          }}
         >
           <HStack alignment="center">
             <Spacer />
@@ -60,7 +60,7 @@ export function DateField({
           </HStack>
         </Host>
       </View>
-      {last ? null : <Hairline />}
+      <Hairline />
     </>
   );
 }

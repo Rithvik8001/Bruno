@@ -354,6 +354,7 @@ export async function POST(request: Request): Promise<Response> {
     let sent = 0;
     let failed = 0;
     let truncated = false;
+    const releaseErrors: string[] = [];
 
     for (const item of planned) {
       if (Date.now() > deadline) {
@@ -378,7 +379,10 @@ export async function POST(request: Request): Promise<Response> {
         sent += 1;
       } else {
         failed += 1;
-        await admin.rpc("release_notification", args);
+        const released = await admin.rpc("release_notification", args);
+        if (released.error !== null) {
+          releaseErrors.push(released.error.message);
+        }
       }
       await wait(sendSpacingMs);
     }
@@ -390,9 +394,13 @@ export async function POST(request: Request): Promise<Response> {
       sent,
       failed,
       truncated,
+      releaseErrors,
     });
   } catch (error) {
     console.error("[bruno cron] notifications failed", error);
-    return json(500, { error: "server_error" });
+    return json(500, {
+      error: "server_error",
+      detail: error instanceof Error ? error.message : JSON.stringify(error),
+    });
   }
 }

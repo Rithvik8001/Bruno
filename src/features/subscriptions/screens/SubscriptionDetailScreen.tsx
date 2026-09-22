@@ -2,7 +2,6 @@ import { router } from "expo-router";
 import { useState, type ReactNode } from "react";
 
 import {
-  Container,
   EmptyState,
   Gap,
   IconAction,
@@ -241,7 +240,7 @@ function Detail({ subscription }: { subscription: Subscription }) {
         </>
       )}
       <SectionLabel title={copy.details} />
-      <Container>
+      <>
         {subscription.category === null ? null : (
           <ListRow
             title={copy.category}
@@ -249,17 +248,26 @@ function Detail({ subscription }: { subscription: Subscription }) {
             mono={false}
           />
         )}
-        <ListRow title={copy.billing} value={formatCycleAdverb(subscription.cycle)} mono={false} />
+        <ListRow
+          title={copy.billing}
+          value={formatCycleAdverb(subscription.cycle)}
+          mono={false}
+        />
         {subscription.paymentMethod === null ? null : (
-          <ListRow title={copy.paymentMethod} value={subscription.paymentMethod} mono={false} />
+          <ListRow
+            title={copy.paymentMethod}
+            value={subscription.paymentMethod}
+            mono={false}
+          />
         )}
         <ListRow
           title={copy.sinceLabel}
-          value={formatMonthYear(fromLocalDate(new Date(subscription.createdAt)))}
+          value={formatMonthYear(
+            fromLocalDate(new Date(subscription.createdAt)),
+          )}
           mono={false}
-          last
         />
-      </Container>
+      </>
       {subscription.notes === null ? null : (
         <>
           <SectionLabel title={copy.notes} />
@@ -270,7 +278,7 @@ function Detail({ subscription }: { subscription: Subscription }) {
       )}
       <Spacer grow />
       <Gap size="s32" />
-      <Container>
+      <>
         {actions.map((action, index) => (
           <ListRow
             key={action.target}
@@ -282,10 +290,9 @@ function Detail({ subscription }: { subscription: Subscription }) {
         <ListRow
           title={copy.delete}
           tone="ink2"
-          last
           onPress={busy ? undefined : askDelete}
         />
-      </Container>
+      </>
       {alert}
     </Shell>
   );

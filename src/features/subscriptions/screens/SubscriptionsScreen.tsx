@@ -3,12 +3,11 @@ import { useState } from "react";
 import { RefreshControl, View } from "react-native";
 
 import {
-  Container,
   EmptyState,
   Gap,
   IconAction,
-  ListRow,
   Loading,
+  NativeList,
   Screen,
   SectionLabel,
   T,
@@ -176,23 +175,20 @@ export function SubscriptionsScreen() {
                       : undefined
                   }
                 />
-                <Container>
-                  {group.items.map((item, index) => (
-                    <ListRow
-                      key={item.subscription.id}
-                      title={item.subscription.name}
-                      subtitle={formatLedgerDate(item.nextRenewal)}
-                      value={formatMoney(
-                        displayAmountMinor(item.subscription),
-                        item.subscription.currency,
-                      )}
-                      valueNote={rowNote(item)}
-                      tone={group.kind === "status" ? "ink2" : "ink"}
-                      last={index === group.items.length - 1}
-                      onPress={() => openDetail(item.subscription.id)}
-                    />
-                  ))}
-                </Container>
+                <NativeList
+                  items={group.items.map((item) => ({
+                    key: item.subscription.id,
+                    title: item.subscription.name,
+                    subtitle: formatLedgerDate(item.nextRenewal),
+                    value: formatMoney(
+                      displayAmountMinor(item.subscription),
+                      item.subscription.currency,
+                    ),
+                    valueNote: rowNote(item),
+                    tone: group.kind === "status" ? "ink2" : "ink",
+                    onPress: () => openDetail(item.subscription.id),
+                  }))}
+                />
               </View>
             ))
           )}

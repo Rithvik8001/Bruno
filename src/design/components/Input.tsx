@@ -1,7 +1,9 @@
 import {
   Button as SwiftButton,
+  Divider,
   HStack,
   Host,
+  VStack,
   SecureField,
   Text,
   TextField,
@@ -11,7 +13,6 @@ import {
 } from "@expo/ui/swift-ui";
 import {
   autocorrectionDisabled,
-  background,
   buttonStyle,
   font,
   foregroundStyle,
@@ -20,16 +21,21 @@ import {
   lineLimit,
   monospacedDigit,
   onSubmit,
+  overlay,
   padding,
-  shapes,
-  strokeBorder,
   submitLabel,
   textContentType as textContentTypeModifier,
   textInputAutocapitalization,
   tint,
   type ModifierConfig,
 } from "@expo/ui/swift-ui/modifiers";
-import { useEffect, useImperativeHandle, useRef, useState, type Ref } from "react";
+import {
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+  type Ref,
+} from "react";
 import { View } from "react-native";
 
 import { layout, type, weights } from "../tokens";
@@ -50,11 +56,7 @@ export type InputRef = {
 export type InputKeyboard = "default" | "email-address" | "decimal-pad";
 
 export type InputContentType =
-  | "username"
-  | "password"
-  | "newPassword"
-  | "emailAddress"
-  | "name";
+  "username" | "password" | "newPassword" | "emailAddress" | "name";
 
 export type InputProps = {
   value: string;
@@ -156,7 +158,10 @@ export function Input({
   };
 
   const fieldModifiers: ModifierConfig[] = [
-    font({ size: textStyle.fontSize, weight: weightNames[textStyle.fontWeight] }),
+    font({
+      size: textStyle.fontSize,
+      weight: weightNames[textStyle.fontWeight],
+    }),
     foregroundStyle(theme.ink),
     tint(theme.ink),
     keyboardTypeModifier(keyboardType),
@@ -186,10 +191,7 @@ export function Input({
     <Text modifiers={[foregroundStyle(theme.ink4)]}>{placeholder ?? ""}</Text>
   );
 
-  const borderColor = hasError ? theme.ink : focused ? theme.border2 : theme.border;
-  const shape = multiline
-    ? shapes.roundedRectangle({ cornerRadius: layout.input.height / 2 })
-    : shapes.capsule();
+  const borderColor = hasError || focused ? theme.ink : theme.border;
 
   return (
     <View>
@@ -207,85 +209,89 @@ export function Input({
         seedColor={theme.ink}
         style={{ alignSelf: "stretch" }}
       >
-        <HStack
-          alignment={multiline ? "top" : "center"}
-          spacing={layout.input.prefixGap}
-          modifiers={[
-            padding({
-              horizontal: layout.input.paddingHorizontal,
-              vertical: multiline ? layout.input.multilinePaddingVertical : 0,
-            }),
-            frame({ minHeight: layout.input.height }),
-            background(theme.surface, shape),
-            strokeBorder({
-              content: borderColor,
-              style: { lineWidth: layout.hairline },
-              shape: multiline ? "roundedRectangle" : "capsule",
-              cornerRadius: layout.input.height / 2,
-            }),
-          ]}
-        >
-          {prefix === undefined ? null : (
-            <Text
-              modifiers={[
-                font({
-                  size: type.numLarge.fontSize,
-                  weight: weightNames[type.numLarge.fontWeight],
-                }),
-                foregroundStyle(theme.ink3),
-              ]}
-            >
-              {prefix}
-            </Text>
-          )}
-          {secureTextEntry ? (
-            <SecureField
-              ref={secureField}
-              text={text}
-              maxLength={maxLength}
-              autoFocus={autoFocus}
-              onTextChange={change}
-              onFocusChange={focusChange}
-              modifiers={fieldModifiers}
-            >
-              <SecureField.Placeholder>{placeholderText}</SecureField.Placeholder>
-            </SecureField>
-          ) : (
-            <TextField
-              ref={textField}
-              text={text}
-              maxLength={maxLength}
-              autoFocus={autoFocus}
-              axis={multiline ? "vertical" : "horizontal"}
-              onTextChange={change}
-              onFocusChange={focusChange}
-              modifiers={fieldModifiers}
-            >
-              <TextField.Placeholder>{placeholderText}</TextField.Placeholder>
-            </TextField>
-          )}
-          {suffix === undefined ? null : (
-            <SwiftButton
-              onPress={suffix.onPress}
-              modifiers={[
-                buttonStyle("plain"),
-                padding({ leading: layout.input.suffixGap - layout.input.prefixGap }),
-              ]}
-            >
+        <VStack alignment="leading" spacing={0}>
+          <HStack
+            alignment={multiline ? "top" : "center"}
+            spacing={layout.input.prefixGap}
+            modifiers={[
+              padding({
+                vertical: multiline ? layout.input.multilinePaddingVertical : 0,
+              }),
+              frame({ minHeight: layout.input.height }),
+            ]}
+          >
+            {prefix === undefined ? null : (
               <Text
                 modifiers={[
                   font({
-                    size: type.caption.fontSize,
-                    weight: weightNames[type.caption.fontWeight],
+                    size: type.numLarge.fontSize,
+                    weight: weightNames[type.numLarge.fontWeight],
                   }),
                   foregroundStyle(theme.ink3),
                 ]}
               >
-                {suffix.title}
+                {prefix}
               </Text>
-            </SwiftButton>
-          )}
-        </HStack>
+            )}
+            {secureTextEntry ? (
+              <SecureField
+                ref={secureField}
+                text={text}
+                maxLength={maxLength}
+                autoFocus={autoFocus}
+                onTextChange={change}
+                onFocusChange={focusChange}
+                modifiers={fieldModifiers}
+              >
+                <SecureField.Placeholder>
+                  {placeholderText}
+                </SecureField.Placeholder>
+              </SecureField>
+            ) : (
+              <TextField
+                ref={textField}
+                text={text}
+                maxLength={maxLength}
+                autoFocus={autoFocus}
+                axis={multiline ? "vertical" : "horizontal"}
+                onTextChange={change}
+                onFocusChange={focusChange}
+                modifiers={fieldModifiers}
+              >
+                <TextField.Placeholder>{placeholderText}</TextField.Placeholder>
+              </TextField>
+            )}
+            {suffix === undefined ? null : (
+              <SwiftButton
+                onPress={suffix.onPress}
+                modifiers={[
+                  buttonStyle("plain"),
+                  padding({
+                    leading: layout.input.suffixGap - layout.input.prefixGap,
+                  }),
+                ]}
+              >
+                <Text
+                  modifiers={[
+                    font({
+                      size: type.caption.fontSize,
+                      weight: weightNames[type.caption.fontWeight],
+                    }),
+                    foregroundStyle(theme.ink3),
+                  ]}
+                >
+                  {suffix.title}
+                </Text>
+              </SwiftButton>
+            )}
+          </HStack>
+          <Divider
+            modifiers={[
+              frame({ height: layout.hairline }),
+              overlay({ color: borderColor }),
+            ]}
+          />
+        </VStack>
       </Host>
       {note === undefined ? null : (
         <>

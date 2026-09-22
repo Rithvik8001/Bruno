@@ -1,7 +1,6 @@
 import { useState } from "react";
 
 import {
-  Container,
   EmptyState,
   Gap,
   ListRow,
@@ -37,7 +36,10 @@ const loadingRows = 5;
 type LeadValue = `${(typeof reminderLeadOptions)[number]}`;
 
 const leadOptions: readonly SelectOption<LeadValue>[] = reminderLeadOptions.map(
-  (days) => ({ value: `${days}` as LeadValue, label: copy.leadDays[`${days}`] }),
+  (days) => ({
+    value: `${days}` as LeadValue,
+    label: copy.leadDays[`${days}`],
+  }),
 );
 
 const appearanceOptions: readonly SelectOption<AppearancePreference>[] =
@@ -102,30 +104,28 @@ export function SettingsScreen() {
           link={{ title: copy.retry, onPress: retry }}
         />
       ) : (
-        <Container>
+        <>
           <ToggleRow
             label={copy.renewalReminders}
             value={profile.renewalReminders}
-            onValueChange={(value) => setPreference({ renewalReminders: value })}
-            last={false}
+            onValueChange={(value) =>
+              setPreference({ renewalReminders: value })
+            }
           />
           <ToggleRow
             label={copy.trialReminders}
             value={profile.trialReminders}
             onValueChange={(value) => setPreference({ trialReminders: value })}
-            last={false}
           />
           <ToggleRow
             label={copy.renewsToday}
             value={profile.renewsToday}
             onValueChange={(value) => setPreference({ renewsToday: value })}
-            last={false}
           />
           <ToggleRow
             label={copy.monthlyDigest}
             value={profile.monthlyDigest}
             onValueChange={(value) => setPreference({ monthlyDigest: value })}
-            last={false}
           />
           <SelectField
             label={copy.remindMe}
@@ -137,22 +137,20 @@ export function SettingsScreen() {
                 setPreference({ reminderLeadDays: days });
               }
             }}
-            last
           />
-        </Container>
+        </>
       )}
       <SectionLabel title={copy.appearance} />
-      <Container>
+      <>
         <SelectField
           label={copy.theme}
           options={appearanceOptions}
           value={preference}
           onChange={setAppearance}
-          last
         />
-      </Container>
+      </>
       <SectionLabel title={copy.account} />
-      <Container>
+      <>
         {email === undefined ? null : (
           <ListRow title={copy.email} value={email} mono={false} />
         )}
@@ -160,10 +158,9 @@ export function SettingsScreen() {
         <ListRow
           title={copy.deleteAccount}
           tone="ink2"
-          last
           onPress={busy ? undefined : askDelete}
         />
-      </Container>
+      </>
       <Gap size="s32" />
       {alert}
     </Screen>
