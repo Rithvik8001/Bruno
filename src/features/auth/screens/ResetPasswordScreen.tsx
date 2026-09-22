@@ -171,9 +171,7 @@ export function ResetPasswordScreen({ initialEmail }: ResetPasswordScreenProps) 
           secureTextEntry={!revealed}
           autoCapitalize="none"
           autoCorrect={false}
-          autoComplete="new-password"
           textContentType="newPassword"
-          passwordRules="minlength: 8; required: digit;"
           returnKeyType="go"
           onSubmitEditing={sendCode}
           suffix={{
@@ -210,11 +208,9 @@ export function ResetPasswordScreen({ initialEmail }: ResetPasswordScreenProps) 
         autoFocus
         autoCapitalize="none"
         autoCorrect={false}
-        autoComplete="email"
         keyboardType="email-address"
         textContentType="username"
         returnKeyType="next"
-        submitBehavior="submit"
         onSubmitEditing={() => {
           if (emailValid) {
             setStage("password");

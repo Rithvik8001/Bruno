@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { View, type TextInput } from "react-native";
+import { View } from "react-native";
 
 import {
   Container,
@@ -12,6 +12,7 @@ import {
   T,
   ToggleRow,
   layout,
+  type InputRef,
   type SelectOption,
 } from "@/design";
 import { toLocalDate, type BillingCycle, type CalendarDate } from "@/lib/calendar";
@@ -134,7 +135,7 @@ export function SubscriptionForm({
   trialHint,
   autoFocusName = false,
 }: SubscriptionFormProps) {
-  const amountInput = useRef<TextInput>(null);
+  const amountInput = useRef<InputRef>(null);
   const { draft, set, currency, start } = form;
 
   return (
@@ -149,7 +150,6 @@ export function SubscriptionForm({
         autoCapitalize="words"
         autoCorrect={false}
         returnKeyType="next"
-        submitBehavior="submit"
         onSubmitEditing={() => amountInput.current?.focus()}
       />
       <Gap size="s16" />

@@ -157,9 +157,7 @@ export function AuthScreen({ mode }: AuthScreenProps) {
           secureTextEntry={!revealed}
           autoCapitalize="none"
           autoCorrect={false}
-          autoComplete={signingUp ? "new-password" : "current-password"}
           textContentType={signingUp ? "newPassword" : "password"}
-          passwordRules={signingUp ? "minlength: 8; required: digit;" : undefined}
           returnKeyType="go"
           onSubmitEditing={submit}
           suffix={{
@@ -199,11 +197,9 @@ export function AuthScreen({ mode }: AuthScreenProps) {
         autoFocus
         autoCapitalize="none"
         autoCorrect={false}
-        autoComplete="email"
         keyboardType="email-address"
         textContentType="username"
         returnKeyType="next"
-        submitBehavior="submit"
         onSubmitEditing={continueToPassword}
       />
       {alert}

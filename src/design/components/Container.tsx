@@ -17,6 +17,7 @@ export function Container({ children, style }: ContainerProps) {
       style={[
         {
           borderRadius: radius.container,
+          borderCurve: "continuous",
           borderWidth: layout.hairline,
           borderColor: theme.border,
           backgroundColor: theme.surface,

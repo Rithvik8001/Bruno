@@ -147,8 +147,8 @@ export const space = {
 
 export const radius = {
   compact: 4,
-  control: 6,
-  container: 12,
+  control: 22,
+  container: 22,
   full: 999,
 } as const;
 
@@ -160,20 +160,20 @@ export const layout = {
   hairline: 1,
   hit: 44,
   nav: { height: 44, side: 12, symbol: 22 },
-  button: { height: 44, heightSmall: 36, paddingHorizontal: 16 },
+  button: { height: 44, heightSmall: 36, paddingHorizontal: 16, fillWidth: 10000 },
   input: {
     height: 44,
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     labelGap: 6,
     hintGap: 6,
     prefixGap: 6,
     suffixGap: 12,
-    multilineMinHeight: 88,
     multilinePaddingVertical: 11,
+    multilineLines: { min: 3 },
   },
   row: {
     minHeight: 52,
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingVertical: 12,
     gap: 12,
     subGap: 2,
