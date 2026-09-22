@@ -141,7 +141,7 @@ export function InsightsScreen() {
         </>
       ) : (
         <>
-          <SectionHeader top="s40" label={copy.byCategory} />
+          <SectionHeader top="s24" label={copy.byCategory} />
           <DonutChart
             slices={split.map((entry, index) => ({
               key: entry.category,
@@ -197,7 +197,7 @@ export function InsightsScreen() {
               projection.averageMinor > 0 ? projection.averageMinor : undefined
             }
           />
-          <Gap size="s24" />
+          <Gap size="s16" />
           <T style="caption" color="ink3">
             {closingLine(count, split, priciest, currency)}
           </T>

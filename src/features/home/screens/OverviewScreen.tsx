@@ -125,14 +125,14 @@ export function OverviewScreen() {
         </>
       ) : (
         <>
-          <Gap size="s40" />
+          <Gap size="s32" />
           <MoneyHero
             size="s"
             amount={formatMoney(monthlyMinor, currency)}
             caption={copy.perMonth}
           />
           <SectionHeader
-            top="s48"
+            top="s36"
             label={copy.nextSevenDays}
             caption={
               due.items.length === 0
@@ -184,7 +184,7 @@ export function OverviewScreen() {
               ))}
             </>
           )}
-          <Gap size="s24" />
+          <Gap size="s16" />
           <T style="caption" color="ink3">
             {closingLine(counts)}
           </T>

@@ -153,9 +153,9 @@ export const type = {
   },
   label: {
     fontFamily: fonts.sansSemibold,
-    fontSize: 13,
-    lineHeight: 18,
-    letterSpacing: 0.2,
+    fontSize: 15,
+    lineHeight: 20,
+    letterSpacing: -0.3,
   },
   labelValue: {
     fontFamily: fonts.sansMedium,
@@ -239,7 +239,7 @@ export const layout = {
   sectionHeader: { captionHitSlop: 12, gap: 6, tightGap: 4 },
   list: { captionGap: 10 },
   breakdown: { height: 44, column: 72 },
-  hero: { captionGap: 10, lineGap: 10 },
+  hero: { captionGap: 10, lineGap: 6 },
   chart: {
     donutHeight: 200,
     donutInner: 0.7,

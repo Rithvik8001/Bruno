@@ -21,7 +21,7 @@ export function SettingsScreen() {
       <T style="title">{copy.title}</T>
       {email === undefined ? null : (
         <>
-          <SectionHeader label={copy.account} />
+          <SectionHeader top="s24" label={copy.account} />
           <SettingsRow label={copy.email} value={email} chevron={false} last />
         </>
       )}

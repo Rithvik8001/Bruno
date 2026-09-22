@@ -157,7 +157,7 @@ export function SubscriptionsScreen() {
           {groups.map((group) => (
             <View key={group.key}>
               <SectionHeader
-                top="s32"
+                top="s24"
                 bottom="tight"
                 label={groupLabel(group)}
                 caption={

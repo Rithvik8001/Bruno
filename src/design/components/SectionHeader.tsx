@@ -16,7 +16,7 @@ export function SectionHeader({
   label,
   caption,
   onPressCaption,
-  top = "s48",
+  top = "s36",
   bottom,
 }: SectionHeaderProps) {
   return (
