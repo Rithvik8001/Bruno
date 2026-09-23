@@ -221,6 +221,7 @@ export type LedgerGroup =
 
 export function groupLedger(
   items: readonly UpcomingSubscription[],
+  currency: string,
 ): LedgerGroup[] {
   const months = new Map<string, LedgerGroup & { kind: "month" }>();
   const statuses = new Map<
@@ -239,7 +240,9 @@ export function groupLedger(
         totalMinor: 0,
       };
       group.items.push(item);
-      group.totalMinor += displayAmountMinor(item.subscription);
+      if (item.subscription.currency === currency) {
+        group.totalMinor += displayAmountMinor(item.subscription);
+      }
       months.set(key, group);
       continue;
     }

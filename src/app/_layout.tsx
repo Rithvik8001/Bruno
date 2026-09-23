@@ -1,6 +1,3 @@
-import { Newsreader_400Regular } from "@expo-google-fonts/newsreader/400Regular";
-import { Newsreader_500Medium } from "@expo-google-fonts/newsreader/500Medium";
-import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
@@ -10,14 +7,13 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import {
   ThemeProvider,
-  fonts,
   readStoredPreference,
   useTheme,
   useThemeName,
   writeStoredPreference,
 } from "@/design";
 import { SessionProvider, useSession } from "@/features/auth";
-import { ProfileProvider } from "@/features/profile";
+import { ProfileProvider, useProfile } from "@/features/profile";
 import { SubscriptionsProvider } from "@/features/subscriptions";
 
 SplashScreen.preventAutoHideAsync();
@@ -25,12 +21,9 @@ SplashScreen.preventAutoHideAsync();
 function RootNavigator() {
   const theme = useTheme();
   const themeName = useThemeName();
-  const { session, loading: sessionLoading } = useSession();
-  const [fontsLoaded] = useFonts({
-    [fonts.serif]: Newsreader_400Regular,
-    [fonts.serifMedium]: Newsreader_500Medium,
-  });
-  const loading = sessionLoading || !fontsLoaded;
+  const { session, loading } = useSession();
+  const { status: profileStatus } = useProfile();
+  const needsSetup = session !== null && profileStatus === "missing";
 
   useEffect(() => {
     SystemUI.setBackgroundColorAsync(theme.canvas);
@@ -70,11 +63,15 @@ function RootNavigator() {
           <Stack.Screen name="verify" />
           <Stack.Screen name="reset" />
         </Stack.Protected>
-        <Stack.Protected guard={session !== null}>
+        <Stack.Protected guard={needsSetup}>
+          <Stack.Screen name="setup-currency" options={{ animation: "none" }} />
+        </Stack.Protected>
+        <Stack.Protected guard={session !== null && !needsSetup}>
           <Stack.Screen name="(tabs)" options={{ animation: "none" }} />
           <Stack.Screen name="subscription" />
           <Stack.Screen name="add-subscription" options={modalOptions} />
           <Stack.Screen name="edit-subscription" options={modalOptions} />
+          <Stack.Screen name="currency" options={modalOptions} />
         </Stack.Protected>
       </Stack>
     </>

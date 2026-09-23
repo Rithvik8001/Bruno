@@ -7,10 +7,15 @@
     "production": {
       "environment": "production",
       "autoIncrement": true,
-      "bun": "1.4.2"
+      "bun": "1.4.2",
+      "channel": "production"
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "ascAppId": "6815040597"
+      }
+    }
   }
 }

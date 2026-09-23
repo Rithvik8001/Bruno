@@ -1,7 +1,7 @@
 import type { Session } from "@supabase/supabase-js";
 import { createContext, use, useEffect, useState, type ReactNode } from "react";
 
-import { supabase } from "@/lib/supabase";
+import { readStoredSession, supabase } from "@/lib/supabase";
 
 export type SessionState = {
   session: Session | null;
@@ -19,21 +19,34 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let active = true;
 
+    readStoredSession().then((stored) => {
+      if (active) {
+        setState((current) =>
+          current.loading ? { session: stored, loading: false } : current,
+        );
+      }
+    });
+
     supabase.auth
       .getSession()
-      .then(({ data }) => {
+      .then(({ data, error }) => {
         if (active) {
-          setState({ session: data.session, loading: false });
+          setState((current) => ({
+            session: error === null ? data.session : current.session,
+            loading: false,
+          }));
         }
       })
       .catch(() => {
         if (active) {
-          setState({ session: null, loading: false });
+          setState((current) => ({ ...current, loading: false }));
         }
       });
 
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-      setState({ session, loading: false });
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event !== "INITIAL_SESSION") {
+        setState({ session, loading: false });
+      }
     });
 
     return () => {

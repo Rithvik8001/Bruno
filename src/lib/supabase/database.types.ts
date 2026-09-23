@@ -148,6 +148,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      change_currency: {
+        Args: { p_currency: string };
+        Returns: undefined;
+      };
       claim_notification: {
         Args: {
           p_due_on: string;
@@ -156,6 +160,10 @@ export type Database = {
           p_user_id: string;
         };
         Returns: boolean;
+      };
+      currency_digits: {
+        Args: { code: string };
+        Returns: number;
       };
       release_notification: {
         Args: {

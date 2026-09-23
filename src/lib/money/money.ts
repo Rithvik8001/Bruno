@@ -1,5 +1,7 @@
 import type { BillingCycle } from "../calendar/calendarDate";
 
+import { findCurrency, isSupportedCurrency } from "./currencies";
+
 export const fallbackCurrency = "USD";
 export const maxAmountMinor = 99_999_999_999;
 
@@ -9,35 +11,6 @@ const weeksPerMonth = 4.348214;
 const daysPerMonth = 30.4375;
 
 const currencyPattern = /^[A-Z]{3}$/;
-
-const zeroDecimalCurrencies: readonly string[] = [
-  "BIF",
-  "CLP",
-  "DJF",
-  "GNF",
-  "ISK",
-  "JPY",
-  "KMF",
-  "KRW",
-  "PYG",
-  "RWF",
-  "UGX",
-  "VND",
-  "VUV",
-  "XAF",
-  "XOF",
-  "XPF",
-];
-
-const threeDecimalCurrencies: readonly string[] = [
-  "BHD",
-  "IQD",
-  "JOD",
-  "KWD",
-  "LYD",
-  "OMR",
-  "TND",
-];
 
 export type FractionDigits = 0 | 2 | 3;
 
@@ -50,17 +23,13 @@ export function resolveCurrency(deviceCode: string | null | undefined): string {
     return fallbackCurrency;
   }
   const candidate = deviceCode.trim().toUpperCase();
-  return isCurrencyCode(candidate) ? candidate : fallbackCurrency;
+  return isCurrencyCode(candidate) && isSupportedCurrency(candidate)
+    ? candidate
+    : fallbackCurrency;
 }
 
 export function fractionDigits(currency: string): FractionDigits {
-  if (zeroDecimalCurrencies.includes(currency)) {
-    return 0;
-  }
-  if (threeDecimalCurrencies.includes(currency)) {
-    return 3;
-  }
-  return 2;
+  return findCurrency(currency)?.digits ?? 2;
 }
 
 export function parseAmount(text: string, currency: string): number | null {

@@ -61,6 +61,7 @@ export {
   useReduceTransparency,
 } from "./theme/useAccessibility";
 
+export { BrandMark, type BrandMarkProps } from "./primitives/BrandMark";
 export { Gap, type GapProps } from "./primitives/Gap";
 export { Spacer, type SpacerProps } from "./primitives/Spacer";
 export { Hairline, type HairlineProps } from "./primitives/Hairline";

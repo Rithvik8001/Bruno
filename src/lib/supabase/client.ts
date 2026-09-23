@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type Session } from "@supabase/supabase-js";
 import { AppState } from "react-native";
 
 import type { Database } from "./database.types";
@@ -13,14 +13,42 @@ if (url === undefined || publishableKey === undefined) {
   );
 }
 
+const storageKey = `sb-${new URL(url).hostname.split(".")[0]}-auth-token`;
+
 export const supabase = createClient<Database>(url, publishableKey, {
   auth: {
     storage: sessionStorage,
+    storageKey,
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
   },
 });
+
+function isStoredSession(value: unknown): value is Session {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const candidate = value as Partial<Session>;
+  return (
+    typeof candidate.access_token === "string" &&
+    typeof candidate.refresh_token === "string" &&
+    typeof candidate.user?.id === "string"
+  );
+}
+
+export async function readStoredSession(): Promise<Session | null> {
+  try {
+    const stored = await sessionStorage.getItem(storageKey);
+    if (stored === null) {
+      return null;
+    }
+    const parsed: unknown = JSON.parse(stored);
+    return isStoredSession(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
 
 AppState.addEventListener("change", (state) => {
   if (state === "active") {

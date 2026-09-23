@@ -17,5 +17,4 @@ async function render(source, target, width) {
 }
 
 await render("icon.svg", "icon.png", 1024);
-await render("splash-light.svg", "splash-light.png", 600);
-await render("splash-dark.svg", "splash-dark.png", 600);
+await render("mark.svg", "mark.png", 360);

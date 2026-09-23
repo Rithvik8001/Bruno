@@ -78,6 +78,7 @@ export function SubscriptionsScreen() {
   const { monthlyMinor, count } = summarize(subscriptions, now, currency);
   const groups = groupLedger(
     applyListFilter(sortByNextRenewal(subscriptions, now), filter),
+    currency,
   );
 
   const openAdd = () => router.push("/add-subscription");

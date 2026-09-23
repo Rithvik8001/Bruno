@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 
 import type { AuthMode } from "@/features/auth";
-import { Button, Gap, Screen, Spacer, T, TextLink, layout } from "@/design";
+import { BrandMark, Button, Gap, Screen, Spacer, T, TextLink, layout } from "@/design";
 
 import { onboardingCopy } from "../copy";
 
@@ -12,10 +12,9 @@ function openAuth(mode: AuthMode) {
 export function OnboardingScreen() {
   return (
     <Screen scroll fill scrollViewProps={{ alwaysBounceVertical: false }}>
-      <T style="label" color="ink3">
-        {onboardingCopy.wordmark}
-      </T>
-      <Spacer height={layout.onboarding.statementTop} />
+      <Spacer height={layout.onboarding.markTop} />
+      <BrandMark size={layout.onboarding.mark} />
+      <Spacer height={layout.onboarding.markGap} />
       <T style="statement" accessibilityRole="header">
         {onboardingCopy.statement}
       </T>

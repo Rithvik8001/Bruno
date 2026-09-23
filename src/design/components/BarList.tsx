@@ -34,11 +34,18 @@ export function BarList({ items }: BarListProps) {
               style="num"
               color="ink3"
               align="right"
-              override={{ width: layout.bar.column }}
+              override={{ minWidth: layout.bar.column }}
             >
               {item.percent}
             </T>
-            <T style="num" align="right" override={{ minWidth: layout.bar.column }}>
+            <T
+              style="num"
+              align="right"
+              override={{
+                minWidth: layout.bar.column,
+                marginLeft: layout.bar.labelGap,
+              }}
+            >
               {item.amount}
             </T>
           </View>

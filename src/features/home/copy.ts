@@ -52,6 +52,7 @@ export const homeCopy = {
     theme: "Theme",
     appearanceOptions: { system: "System", light: "Light", dark: "Dark" },
     account: "Account",
+    currency: "Currency",
     email: "Email",
     signOut: "Sign out",
     deleteAccount: "Delete account",

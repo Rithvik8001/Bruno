@@ -19,7 +19,7 @@ import {
   type BillingCycle,
   type CalendarDate,
 } from "@/lib/calendar";
-import { currencySymbol, parseAmount } from "@/lib/money";
+import { currencySymbol, parseAmount, toAmountInput } from "@/lib/money";
 
 import { subscriptionsCopy } from "../copy";
 import {
@@ -172,7 +172,9 @@ export function SubscriptionForm({
         value={draft.amount}
         onChangeText={(value) => set("amount", value)}
         onBlur={form.blurAmount}
-        placeholder={copy.amountPlaceholder}
+        placeholder={
+          currency === null ? copy.amountPlaceholder : toAmountInput(0, currency)
+        }
         keyboardType="decimal-pad"
         error={form.amountError}
       />

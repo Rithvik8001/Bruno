@@ -7,10 +7,19 @@ import {
 } from "react";
 
 import { useSession } from "@/features/auth";
-import { dataFailure, type DataFailure, type DataResult } from "@/lib/supabase";
+import {
+  dataFailure,
+  dataSuccess,
+  type DataFailure,
+  type DataResult,
+} from "@/lib/supabase";
 
-import { ensureProfile, updatePreferences } from "./api";
-import { getDeviceCurrency } from "./deviceCurrency";
+import {
+  changeCurrency as changeProfileCurrency,
+  createProfile,
+  loadProfile,
+  updatePreferences,
+} from "./api";
 import { getDeviceTimeZone } from "./deviceTimeZone";
 import type { Profile, ProfilePreferences, ProfileStatus } from "./types";
 
@@ -20,6 +29,8 @@ export type ProfileState = {
   failure: DataFailure | null;
   retry: () => void;
   update: (patch: Partial<ProfilePreferences>) => Promise<DataResult<null>>;
+  create: (currency: string) => Promise<DataResult<null>>;
+  changeCurrency: (currency: string) => Promise<DataResult<null>>;
 };
 
 type Loaded = {
@@ -43,7 +54,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     }
 
     let active = true;
-    ensureProfile(userId, getDeviceCurrency(), getDeviceTimeZone()).then((result) => {
+    loadProfile(userId, getDeviceTimeZone()).then((result) => {
       if (!active) {
         return;
       }
@@ -80,20 +91,53 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     return result;
   };
 
+  const create = async (currency: string): Promise<DataResult<null>> => {
+    if (userId === null) {
+      return dataFailure("session");
+    }
+    const result = await createProfile(userId, currency, getDeviceTimeZone());
+    if (!result.ok) {
+      return dataFailure(result.reason);
+    }
+    setLoaded({ userId, profile: result.data, failure: null });
+    return dataSuccess(null);
+  };
+
+  const changeCurrency = async (
+    currency: string,
+  ): Promise<DataResult<null>> => {
+    if (userId === null || current === null || current.profile === null) {
+      return dataFailure("session");
+    }
+    const result = await changeProfileCurrency(currency);
+    if (result.ok) {
+      setLoaded((latest) =>
+        latest !== null && latest.userId === userId && latest.profile !== null
+          ? { ...latest, profile: { ...latest.profile, currency } }
+          : latest,
+      );
+    }
+    return result;
+  };
+
   const state: ProfileState = {
     profile: current?.profile ?? null,
     status:
       current === null
         ? "loading"
-        : current.profile === null
+        : current.failure !== null
           ? "error"
-          : "ready",
+          : current.profile === null
+            ? "missing"
+            : "ready",
     failure: current?.failure ?? null,
     retry: () => {
       setLoaded(null);
       setAttempt((value) => value + 1);
     },
     update,
+    create,
+    changeCurrency,
   };
 
   return <ProfileContext value={state}>{children}</ProfileContext>;

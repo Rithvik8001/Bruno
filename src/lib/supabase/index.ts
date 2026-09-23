@@ -1,4 +1,4 @@
-export { supabase } from "./client";
+export { readStoredSession, supabase } from "./client";
 export type { Database } from "./database.types";
 export {
   dataFailure,

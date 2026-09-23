@@ -18,7 +18,68 @@ const profileColumns =
 
 const defaultLeadDays = 3;
 
-export async function ensureProfile(
+type ProfileRow = {
+  currency: string;
+  timezone: string | null;
+  renewal_reminders: boolean;
+  trial_reminders: boolean;
+  renews_today: boolean;
+  monthly_digest: boolean;
+  reminder_lead_days: number;
+};
+
+function toProfile(row: ProfileRow, timeZone: string | null): Profile | null {
+  if (!isCurrencyCode(row.currency)) {
+    return null;
+  }
+  return {
+    currency: row.currency,
+    timeZone: row.timezone ?? timeZone,
+    renewalReminders: row.renewal_reminders,
+    trialReminders: row.trial_reminders,
+    renewsToday: row.renews_today,
+    monthlyDigest: row.monthly_digest,
+    reminderLeadDays: isReminderLeadDays(row.reminder_lead_days)
+      ? row.reminder_lead_days
+      : defaultLeadDays,
+  };
+}
+
+export async function loadProfile(
+  userId: string,
+  timeZone: string | null,
+): Promise<DataResult<Profile | null>> {
+  try {
+    const { data, error, status } = await supabase
+      .from("profiles")
+      .select(profileColumns)
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (error !== null) {
+      if (__DEV__) {
+        console.log("[bruno profile] read failed", error.code, error.message);
+      }
+      return dataFailure(mapDataFailure(error, status));
+    }
+    if (data === null) {
+      return dataSuccess(null);
+    }
+
+    const profile = toProfile(data, timeZone);
+    if (profile === null) {
+      return dataFailure("unknown");
+    }
+    if (data.timezone === null && timeZone !== null) {
+      void supabase.from("profiles").update({ timezone: timeZone }).eq("id", userId);
+    }
+    return dataSuccess(profile);
+  } catch {
+    return dataFailure("network");
+  }
+}
+
+export async function createProfile(
   userId: string,
   currency: string,
   timeZone: string | null,
@@ -42,37 +103,35 @@ export async function ensureProfile(
       return dataFailure(mapDataFailure(created.error, created.status));
     }
 
-    const { data, error, status } = await supabase
-      .from("profiles")
-      .select(profileColumns)
-      .eq("id", userId)
-      .single();
+    const loaded = await loadProfile(userId, timeZone);
+    if (!loaded.ok) {
+      return loaded;
+    }
+    return loaded.data === null ? dataFailure("unknown") : dataSuccess(loaded.data);
+  } catch {
+    return dataFailure("network");
+  }
+}
+
+export async function changeCurrency(
+  currency: string,
+): Promise<DataResult<null>> {
+  try {
+    const { error, status } = await supabase.rpc("change_currency", {
+      p_currency: currency,
+    });
 
     if (error !== null) {
       if (__DEV__) {
-        console.log("[bruno profile] read failed", error.code, error.message);
+        console.log(
+          "[bruno profile] currency change failed",
+          error.code,
+          error.message,
+        );
       }
       return dataFailure(mapDataFailure(error, status));
     }
-    if (!isCurrencyCode(data.currency)) {
-      return dataFailure("unknown");
-    }
-
-    if (data.timezone === null && timeZone !== null) {
-      void supabase.from("profiles").update({ timezone: timeZone }).eq("id", userId);
-    }
-
-    return dataSuccess({
-      currency: data.currency,
-      timeZone: data.timezone ?? timeZone,
-      renewalReminders: data.renewal_reminders,
-      trialReminders: data.trial_reminders,
-      renewsToday: data.renews_today,
-      monthlyDigest: data.monthly_digest,
-      reminderLeadDays: isReminderLeadDays(data.reminder_lead_days)
-        ? data.reminder_lead_days
-        : defaultLeadDays,
-    });
+    return dataSuccess(null);
   } catch {
     return dataFailure("network");
   }

@@ -35,8 +35,8 @@ export const themes = {
 
 export const fonts = {
   sans: "System",
-  serif: "Newsreader_400Regular",
-  serifMedium: "Newsreader_500Medium",
+  serif: "Newsreader-Regular",
+  serifMedium: "Newsreader-Medium",
 } as const;
 
 export const weights = {
@@ -49,8 +49,8 @@ export const type = {
   statement: {
     fontFamily: fonts.serif,
     fontWeight: weights.regular,
-    fontSize: 40,
-    lineHeight: 46,
+    fontSize: 42,
+    lineHeight: 48,
     letterSpacing: -0.6,
   },
   display: {
@@ -63,57 +63,57 @@ export const type = {
   title: {
     fontFamily: fonts.serif,
     fontWeight: weights.regular,
-    fontSize: 32,
-    lineHeight: 38,
+    fontSize: 34,
+    lineHeight: 40,
     letterSpacing: -0.4,
   },
   heading: {
     fontFamily: fonts.serif,
     fontWeight: weights.regular,
-    fontSize: 24,
-    lineHeight: 30,
+    fontSize: 26,
+    lineHeight: 32,
     letterSpacing: -0.2,
   },
   body: {
     fontFamily: fonts.sans,
     fontWeight: weights.regular,
-    fontSize: 16,
-    lineHeight: 22,
+    fontSize: 17,
+    lineHeight: 24,
     letterSpacing: 0,
   },
   bodyMedium: {
     fontFamily: fonts.sans,
     fontWeight: weights.medium,
-    fontSize: 16,
-    lineHeight: 22,
+    fontSize: 17,
+    lineHeight: 24,
     letterSpacing: 0,
   },
   caption: {
-    fontFamily: fonts.sans,
-    fontWeight: weights.regular,
-    fontSize: 14,
-    lineHeight: 20,
-    letterSpacing: 0,
-  },
-  label: {
-    fontFamily: fonts.sans,
-    fontWeight: weights.medium,
-    fontSize: 12,
-    lineHeight: 16,
-    letterSpacing: 0.2,
-  },
-  num: {
     fontFamily: fonts.sans,
     fontWeight: weights.regular,
     fontSize: 15,
     lineHeight: 20,
     letterSpacing: 0,
   },
+  label: {
+    fontFamily: fonts.sans,
+    fontWeight: weights.medium,
+    fontSize: 13,
+    lineHeight: 18,
+    letterSpacing: 0.2,
+  },
+  num: {
+    fontFamily: fonts.sans,
+    fontWeight: weights.regular,
+    fontSize: 17,
+    lineHeight: 22,
+    letterSpacing: 0,
+  },
   numLarge: {
     fontFamily: fonts.sans,
     fontWeight: weights.semibold,
-    fontSize: 16,
-    lineHeight: 22,
+    fontSize: 17,
+    lineHeight: 24,
     letterSpacing: 0,
   },
   code: {
@@ -195,7 +195,7 @@ export const layout = {
     ruleDash: [3, 4],
     column: 56,
   },
-  onboarding: { statementTop: 96 },
+  onboarding: { markTop: 48, mark: 96, markGap: 40 },
   tabBar: { height: 62, bottom: 26 },
   emptyState: { gap: 8, actionGap: 20 },
   toggle: { width: 44, height: 24, radius: 12, knob: 20, inset: 1 },
@@ -203,7 +203,7 @@ export const layout = {
   disclosure: { height: 32, gap: 6 },
   loading: { bar: 12, long: 0.6, short: 0.35, rows: 4, gap: 8 },
   link: { height: 44 },
-  list: { rowHeight: 60 },
+  list: { rowHeight: 66 },
   select: { chevron: 12, gap: 6 },
   nativeAlert: { host: 1 },
 } as const;
@@ -225,6 +225,7 @@ export const icons = {
   select: "chevron.up.chevron.down",
   disclose: "chevron.down",
   collapse: "chevron.up",
+  check: "checkmark",
 } as const satisfies Record<string, SFSymbol>;
 
 export const iconSizes = { bar: 22, inline: 16, tight: 14 } as const;

@@ -21,4 +21,4 @@ export type Profile = {
 
 export type ProfilePreferences = Omit<Profile, "currency" | "timeZone">;
 
-export type ProfileStatus = "loading" | "ready" | "error";
+export type ProfileStatus = "loading" | "ready" | "missing" | "error";

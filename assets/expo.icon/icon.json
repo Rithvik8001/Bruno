@@ -1,36 +1,59 @@
 {
-  "fill" : {
-    "solid" : "extended-srgb:1.00000,1.00000,1.00000,1.00000"
-  },
-  "groups" : [
+  "groups": [
     {
-      "layers" : [
+      "layers": [
         {
-          "image-name" : "glyph.svg",
-          "name" : "glyph",
-          "position" : {
-            "scale" : 1,
-            "translation-in-points" : [
+          "image-name": "glyph.svg",
+          "name": "glyph",
+          "position": {
+            "scale": 1,
+            "translation-in-points": [
               0,
               0
             ]
-          }
+          },
+          "fill-specializations": [
+            {
+              "value": {
+                "solid": "extended-srgb:0.09020,0.09020,0.09020,1.00000"
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "extended-srgb:1.00000,1.00000,1.00000,1.00000"
+              }
+            }
+          ]
         }
       ],
-      "shadow" : {
-        "kind" : "neutral",
-        "opacity" : 0
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0
       },
-      "translucency" : {
-        "enabled" : false,
-        "value" : 0
+      "translucency": {
+        "enabled": false,
+        "value": 0
       }
     }
   ],
-  "supported-platforms" : {
-    "circles" : [
+  "supported-platforms": {
+    "circles": [
       "watchOS"
     ],
-    "squares" : "shared"
-  }
+    "squares": "shared"
+  },
+  "fill-specializations": [
+    {
+      "value": {
+        "solid": "extended-srgb:1.00000,1.00000,1.00000,1.00000"
+      }
+    },
+    {
+      "appearance": "dark",
+      "value": {
+        "solid": "extended-srgb:0.09020,0.09020,0.09020,1.00000"
+      }
+    }
+  ]
 }

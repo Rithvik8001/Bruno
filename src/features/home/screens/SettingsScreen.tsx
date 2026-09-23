@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { useState } from "react";
 
 import {
@@ -27,6 +28,7 @@ import {
   useProfile,
   type ProfilePreferences,
 } from "@/features/profile";
+import { currencyName } from "@/lib/money";
 
 import { homeCopy } from "../copy";
 
@@ -151,6 +153,15 @@ export function SettingsScreen() {
       </>
       <SectionLabel title={copy.account} />
       <>
+        {profile === null ? null : (
+          <ListRow
+            title={copy.currency}
+            value={profile.currency}
+            valueNote={currencyName(profile.currency)}
+            chevron
+            onPress={() => router.push("/currency")}
+          />
+        )}
         {email === undefined ? null : (
           <ListRow title={copy.email} value={email} mono={false} />
         )}
