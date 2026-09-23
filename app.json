@@ -53,18 +53,20 @@
           }
         }
       ],
-      "expo-sqlite",
-      "expo-secure-store",
-      "expo-localization",
       [
         "expo-font",
         {
           "fonts": [
-            "./node_modules/@expo-google-fonts/newsreader/400Regular/Newsreader_400Regular.ttf",
-            "./node_modules/@expo-google-fonts/newsreader/500Medium/Newsreader_500Medium.ttf"
+            "./node_modules/@expo-google-fonts/bricolage-grotesque/500Medium/BricolageGrotesque_500Medium.ttf",
+            "./node_modules/@expo-google-fonts/bricolage-grotesque/700Bold/BricolageGrotesque_700Bold.ttf",
+            "./node_modules/@expo-google-fonts/bricolage-grotesque/800ExtraBold/BricolageGrotesque_800ExtraBold.ttf"
           ]
         }
-      ]
+      ],
+      "expo-sqlite",
+      "expo-secure-store",
+      "expo-notifications",
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true,

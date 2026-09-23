@@ -4,6 +4,12 @@ import {
   type CalendarDate,
 } from "@/lib/calendar";
 
+export {
+  isValidServiceKey,
+  normalizeServiceKey,
+  serviceKeyMaxLength,
+} from "@/lib/logos";
+
 export const nameMaxLength = 80;
 export const notesMaxLength = 500;
 export const paymentMethodMaxLength = 40;

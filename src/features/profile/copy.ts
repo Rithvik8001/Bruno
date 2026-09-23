@@ -1,8 +1,8 @@
 export const profileCopy = {
   currency: {
-    setupTitle: "Your currency",
+    setupTitle: "Pick your currency",
     setupSubtitle:
-      "Every amount in Bruno uses one currency. You can change it later in Settings.",
+      "Bruno shows every amount in one currency. You can change it later in Settings.",
     setupContinue: (code: string) => `Continue with ${code}`,
     title: "Currency",
     cancel: "Cancel",

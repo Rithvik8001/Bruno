@@ -1,20 +1,22 @@
 import { Stack, router } from "expo-router";
 import { useRef, useState } from "react";
-import { RefreshControl, View } from "react-native";
+import { View } from "react-native";
 import type { SearchBarCommands } from "react-native-screens";
 
 import {
   EmptyState,
+  Entering,
   Gap,
   Loading,
-  NativeList,
+  LogoRow,
   Screen,
-  SectionLabel,
+  SectionHeading,
+  Segmented,
   T,
-  Tabs,
   icons,
-  useTheme,
-  type TabOption,
+  useThemeName,
+  type ChipTone,
+  type SegmentOption,
 } from "@/design";
 import { useProfile } from "@/features/profile";
 import { today } from "@/lib/calendar";
@@ -22,7 +24,7 @@ import { fallbackCurrency, formatMoney } from "@/lib/money";
 
 import { subscriptionsCopy } from "../copy";
 import { failureMessage } from "../errors";
-import { formatLedgerDate, formatMonth } from "../format";
+import { formatLedgerDate, formatMonth, subscriptionLogo } from "../format";
 import {
   applyListFilter,
   displayAmountMinor,
@@ -41,19 +43,33 @@ import {
 } from "../selectors";
 import { readSortPreference, writeSortPreference } from "../sortPreference";
 import { useSubscriptions } from "../SubscriptionsProvider";
+import { usePullToRefresh } from "../usePullToRefresh";
 import { useSubscriptionAlert } from "../useSubscriptionAlert";
 
 const copy = subscriptionsCopy.list;
 const loadingRows = 6;
+const enteringGroups = 6;
 
-const filterOptions: readonly TabOption<ListFilter>[] = listFilters.map(
+const filterOptions: readonly SegmentOption<ListFilter>[] = listFilters.map(
   (value) => ({ value, label: copy.filters[value] }),
 );
 
-function rowNote(item: UpcomingSubscription): string | undefined {
+function rowChip(
+  item: UpcomingSubscription,
+): { label: string; tone: ChipTone } | undefined {
   if (item.status === "trial") {
-    return copy.trialNote;
+    return { label: copy.trialNote, tone: "accent" };
   }
+  if (item.status === "paused") {
+    return { label: copy.groupPaused, tone: "neutral" };
+  }
+  if (item.status === "cancelled") {
+    return { label: copy.groupCancelled, tone: "neutral" };
+  }
+  return undefined;
+}
+
+function rowNote(item: UpcomingSubscription): string | undefined {
   if (item.subscription.cycle.unit === "year") {
     return copy.yearNote.replace(
       "{amount}",
@@ -78,12 +94,12 @@ function categoryLabel(category: keyof typeof subscriptionsCopy.categories): str
 }
 
 export function SubscriptionsScreen() {
-  const theme = useTheme();
+  const themeName = useThemeName();
   const { profile } = useProfile();
   const { status, failure, subscriptions, refresh } = useSubscriptions();
   const { alert, showFailure } = useSubscriptionAlert();
+  const pull = usePullToRefresh(refresh, showFailure);
   const [filter, setFilter] = useState<ListFilter>("all");
-  const [refreshing, setRefreshing] = useState(false);
   const [sort, setSort] = useState<ListSort>(readSortPreference);
   const [query, setQuery] = useState("");
   const searchBar = useRef<SearchBarCommands>(null);
@@ -119,30 +135,9 @@ export function SubscriptionsScreen() {
   const openAdd = () => router.push("/add-subscription");
   const openDetail = (id: string) =>
     router.push({ pathname: "/subscription", params: { id } });
-  const pullToRefresh = async () => {
-    setRefreshing(true);
-    const result = await refresh();
-    setRefreshing(false);
-    if (!result.ok) {
-      showFailure(result.reason);
-    }
-  };
 
   return (
-    <Screen
-      scroll
-      header
-      scrollViewProps={{
-        contentInsetAdjustmentBehavior: "automatic",
-        refreshControl: (
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={pullToRefresh}
-            tintColor={theme.ink3}
-          />
-        ),
-      }}
-    >
+    <Screen scroll header automaticInsets refresh={pull}>
       {hasList ? (
         <Stack.SearchBar
           ref={searchBar}
@@ -181,16 +176,16 @@ export function SubscriptionsScreen() {
         </>
       ) : status === "error" ? (
         <>
-          <Gap size="s24" />
+          <Gap size="s32" />
           <EmptyState
             title={copy.errorTitle}
             body={failureMessage(failure ?? "unknown")}
-            link={{ title: copy.retry, onPress: pullToRefresh }}
+            link={{ title: copy.retry, onPress: pull.onRefresh }}
           />
         </>
       ) : subscriptions.length === 0 ? (
         <>
-          <Gap size="s24" />
+          <Gap size="s32" />
           <EmptyState
             title={copy.emptyTitle}
             body={copy.emptyBody}
@@ -204,11 +199,11 @@ export function SubscriptionsScreen() {
               .replace("{count}", String(count))
               .replace("{amount}", formatMoney(monthlyMinor, currency))}
           </T>
-          <Gap size="s24" />
-          <Tabs options={filterOptions} value={filter} onChange={setFilter} />
+          <Gap size="s16" />
+          <Segmented options={filterOptions} value={filter} onChange={setFilter} />
           {groups.length === 0 && terms.length > 0 ? (
             <>
-              <Gap size="s24" />
+              <Gap size="s32" />
               <EmptyState
                 title={copy.searchEmpty.replace("{query}", query.trim())}
                 body={copy.searchEmptyBody}
@@ -227,37 +222,51 @@ export function SubscriptionsScreen() {
               />
             </>
           ) : (
-            groups.map((group) => (
-              <View key={group.key}>
-                {group.kind === "list" ? (
-                  <Gap size="s24" />
-                ) : (
-                  <SectionLabel
-                    top="s24"
-                    title={groupLabel(group) ?? ""}
-                    value={
-                      group.kind === "month"
-                        ? formatMoney(group.totalMinor, currency)
-                        : undefined
-                    }
-                  />
-                )}
-                <NativeList
-                  items={group.items.map((item) => ({
-                    key: item.subscription.id,
-                    title: item.subscription.name,
-                    subtitle: formatLedgerDate(item.nextRenewal),
-                    value: formatMoney(
-                      displayAmountMinor(item.subscription),
-                      item.subscription.currency,
-                    ),
-                    valueNote: rowNote(item),
-                    tone: group.kind === "status" ? "ink2" : "ink",
-                    onPress: () => openDetail(item.subscription.id),
-                  }))}
-                />
-              </View>
-            ))
+            groups.map((group, index) => {
+              const block = (
+                <View>
+                  {group.kind === "list" ? (
+                    <Gap size="s16" />
+                  ) : (
+                    <SectionHeading
+                      top="s24"
+                      title={groupLabel(group) ?? ""}
+                      value={
+                        group.kind === "month"
+                          ? formatMoney(group.totalMinor, currency)
+                          : undefined
+                      }
+                    />
+                  )}
+                  {group.items.map((item) => (
+                    <LogoRow
+                      key={item.subscription.id}
+                      title={item.subscription.name}
+                      subtitle={formatLedgerDate(item.nextRenewal)}
+                      value={formatMoney(
+                        displayAmountMinor(item.subscription),
+                        item.subscription.currency,
+                      )}
+                      valueNote={rowNote(item)}
+                      chip={rowChip(item)}
+                      logo={{
+                        ...subscriptionLogo(item.subscription, themeName, "row"),
+                        muted: group.kind === "status",
+                      }}
+                      tone={group.kind === "status" ? "ink2" : "ink"}
+                      onPress={() => openDetail(item.subscription.id)}
+                    />
+                  ))}
+                </View>
+              );
+              return index < enteringGroups ? (
+                <Entering key={group.key} index={index}>
+                  {block}
+                </Entering>
+              ) : (
+                <View key={group.key}>{block}</View>
+              );
+            })
           )}
         </>
       )}

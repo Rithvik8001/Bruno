@@ -1,11 +1,10 @@
-import { DatePicker, Host, HStack, Spacer } from "@expo/ui/swift-ui";
+import { DatePicker, Host } from "@expo/ui/swift-ui";
 import { datePickerStyle, labelsHidden } from "@expo/ui/swift-ui/modifiers";
-import { View } from "react-native";
 
 import { layout } from "../tokens";
 import { useTheme, useThemeName } from "../theme/useTheme";
-import { Hairline } from "../primitives/Hairline";
-import { T } from "../primitives/T";
+import type { IconSource } from "../types";
+import { IconRow } from "./IconRow";
 
 export type DateFieldProps = {
   label: string;
@@ -13,6 +12,7 @@ export type DateFieldProps = {
   minimumDate?: Date;
   maximumDate?: Date;
   onChange: (value: Date) => void;
+  icon?: IconSource;
 };
 
 export function DateField({
@@ -21,46 +21,32 @@ export function DateField({
   minimumDate,
   maximumDate,
   onChange,
+  icon,
 }: DateFieldProps) {
   const theme = useTheme();
   const themeName = useThemeName();
 
   return (
-    <>
-      <View
-        style={{
-          minHeight: layout.row.minHeight,
-          flexDirection: "row",
-          alignItems: "center",
-        }}
-      >
-        <T style="bodyMedium" numberOfLines={1}>
-          {label}
-        </T>
+    <IconRow
+      icon={icon}
+      title={label}
+      trailing={
         <Host
-          matchContents={{ vertical: true }}
+          matchContents={{ horizontal: true }}
           colorScheme={themeName}
           seedColor={theme.ink}
-          style={{
-            flex: 1,
-            minHeight: layout.row.minHeight,
-            justifyContent: "center",
-          }}
+          style={{ height: layout.row.minHeight - layout.row.paddingVertical * 2 }}
         >
-          <HStack alignment="center">
-            <Spacer />
-            <DatePicker
-              title={label}
-              selection={value}
-              range={{ start: minimumDate, end: maximumDate }}
-              displayedComponents={["date"]}
-              onDateChange={onChange}
-              modifiers={[datePickerStyle("compact"), labelsHidden()]}
-            />
-          </HStack>
+          <DatePicker
+            title={label}
+            selection={value}
+            range={{ start: minimumDate, end: maximumDate }}
+            displayedComponents={["date"]}
+            onDateChange={onChange}
+            modifiers={[datePickerStyle("compact"), labelsHidden()]}
+          />
         </Host>
-      </View>
-      <Hairline />
-    </>
+      }
+    />
   );
 }

@@ -1,9 +1,7 @@
 import {
   Button as SwiftButton,
-  Divider,
   HStack,
   Host,
-  VStack,
   SecureField,
   Text,
   TextField,
@@ -13,16 +11,17 @@ import {
 } from "@expo/ui/swift-ui";
 import {
   autocorrectionDisabled,
+  background,
   buttonStyle,
-  font,
   foregroundStyle,
   frame,
   keyboardType as keyboardTypeModifier,
   lineLimit,
   monospacedDigit,
   onSubmit,
-  overlay,
   padding,
+  shapes,
+  strokeBorder,
   submitLabel,
   textContentType as textContentTypeModifier,
   textInputAutocapitalization,
@@ -38,8 +37,9 @@ import {
 } from "react";
 import { View } from "react-native";
 
-import { layout, motion, type, weights } from "../tokens";
+import { layout, motion, radius } from "../tokens";
 import { useTheme, useThemeName } from "../theme/useTheme";
+import { useSwiftFont } from "../swiftText";
 import { Spacer } from "../primitives/Spacer";
 import { T } from "../primitives/T";
 
@@ -79,14 +79,9 @@ export type InputProps = {
   returnKeyType?: "next" | "go" | "done";
   onSubmitEditing?: () => void;
   onBlur?: () => void;
+  onFocus?: () => void;
   ref?: Ref<InputRef>;
 };
-
-const weightNames = {
-  [weights.regular]: "regular",
-  [weights.medium]: "medium",
-  [weights.semibold]: "semibold",
-} as const;
 
 const capitalization = {
   none: "never",
@@ -116,6 +111,7 @@ export function Input({
   returnKeyType,
   onSubmitEditing,
   onBlur,
+  onFocus,
   ref,
 }: InputProps) {
   const theme = useTheme();
@@ -128,7 +124,9 @@ export function Input({
   const [focused, setFocused] = useState(false);
   const note = error ?? hint;
   const hasError = error !== undefined;
-  const textStyle = mono ? type.numLarge : type.body;
+  const fieldFont = useSwiftFont(mono ? "numLarge" : "body");
+  const prefixFont = useSwiftFont("numLarge");
+  const suffixFont = useSwiftFont("caption");
 
   useEffect(() => {
     if (value !== emitted.current) {
@@ -190,10 +188,12 @@ export function Input({
 
   const focusChange = (next: boolean) => {
     setFocused(next);
-    if (!next) {
-      sync();
-      onBlur?.();
+    if (next) {
+      onFocus?.();
+      return;
     }
+    sync();
+    onBlur?.();
   };
 
   const submit = () => {
@@ -207,10 +207,7 @@ export function Input({
   };
 
   const fieldModifiers: ModifierConfig[] = [
-    font({
-      size: textStyle.fontSize,
-      weight: weightNames[textStyle.fontWeight],
-    }),
+    ...fieldFont,
     foregroundStyle(theme.ink),
     tint(theme.ink),
     keyboardTypeModifier(keyboardType),
@@ -231,7 +228,7 @@ export function Input({
   }
   if (multiline) {
     fieldModifiers.push(
-      lineLimit(layout.input.multilineLines.min, { reservesSpace: true }),
+      lineLimit(layout.field.multilineLines.min, { reservesSpace: true }),
       frame({ maxWidth: layout.button.fillWidth, alignment: "topLeading" }),
     );
   }
@@ -240,7 +237,27 @@ export function Input({
     <Text modifiers={[foregroundStyle(theme.ink4)]}>{placeholder ?? ""}</Text>
   );
 
-  const borderColor = hasError || focused ? theme.ink : theme.border;
+  const outlined = hasError || focused;
+  const shellModifiers: ModifierConfig[] = [
+    padding({
+      horizontal: layout.field.paddingHorizontal,
+      vertical: multiline ? layout.field.multilinePaddingVertical : 0,
+    }),
+    frame({ minHeight: layout.field.height, maxWidth: layout.button.fillWidth }),
+    background(
+      theme.canvas,
+      shapes.roundedRectangle({
+        cornerRadius: radius.field,
+        roundedCornerStyle: "continuous",
+      }),
+    ),
+    strokeBorder({
+      content: outlined ? theme.ink : theme.border,
+      style: { lineWidth: outlined ? layout.field.focus : layout.field.border },
+      shape: "roundedRectangle",
+      cornerRadius: radius.field,
+    }),
+  ];
 
   return (
     <View>
@@ -249,36 +266,25 @@ export function Input({
           <T style="label" color="ink3" numberOfLines={1}>
             {label}
           </T>
-          <Spacer height={layout.input.labelGap} />
+          <Spacer height={layout.field.labelGap} />
         </>
       )}
       <Host
-        matchContents={{ vertical: true }}
+        matchContents={multiline ? { vertical: true } : false}
         colorScheme={themeName}
         seedColor={theme.ink}
-        style={{ alignSelf: "stretch" }}
+        style={{
+          alignSelf: "stretch",
+          height: multiline ? undefined : layout.field.height,
+        }}
       >
-        <VStack alignment="leading" spacing={0}>
           <HStack
             alignment={multiline ? "top" : "center"}
-            spacing={layout.input.prefixGap}
-            modifiers={[
-              padding({
-                vertical: multiline ? layout.input.multilinePaddingVertical : 0,
-              }),
-              frame({ minHeight: layout.input.height }),
-            ]}
+            spacing={layout.field.prefixGap}
+            modifiers={shellModifiers}
           >
             {prefix === undefined ? null : (
-              <Text
-                modifiers={[
-                  font({
-                    size: type.numLarge.fontSize,
-                    weight: weightNames[type.numLarge.fontWeight],
-                  }),
-                  foregroundStyle(theme.ink3),
-                ]}
-              >
+              <Text modifiers={[...prefixFont, foregroundStyle(theme.ink3)]}>
                 {prefix}
               </Text>
             )}
@@ -316,35 +322,20 @@ export function Input({
                 modifiers={[
                   buttonStyle("plain"),
                   padding({
-                    leading: layout.input.suffixGap - layout.input.prefixGap,
+                    leading: layout.field.suffixGap - layout.field.prefixGap,
                   }),
                 ]}
               >
-                <Text
-                  modifiers={[
-                    font({
-                      size: type.caption.fontSize,
-                      weight: weightNames[type.caption.fontWeight],
-                    }),
-                    foregroundStyle(theme.ink3),
-                  ]}
-                >
+                <Text modifiers={[...suffixFont, foregroundStyle(theme.ink2)]}>
                   {suffix.title}
                 </Text>
               </SwiftButton>
             )}
           </HStack>
-          <Divider
-            modifiers={[
-              frame({ height: layout.hairline }),
-              overlay({ color: borderColor }),
-            ]}
-          />
-        </VStack>
       </Host>
       {note === undefined ? null : (
         <>
-          <Spacer height={layout.input.hintGap} />
+          <Spacer height={layout.field.hintGap} />
           <T style="caption" color={hasError ? "ink2" : "ink3"}>
             {note}
           </T>

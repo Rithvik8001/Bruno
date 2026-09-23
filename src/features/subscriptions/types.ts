@@ -99,6 +99,7 @@ export type Subscription = {
   category: Category | null;
   paymentMethod: string | null;
   notes: string | null;
+  serviceKey: string | null;
   createdAt: string;
 };
 
@@ -111,4 +112,5 @@ export type NewSubscription = {
   category: Category | null;
   paymentMethod: string;
   notes: string;
+  serviceKey: string | null;
 };

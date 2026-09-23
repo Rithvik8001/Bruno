@@ -8,6 +8,7 @@ import { fill } from "./emails/format";
 import {
   AccountDeletedEmail,
   AlreadyRegisteredEmail,
+  ComingUpEmail,
   MonthlyDigestEmail,
   PasswordChangedEmail,
   RenewalReminderEmail,
@@ -16,10 +17,17 @@ import {
   SignupCodeEmail,
   TrialReminderEmail,
   WelcomeEmail,
+  batchValues,
   digestValues,
   renewalValues,
 } from "./emails/templates";
-import type { DigestEmail, RenewalEmail } from "./emails/types";
+import type {
+  BatchEmail,
+  BatchSlot,
+  DigestEmail,
+  ReminderKind,
+  RenewalEmail,
+} from "./emails/types";
 import { readMailerEnv } from "./env";
 import { resendClient } from "./resend";
 
@@ -202,5 +210,44 @@ export function deliverMonthlyDigest(
     react: <MonthlyDigestEmail input={input} />,
     idempotencyKey: `digest/${userId}/${toDbDate(month).slice(0, 7)}`,
     kind: "monthly_digest",
+  });
+}
+
+export function deliverReminder(
+  email: string,
+  kind: ReminderKind,
+  subscriptionId: string,
+  input: RenewalEmail,
+): Promise<boolean> {
+  switch (kind) {
+    case "renewal":
+      return deliverRenewalReminder(email, subscriptionId, input);
+    case "trial":
+      return deliverTrialReminder(email, subscriptionId, input);
+    case "renews_today":
+      return deliverRenewsToday(email, subscriptionId, input);
+  }
+}
+
+export function deliverBatch(
+  email: string,
+  userId: string,
+  day: CalendarDate,
+  slot: BatchSlot,
+  input: BatchEmail,
+): Promise<boolean> {
+  const first = input.items[0];
+  if (first === undefined) {
+    return Promise.resolve(false);
+  }
+  if (input.items.length === 1) {
+    return deliverReminder(email, first.kind, first.subscriptionId, first.input);
+  }
+  return sendEmail({
+    to: email,
+    subject: fill(emailCopy.batch.subject, batchValues(input)),
+    react: <ComingUpEmail input={input} />,
+    idempotencyKey: `${slot}/${userId}/${toDbDate(day)}`,
+    kind: "coming_up",
   });
 }

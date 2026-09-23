@@ -1,9 +1,14 @@
-import { Pressable, View } from "react-native";
+import { Host, Toggle as SwiftToggle } from "@expo/ui/swift-ui";
+import {
+  disabled as disabledModifier,
+  labelsHidden,
+  tint,
+} from "@expo/ui/swift-ui/modifiers";
 
 import { layout } from "../tokens";
-import { useTheme } from "../theme/useTheme";
-import { Hairline } from "../primitives/Hairline";
-import { T } from "../primitives/T";
+import { useTheme, useThemeName } from "../theme/useTheme";
+import type { IconSource } from "../types";
+import { IconRow } from "./IconRow";
 
 export type ToggleProps = {
   value: boolean;
@@ -19,46 +24,25 @@ export function Toggle({
   accessibilityLabel,
 }: ToggleProps) {
   const theme = useTheme();
-  const travel =
-    layout.toggle.width - layout.toggle.knob - layout.toggle.inset * 2;
+  const themeName = useThemeName();
 
   return (
-    <Pressable
-      onPress={() => onValueChange(!value)}
-      disabled={disabled}
-      accessibilityRole="switch"
-      accessibilityLabel={accessibilityLabel}
-      accessibilityState={{ checked: value, disabled }}
-      hitSlop={{
-        top: (layout.hit - layout.toggle.height) / 2,
-        bottom: (layout.hit - layout.toggle.height) / 2,
-        left: 0,
-        right: 0,
-      }}
+    <Host
+      colorScheme={themeName}
+      seedColor={theme.accent}
       style={{
         width: layout.toggle.width,
         height: layout.toggle.height,
-        borderRadius: layout.toggle.radius,
-        padding: layout.toggle.inset,
-        justifyContent: "center",
-        backgroundColor: value ? theme.ink : theme.surface2,
-        borderWidth: value ? 0 : layout.hairline,
-        borderColor: theme.border2,
-        opacity: disabled ? layout.money.minimumScale : 1,
+        opacity: disabled ? layout.disabledOpacity : 1,
       }}
     >
-      <View
-        style={{
-          width: layout.toggle.knob - (value ? 0 : layout.hairline * 2),
-          height: layout.toggle.knob - (value ? 0 : layout.hairline * 2),
-          borderRadius: layout.toggle.knob / 2,
-          backgroundColor: value ? theme.onInk : theme.canvas,
-          borderWidth: value ? 0 : layout.hairline,
-          borderColor: theme.border2,
-          transform: [{ translateX: value ? travel : 0 }],
-        }}
+      <SwiftToggle
+        isOn={value}
+        label={accessibilityLabel}
+        onIsOnChange={onValueChange}
+        modifiers={[labelsHidden(), tint(theme.accent), disabledModifier(disabled)]}
       />
-    </Pressable>
+    </Host>
   );
 }
 
@@ -66,6 +50,8 @@ export type ToggleRowProps = {
   label: string;
   value: boolean;
   onValueChange: (value: boolean) => void;
+  icon?: IconSource;
+  subtitle?: string;
   disabled?: boolean;
 };
 
@@ -73,29 +59,23 @@ export function ToggleRow({
   label,
   value,
   onValueChange,
+  icon,
+  subtitle,
   disabled,
 }: ToggleRowProps) {
   return (
-    <>
-      <View
-        style={{
-          minHeight: layout.row.minHeight,
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <T style="bodyMedium" override={{ flex: 1 }} numberOfLines={1}>
-          {label}
-        </T>
+    <IconRow
+      icon={icon}
+      title={label}
+      subtitle={subtitle}
+      trailing={
         <Toggle
           value={value}
           onValueChange={onValueChange}
           disabled={disabled}
           accessibilityLabel={label}
         />
-      </View>
-      <Hairline />
-    </>
+      }
+    />
   );
 }

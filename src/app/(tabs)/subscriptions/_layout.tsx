@@ -1,6 +1,6 @@
 import { Stack } from "expo-router";
 
-import { fonts, useTheme } from "@/design";
+import { type, useTheme } from "@/design";
 import { subscriptionsCopy } from "@/features/subscriptions";
 
 export default function SubscriptionsLayout() {
@@ -13,7 +13,12 @@ export default function SubscriptionsLayout() {
         headerTintColor: theme.ink,
         headerStyle: { backgroundColor: theme.canvas },
         headerShadowVisible: false,
-        headerTitleStyle: { fontFamily: fonts.serif, color: theme.ink },
+        headerTitleStyle: {
+          fontFamily: type.heading.fontFamily,
+          fontWeight: type.heading.fontWeight,
+          fontSize: type.heading.fontSize,
+          color: theme.ink,
+        },
         contentStyle: { backgroundColor: theme.canvas },
       }}
     >

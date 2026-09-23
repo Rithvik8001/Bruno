@@ -9,6 +9,31 @@ export function isReminderLeadDays(value: unknown): value is ReminderLeadDays {
   );
 }
 
+export const notificationFrequencies = ["event", "daily", "twice"] as const;
+
+export type NotificationFrequency = (typeof notificationFrequencies)[number];
+
+export function isNotificationFrequency(
+  value: unknown,
+): value is NotificationFrequency {
+  return (
+    typeof value === "string" &&
+    (notificationFrequencies as readonly string[]).includes(value)
+  );
+}
+
+export const defaultSendHour = 9;
+export const defaultSecondSendHour = 18;
+
+export function isSendHour(value: unknown): value is number {
+  return (
+    typeof value === "number" &&
+    Number.isInteger(value) &&
+    value >= 0 &&
+    value <= 23
+  );
+}
+
 export type Profile = {
   currency: string;
   timeZone: string | null;
@@ -17,6 +42,11 @@ export type Profile = {
   renewsToday: boolean;
   monthlyDigest: boolean;
   reminderLeadDays: ReminderLeadDays;
+  pushEnabled: boolean;
+  emailEnabled: boolean;
+  notificationFrequency: NotificationFrequency;
+  sendHour: number;
+  secondSendHour: number;
 };
 
 export type ProfilePreferences = Omit<Profile, "currency" | "timeZone">;

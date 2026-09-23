@@ -23,3 +23,18 @@ export type DigestEmail = {
   monthlyMinor: number;
   topCategory: { label: string; monthlyMinor: number } | null;
 };
+
+export type ReminderKind = "renewal" | "trial" | "renews_today";
+
+export type ReminderItem = {
+  kind: ReminderKind;
+  subscriptionId: string;
+  dueOn: CalendarDate;
+  input: RenewalEmail;
+};
+
+export type BatchSlot = "batch" | "batch_second";
+
+export type BatchEmail = {
+  items: ReminderItem[];
+};

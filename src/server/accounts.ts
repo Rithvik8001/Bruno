@@ -189,6 +189,7 @@ export async function sendWelcome(accessToken: string): Promise<void> {
     p_subscription_id: null,
     p_kind: "welcome",
     p_due_on: welcomeSentinel,
+    p_channel: "email",
   });
   if (claim.error !== null) {
     throw claim.error;

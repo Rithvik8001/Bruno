@@ -6,9 +6,15 @@ export type TextLinkProps = {
   title: string;
   onPress: () => void;
   disabled?: boolean;
+  size?: "caption" | "note";
 };
 
-export function TextLink({ title, onPress, disabled = false }: TextLinkProps) {
+export function TextLink({
+  title,
+  onPress,
+  disabled = false,
+  size = "caption",
+}: TextLinkProps) {
   return (
     <Tappable
       onPress={onPress}
@@ -21,7 +27,11 @@ export function TextLink({ title, onPress, disabled = false }: TextLinkProps) {
         justifyContent: "center",
       }}
     >
-      <T style="caption" color={disabled ? "ink4" : "ink3"} numberOfLines={1}>
+      <T
+        style={size === "note" ? "note" : "captionStrong"}
+        color={disabled ? "ink4" : size === "note" ? "ink3" : "ink2"}
+        numberOfLines={1}
+      >
         {title}
       </T>
     </Tappable>

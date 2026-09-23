@@ -41,7 +41,12 @@ function useModalHeader({ canSave, onSave }: HeaderProps) {
         onSave === null
           ? () => null
           : () => (
-              <TextAction title={copy.confirm} onPress={onSave} disabled={!canSave} />
+              <TextAction
+                title={copy.confirm}
+                onPress={onSave}
+                disabled={!canSave}
+                prominent
+              />
             ),
     });
   }, [navigation, canSave, onSave]);
@@ -153,13 +158,7 @@ export function EditSubscriptionScreen({ id }: { id: string | null }) {
   }, [snapshot, found]);
 
   return (
-    <Screen
-      scroll
-      fill
-      keyboard
-      header
-      scrollViewProps={{ alwaysBounceVertical: false }}
-    >
+    <Screen scroll fill keyboard header bounce={false}>
       {snapshot === null ? (
         <Fallback loading={id !== null && status === "loading"} />
       ) : (

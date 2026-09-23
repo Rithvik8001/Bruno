@@ -10,7 +10,6 @@ import {
   buttonStyle,
   controlSize,
   disabled as disabledModifier,
-  font,
   foregroundStyle,
   frame,
   progressViewStyle,
@@ -18,8 +17,9 @@ import {
 } from "@expo/ui/swift-ui/modifiers";
 import { View } from "react-native";
 
-import { layout, type, weights } from "../tokens";
+import { layout } from "../tokens";
 import { useTheme, useThemeName } from "../theme/useTheme";
+import { useSwiftFont } from "../swiftText";
 
 export type ButtonVariant = "primary" | "secondary" | "ghost";
 
@@ -35,12 +35,6 @@ export type ButtonProps = {
   inline?: boolean;
 };
 
-const weightNames = {
-  [weights.regular]: "regular",
-  [weights.medium]: "medium",
-  [weights.semibold]: "semibold",
-} as const;
-
 export function Button({
   title,
   onPress,
@@ -52,6 +46,8 @@ export function Button({
 }: ButtonProps) {
   const theme = useTheme();
   const themeName = useThemeName();
+  const labelFont = useSwiftFont("captionStrong");
+  const bodyFont = useSwiftFont("bodyMedium");
   const inactive = disabled || loading;
 
   const label = inactive
@@ -62,12 +58,13 @@ export function Button({
         ? theme.ink
         : theme.ink2;
 
-  const style =
-    variant === "primary"
-      ? buttonStyle("glassProminent")
-      : variant === "secondary"
-        ? buttonStyle("glass")
-        : buttonStyle("plain");
+  const fill = inactive
+    ? theme.surface
+    : variant === "primary"
+      ? theme.ink
+      : theme.surface;
+
+  const minHeight = size === "m" ? layout.pill.height : layout.pill.heightSmall;
 
   return (
     <View
@@ -77,24 +74,33 @@ export function Button({
       style={{ alignSelf: inline ? "flex-start" : "stretch" }}
     >
       <Host
-        matchContents={inline ? true : { vertical: true }}
+        matchContents={inline ? { horizontal: true } : false}
         colorScheme={themeName}
         seedColor={theme.ink}
-        style={{ alignSelf: inline ? "flex-start" : "stretch" }}
+        style={{ alignSelf: inline ? "flex-start" : "stretch", height: minHeight }}
       >
         <SwiftButton
           onPress={onPress}
           modifiers={[
-            style,
+            buttonStyle(variant === "ghost" ? "plain" : "borderedProminent"),
             buttonBorderShape("capsule"),
             controlSize(size === "m" ? "large" : "regular"),
-            tint(inactive ? theme.surface2 : theme.ink),
+            tint(fill),
             disabledModifier(inactive),
           ]}
         >
           <HStack
             alignment="center"
-            modifiers={inline ? [] : [frame({ maxWidth: layout.button.fillWidth })]}
+            modifiers={[
+              frame(
+                inline
+                  ? { minHeight: minHeight - layout.pill.gap * 2 }
+                  : {
+                      maxWidth: layout.button.fillWidth,
+                      minHeight: minHeight - layout.pill.gap * 2,
+                    },
+              ),
+            ]}
           >
             {loading ? (
               <ProgressView
@@ -103,10 +109,7 @@ export function Button({
             ) : (
               <Text
                 modifiers={[
-                  font({
-                    size: type.bodyMedium.fontSize,
-                    weight: weightNames[type.bodyMedium.fontWeight],
-                  }),
+                  ...(size === "m" ? bodyFont : labelFont),
                   foregroundStyle(label),
                 ]}
               >

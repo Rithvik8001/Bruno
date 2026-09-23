@@ -25,6 +25,7 @@ import {
   isValidNotes,
   isValidPaymentMethod,
   isValidRenewalDate,
+  isValidServiceKey,
   normalizeName,
   normalizeOptional,
 } from "./validation";
@@ -46,6 +47,7 @@ export type SubscriptionDraft = {
   trial: boolean;
   paymentMethod: string;
   notes: string;
+  serviceKey: string | null;
 };
 
 export function emptyDraft(start: CalendarDate): SubscriptionDraft {
@@ -58,6 +60,7 @@ export function emptyDraft(start: CalendarDate): SubscriptionDraft {
     trial: false,
     paymentMethod: "",
     notes: "",
+    serviceKey: null,
   };
 }
 
@@ -76,6 +79,7 @@ export function draftFrom(
     trial: isInTrial(subscription.trialEndsOn, from),
     paymentMethod: subscription.paymentMethod ?? "",
     notes: subscription.notes ?? "",
+    serviceKey: subscription.serviceKey,
   };
 }
 
@@ -111,7 +115,8 @@ export function draftInput(
     !isValidName(draft.name) ||
     !isValidRenewalDate(anchorDate, start) ||
     !isValidPaymentMethod(draft.paymentMethod) ||
-    !isValidNotes(draft.notes)
+    !isValidNotes(draft.notes) ||
+    (draft.serviceKey !== null && !isValidServiceKey(draft.serviceKey))
   ) {
     return null;
   }
@@ -125,6 +130,7 @@ export function draftInput(
     category: isCategory(draft.category) ? draft.category : null,
     paymentMethod: draft.paymentMethod,
     notes: draft.notes,
+    serviceKey: draft.serviceKey,
   };
 }
 
@@ -145,6 +151,7 @@ export function isDraftDirty(
     input.trial !== isInTrial(subscription.trialEndsOn, from) ||
     input.category !== subscription.category ||
     normalizeOptional(input.paymentMethod) !== subscription.paymentMethod ||
-    normalizeOptional(input.notes) !== subscription.notes
+    normalizeOptional(input.notes) !== subscription.notes ||
+    input.serviceKey !== subscription.serviceKey
   );
 }

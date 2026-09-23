@@ -14,6 +14,7 @@ export type Database = {
     Tables: {
       notification_sends: {
         Row: {
+          channel: string;
           created_at: string;
           due_on: string;
           id: string;
@@ -22,6 +23,7 @@ export type Database = {
           user_id: string;
         };
         Insert: {
+          channel?: string;
           created_at?: string;
           due_on: string;
           id?: string;
@@ -30,6 +32,7 @@ export type Database = {
           user_id: string;
         };
         Update: {
+          channel?: string;
           created_at?: string;
           due_on?: string;
           id?: string;
@@ -51,11 +54,16 @@ export type Database = {
         Row: {
           created_at: string;
           currency: string;
+          email_enabled: boolean;
           id: string;
           monthly_digest: boolean;
+          notification_frequency: string;
+          push_enabled: boolean;
           reminder_lead_days: number;
           renewal_reminders: boolean;
           renews_today: boolean;
+          second_send_hour: number;
+          send_hour: number;
           timezone: string | null;
           trial_reminders: boolean;
           updated_at: string;
@@ -63,11 +71,16 @@ export type Database = {
         Insert: {
           created_at?: string;
           currency: string;
+          email_enabled?: boolean;
           id: string;
           monthly_digest?: boolean;
+          notification_frequency?: string;
+          push_enabled?: boolean;
           reminder_lead_days?: number;
           renewal_reminders?: boolean;
           renews_today?: boolean;
+          second_send_hour?: number;
+          send_hour?: number;
           timezone?: string | null;
           trial_reminders?: boolean;
           updated_at?: string;
@@ -75,14 +88,64 @@ export type Database = {
         Update: {
           created_at?: string;
           currency?: string;
+          email_enabled?: boolean;
           id?: string;
           monthly_digest?: boolean;
+          notification_frequency?: string;
+          push_enabled?: boolean;
           reminder_lead_days?: number;
           renewal_reminders?: boolean;
           renews_today?: boolean;
+          second_send_hour?: number;
+          send_hour?: number;
           timezone?: string | null;
           trial_reminders?: boolean;
           updated_at?: string;
+        };
+        Relationships: [];
+      };
+      push_receipts: {
+        Row: {
+          created_at: string;
+          ticket_id: string;
+          token: string;
+        };
+        Insert: {
+          created_at?: string;
+          ticket_id: string;
+          token: string;
+        };
+        Update: {
+          created_at?: string;
+          ticket_id?: string;
+          token?: string;
+        };
+        Relationships: [];
+      };
+      push_tokens: {
+        Row: {
+          created_at: string;
+          id: string;
+          last_seen_at: string;
+          platform: string;
+          token: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          last_seen_at?: string;
+          platform?: string;
+          token: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          last_seen_at?: string;
+          platform?: string;
+          token?: string;
+          user_id?: string;
         };
         Relationships: [];
       };
@@ -154,6 +217,7 @@ export type Database = {
       };
       claim_notification: {
         Args: {
+          p_channel?: string;
           p_due_on: string;
           p_kind: string;
           p_subscription_id: string | null;
@@ -165,13 +229,22 @@ export type Database = {
         Args: { code: string };
         Returns: number;
       };
+      register_push_token: {
+        Args: { p_token: string };
+        Returns: undefined;
+      };
       release_notification: {
         Args: {
+          p_channel?: string;
           p_due_on: string;
           p_kind: string;
           p_subscription_id: string | null;
           p_user_id: string;
         };
+        Returns: undefined;
+      };
+      unregister_push_token: {
+        Args: { p_token: string };
         Returns: undefined;
       };
     };

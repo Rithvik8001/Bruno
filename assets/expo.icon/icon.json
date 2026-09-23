@@ -3,8 +3,8 @@
     {
       "layers": [
         {
-          "image-name": "glyph.svg",
-          "name": "glyph",
+          "image-name": "b.svg",
+          "name": "b",
           "position": {
             "scale": 1,
             "translation-in-points": [
@@ -15,13 +15,13 @@
           "fill-specializations": [
             {
               "value": {
-                "solid": "extended-srgb:0.09020,0.09020,0.09020,1.00000"
+                "solid": "extended-srgb:0.62353,0.90980,0.43922,1.00000"
               }
             },
             {
               "appearance": "dark",
               "value": {
-                "solid": "extended-srgb:1.00000,1.00000,1.00000,1.00000"
+                "solid": "extended-srgb:0.65098,1.00000,0.47843,1.00000"
               }
             }
           ]
@@ -46,13 +46,13 @@
   "fill-specializations": [
     {
       "value": {
-        "solid": "extended-srgb:1.00000,1.00000,1.00000,1.00000"
+        "solid": "extended-srgb:0.00000,0.00000,0.00000,1.00000"
       }
     },
     {
       "appearance": "dark",
       "value": {
-        "solid": "extended-srgb:0.09020,0.09020,0.09020,1.00000"
+        "solid": "extended-srgb:0.00000,0.00000,0.00000,1.00000"
       }
     }
   ]

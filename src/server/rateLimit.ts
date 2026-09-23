@@ -11,6 +11,8 @@ export const rateLimits = {
   resetConfirmPerEmail: { limit: 5, windowMs: 15 * 60 * 1000 },
   deletePerIp: { limit: 5, windowMs: 60 * 60 * 1000 },
   welcomePerIp: { limit: 10, windowMs: 60 * 60 * 1000 },
+  logoSearchPerIp: { limit: 60, windowMs: 60 * 1000 },
+  logoSearchPerUser: { limit: 300, windowMs: 60 * 60 * 1000 },
 } as const satisfies Record<string, Rule>;
 
 const hits = new Map<string, number[]>();

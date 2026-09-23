@@ -7,26 +7,32 @@ import { Icon } from "../primitives/Icon";
 import { T } from "../primitives/T";
 import { Tappable } from "../primitives/Tappable";
 
-export type SectionLabelAction = {
+export type SectionHeadingAction = {
   title: string;
   onPress: () => void;
 };
 
-export type SectionLabelProps = {
+export type SectionHeadingSize = "heading" | "small";
+
+export type SectionHeadingProps = {
   title: string;
   value?: string;
-  action?: SectionLabelAction;
+  action?: SectionHeadingAction;
+  size?: SectionHeadingSize;
   top?: SpaceToken | null;
   bottom?: SpaceToken;
 };
 
-export function SectionLabel({
+export function SectionHeading({
   title,
   value,
   action,
+  size = "heading",
   top = "s32",
   bottom = "s12",
-}: SectionLabelProps) {
+}: SectionHeadingProps) {
+  const small = size === "small";
+
   return (
     <>
       {top === null ? null : <Gap size={top} />}
@@ -35,10 +41,16 @@ export function SectionLabel({
           flexDirection: "row",
           alignItems: "baseline",
           justifyContent: "space-between",
-          minHeight: layout.tabs.height / 2,
+          gap: layout.row.gap,
         }}
       >
-        <T style="label" color="ink3" numberOfLines={1} override={{ flex: 1 }}>
+        <T
+          style={small ? "label" : "heading"}
+          color={small ? "ink3" : "ink"}
+          numberOfLines={1}
+          override={{ flex: 1 }}
+          accessibilityRole="header"
+        >
           {title}
         </T>
         {action !== undefined ? (
@@ -53,13 +65,13 @@ export function SectionLabel({
               gap: layout.select.gap,
             }}
           >
-            <T style="caption" color="ink3">
+            <T style="captionStrong" color="ink2">
               {action.title}
             </T>
-            <Icon name="chevron" size={layout.row.chevron} color="ink4" />
+            <Icon name="chevron" size={layout.row.chevron} color="ink3" />
           </Tappable>
         ) : value !== undefined ? (
-          <T style="numLarge" color="ink" numberOfLines={1}>
+          <T style={small ? "label" : "num"} color="ink2" numberOfLines={1}>
             {value}
           </T>
         ) : null}

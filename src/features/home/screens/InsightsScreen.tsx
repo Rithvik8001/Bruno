@@ -1,18 +1,21 @@
 import { router } from "expo-router";
 import { useState } from "react";
-import { RefreshControl } from "react-native";
 
 import {
+  AnimatedMoney,
   BarChart,
-  BarList,
   EmptyState,
+  Entering,
   Gap,
   Loading,
   Screen,
-  SectionLabel,
-  StatRow,
+  SectionHeading,
+  Segmented,
+  ShareBar,
+  StatList,
   T,
-  useTheme,
+  type SegmentOption,
+  type StatItem,
 } from "@/design";
 import { useProfile } from "@/features/profile";
 import {
@@ -23,65 +26,54 @@ import {
   projectMonthly,
   subscriptionsCopy,
   summarize,
+  usePullToRefresh,
   useSubscriptionAlert,
   useSubscriptions,
   yearlyAmountMinor,
-  type CategoryShare,
   type UpcomingSubscription,
 } from "@/features/subscriptions";
 import { today } from "@/lib/calendar";
-import {
-  fallbackCurrency,
-  formatMoney,
-  monthlyAmountMinor,
-} from "@/lib/money";
+import { fallbackCurrency, formatMoney } from "@/lib/money";
 
 import { homeCopy } from "../copy";
 
 const copy = homeCopy.insights;
-const categoryLimit = 5;
+const categoryLimit = 10;
 const projectionMonths = 12;
 const percent = 100;
 const loadingRows = 4;
 
-function closingLine(
-  count: number,
-  split: readonly CategoryShare[],
-  priciest: UpcomingSubscription | null,
-  currency: string,
-): string {
-  const parts: string[] = [];
-  if (count > 1 && split.length > 1) {
-    parts.push(
-      copy.shareLine
-        .replace("{category}", subscriptionsCopy.categories[split[0].category])
-        .replace("{share}", String(Math.round(split[0].share * percent))),
-    );
-  }
-  if (priciest !== null) {
-    parts.push(
-      copy.saveLine
-        .replace("{name}", priciest.subscription.name)
-        .replace(
-          "{amount}",
-          formatMoney(yearlyAmountMinor(priciest.subscription), currency),
-        ),
-    );
-  }
-  return parts.join(" ");
+type View = "months" | "categories";
+
+const views: readonly SegmentOption<View>[] = [
+  { value: "months", label: copy.months },
+  { value: "categories", label: copy.categories },
+];
+
+function monthKey(date: { year: number; month: number }): string {
+  return `${date.year}-${date.month}`;
+}
+
+function categoryCount(
+  billing: readonly UpcomingSubscription[],
+  category: string,
+): number {
+  return billing.filter(
+    (item) => (item.subscription.category ?? "other") === category,
+  ).length;
 }
 
 export function InsightsScreen() {
-  const theme = useTheme();
   const { profile } = useProfile();
   const { status, failure, subscriptions, refresh } = useSubscriptions();
   const { alert, showFailure } = useSubscriptionAlert();
-  const [refreshing, setRefreshing] = useState(false);
+  const pull = usePullToRefresh(refresh, showFailure);
+  const [view, setView] = useState<View>("months");
 
   const now = today();
   const currency =
     profile?.currency ?? subscriptions[0]?.currency ?? fallbackCurrency;
-  const { monthlyMinor, yearlyMinor, count, billing } = summarize(
+  const { monthlyMinor, yearlyMinor, billing } = summarize(
     subscriptions,
     now,
     currency,
@@ -89,33 +81,51 @@ export function InsightsScreen() {
   const split = categorySplit(billing, categoryLimit);
   const projection = projectMonthly(billing, now, projectionMonths);
   const priciest = mostExpensive(billing);
-  const currentKey = `${now.year}-${now.month}`;
-
-  const pullToRefresh = async () => {
-    setRefreshing(true);
-    const result = await refresh();
-    setRefreshing(false);
-    if (!result.ok) {
-      showFailure(result.reason);
-    }
-  };
+  const totals = projection.months.map((entry) => entry.totalMinor);
+  const highest = projection.months[totals.indexOf(Math.max(...totals))];
+  const lowest = projection.months[totals.indexOf(Math.min(...totals))];
 
   const openAdd = () => router.push("/add-subscription");
 
+  const monthStats: StatItem[] = [
+    {
+      key: "average",
+      label: copy.average,
+      value: formatMoney(projection.averageMinor, currency),
+    },
+    {
+      key: "highest",
+      label: copy.highest,
+      value: formatMoney(highest.totalMinor, currency),
+      note: formatMonthShort(highest.month),
+    },
+    {
+      key: "lowest",
+      label: copy.lowest,
+      value: formatMoney(lowest.totalMinor, currency),
+      note: formatMonthShort(lowest.month),
+    },
+  ];
+
+  const facts: StatItem[] =
+    priciest === null
+      ? []
+      : [
+          {
+            key: "priciest",
+            label: copy.priciest,
+            value: priciest.subscription.name,
+          },
+          {
+            key: "save",
+            label: copy.wouldSave,
+            value: formatMoney(yearlyAmountMinor(priciest.subscription), currency),
+            note: copy.perYear,
+          },
+        ];
+
   return (
-    <Screen
-      scroll
-      withTabBar
-      scrollViewProps={{
-        refreshControl: (
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={pullToRefresh}
-            tintColor={theme.ink3}
-          />
-        ),
-      }}
-    >
+    <Screen scroll withTabBar refresh={pull}>
       <T style="title" accessibilityRole="header">
         {copy.title}
       </T>
@@ -126,16 +136,16 @@ export function InsightsScreen() {
         </>
       ) : status === "error" ? (
         <>
-          <Gap size="s24" />
+          <Gap size="s32" />
           <EmptyState
             title={copy.errorTitle}
             body={failureMessage(failure ?? "unknown")}
-            link={{ title: subscriptionsCopy.list.retry, onPress: pullToRefresh }}
+            link={{ title: subscriptionsCopy.list.retry, onPress: pull.onRefresh }}
           />
         </>
       ) : billing.length === 0 ? (
         <>
-          <Gap size="s24" />
+          <Gap size="s32" />
           <EmptyState
             title={copy.emptyTitle}
             body={copy.emptyBody}
@@ -144,58 +154,63 @@ export function InsightsScreen() {
         </>
       ) : (
         <>
-          <SectionLabel
-            top="s24"
-            title={copy.byCategory}
-            value={formatMoney(monthlyMinor, currency)}
-          />
-          <BarList
-            items={split.map((entry) => ({
-              key: entry.category,
-              label: subscriptionsCopy.categories[entry.category],
-              share: entry.share,
-              percent: `${Math.round(entry.share * percent)}%`,
-              amount: formatMoney(entry.monthlyMinor, currency),
-            }))}
-          />
-          <SectionLabel title={copy.atAGlance} />
-          <StatRow
-            cells={[
-              { value: formatMoney(yearlyMinor, currency), label: copy.perYear },
-              ...(priciest === null
-                ? []
-                : [
-                    {
-                      value: formatMoney(
-                        monthlyAmountMinor(
-                          priciest.subscription.amountMinor,
-                          priciest.subscription.cycle,
-                        ),
-                        currency,
-                      ),
-                      label: priciest.subscription.name,
-                    },
-                  ]),
-              { value: String(count), label: copy.active },
-            ]}
-          />
-          <SectionLabel
-            title={copy.byMonth}
-            value={`${formatMoney(projection.averageMinor, currency)} ${copy.average}`}
-          />
-          <BarChart
-            bars={projection.months.map((entry) => ({
-              key: `${entry.month.year}-${entry.month.month}`,
-              label: formatMonthShort(entry.month),
-              value: entry.totalMinor,
-            }))}
-            average={projection.averageMinor > 0 ? projection.averageMinor : undefined}
-            activeKey={currentKey}
-          />
           <Gap size="s24" />
-          <T style="caption" color="ink3">
-            {closingLine(count, split, priciest, currency)}
-          </T>
+          <Entering index={0}>
+            <T style="label" color="ink3">
+              {copy.yearEyebrow}
+            </T>
+            <Gap size="s4" />
+            <AnimatedMoney amount={formatMoney(yearlyMinor, currency)} size="display" />
+            <Gap size="s4" />
+            <T style="caption" color="ink3">
+              {copy.perMonthCaption.replace("{monthly}", formatMoney(monthlyMinor, currency))}
+            </T>
+            <Gap size="s24" />
+            <Segmented options={views} value={view} onChange={setView} />
+          </Entering>
+          <Gap size="s32" />
+          {view === "months" ? (
+            <Entering index={1}>
+              <BarChart
+                bars={projection.months.map((entry) => ({
+                  key: monthKey(entry.month),
+                  label: formatMonthShort(entry.month),
+                  value: entry.totalMinor,
+                  amount: formatMoney(entry.totalMinor, currency),
+                }))}
+                activeKey={monthKey(now)}
+                accessibilityLabel={copy.chart}
+              />
+              <Gap size="s32" />
+              <StatList items={monthStats} />
+            </Entering>
+          ) : (
+            <Entering index={1}>
+              {split.map((entry) => {
+                const count = categoryCount(billing, entry.category);
+                return (
+                  <ShareBar
+                    key={entry.category}
+                    label={subscriptionsCopy.categories[entry.category]}
+                    amount={formatMoney(entry.monthlyMinor, currency)}
+                    share={entry.share}
+                    caption={(count === 1
+                      ? copy.categoryCaptionOne
+                      : copy.categoryCaptionMany
+                    )
+                      .replace("{share}", String(Math.round(entry.share * percent)))
+                      .replace("{count}", String(count))}
+                  />
+                );
+              })}
+              {facts.length === 0 ? null : (
+                <>
+                  <SectionHeading title={copy.facts} />
+                  <StatList items={facts} />
+                </>
+              )}
+            </Entering>
+          )}
         </>
       )}
       {alert}

@@ -5,12 +5,18 @@ import {
   DateField,
   Disclosure,
   Gap,
+  Group,
   Input,
+  Logo,
+  LogoRow,
+  SectionHeading,
   SelectField,
   Spacer,
   T,
+  TextLink,
   ToggleRow,
   layout,
+  useThemeName,
   type InputRef,
   type SelectOption,
 } from "@/design";
@@ -19,6 +25,7 @@ import {
   type BillingCycle,
   type CalendarDate,
 } from "@/lib/calendar";
+import { logoUrl } from "@/lib/logos";
 import { currencySymbol, parseAmount, toAmountInput } from "@/lib/money";
 
 import { subscriptionsCopy } from "../copy";
@@ -31,21 +38,25 @@ import {
   type SubscriptionDraft,
 } from "../form";
 import { formatCycle } from "../format";
+import { searchMinLength, type ServiceSuggestion } from "../logos";
 import {
   categories,
   cyclePresetFor,
   cyclePresets,
   type NewSubscription,
 } from "../types";
+import { useServiceSearch } from "../useServiceSearch";
 import {
   looksLikeCardNumber,
   nameMaxLength,
+  normalizeName,
   notesMaxLength,
   paymentMethodMaxLength,
   renewalHorizon,
 } from "../validation";
 
 const copy = subscriptionsCopy.form;
+const groupInset = layout.icon.row + layout.row.gap;
 
 const presetOptions: readonly SelectOption<CycleChoice>[] = cyclePresets.map(
   (preset) => ({ value: preset, label: subscriptionsCopy.cycles[preset] }),
@@ -81,6 +92,11 @@ export type SubscriptionForm = {
   cycleOptions: readonly SelectOption<CycleChoice>[];
   start: CalendarDate;
   currency: string | null;
+  nameActive: boolean;
+  setNameActive: (active: boolean) => void;
+  pickedName: string | null;
+  pick: (suggestion: ServiceSuggestion) => void;
+  removeLogo: () => void;
 };
 
 export function useSubscriptionForm({
@@ -93,6 +109,10 @@ export function useSubscriptionForm({
   const [draft, setDraft] = useState(initial);
   const [amountError, setAmountError] = useState<string | undefined>();
   const [expanded, setExpanded] = useState(initiallyExpanded);
+  const [nameActive, setNameActive] = useState(false);
+  const [pickedName, setPickedName] = useState<string | null>(
+    initial.serviceKey === null ? null : normalizeName(initial.name),
+  );
 
   const set: SubscriptionForm["set"] = (key, value) => {
     if (key === "amount") {
@@ -109,6 +129,21 @@ export function useSubscriptionForm({
     ) {
       setAmountError(subscriptionsCopy.errors.amountInvalid);
     }
+  };
+
+  const pick = (suggestion: ServiceSuggestion) => {
+    setDraft((current) => ({
+      ...current,
+      name: suggestion.name,
+      serviceKey: suggestion.domain,
+    }));
+    setPickedName(normalizeName(suggestion.name));
+    setNameActive(false);
+  };
+
+  const removeLogo = () => {
+    setDraft((current) => ({ ...current, serviceKey: null }));
+    setPickedName(null);
   };
 
   const cycleOptions: readonly SelectOption<CycleChoice>[] =
@@ -130,6 +165,11 @@ export function useSubscriptionForm({
     cycleOptions,
     start,
     currency,
+    nameActive,
+    setNameActive,
+    pickedName,
+    pick,
+    removeLogo,
   };
 }
 
@@ -146,11 +186,38 @@ export function SubscriptionForm({
   trialHint,
   autoFocusName = false,
 }: SubscriptionFormProps) {
+  const themeName = useThemeName();
   const amountInput = useRef<InputRef>(null);
   const { draft, set, currency, start } = form;
+  const nameChanged = normalizeName(draft.name) !== form.pickedName;
+  const searching = form.nameActive && nameChanged;
+  const { results } = useServiceSearch(draft.name, searching);
+  const showSuggestions =
+    searching &&
+    draft.name.trim().length >= searchMinLength &&
+    results.length > 0;
+
+  const focusAmount = () => {
+    form.setNameActive(false);
+    amountInput.current?.focus();
+  };
+
+  const pick = (suggestion: ServiceSuggestion) => {
+    form.pick(suggestion);
+    amountInput.current?.focus();
+  };
 
   return (
     <View>
+      <Logo
+        name={draft.name}
+        uri={logoUrl(draft.serviceKey, {
+          theme: themeName,
+          px: layout.logo.request.large,
+        })}
+        size="detail"
+      />
+      <Gap size="s16" />
       <Input
         label={copy.name}
         value={draft.name}
@@ -161,8 +228,44 @@ export function SubscriptionForm({
         autoCapitalize="words"
         autoCorrect={false}
         returnKeyType="next"
-        onSubmitEditing={() => amountInput.current?.focus()}
+        onFocus={() => form.setNameActive(true)}
+        onSubmitEditing={focusAmount}
       />
+      {draft.serviceKey === null ? null : (
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: layout.row.gap,
+          }}
+        >
+          <T style="caption" color="ink3" numberOfLines={1} override={{ flex: 1 }}>
+            {copy.logoFrom.replace("{domain}", draft.serviceKey)}
+          </T>
+          <TextLink title={copy.removeLogo} onPress={form.removeLogo} />
+        </View>
+      )}
+      {showSuggestions ? (
+        <>
+          <SectionHeading size="small" top="s16" bottom="s4" title={copy.suggestions} />
+          {results.slice(0, layout.suggestions.max).map((suggestion) => (
+            <LogoRow
+              key={suggestion.domain}
+              title={suggestion.name}
+              subtitle={suggestion.domain}
+              logo={{
+                name: suggestion.name,
+                uri: logoUrl(suggestion.domain, {
+                  theme: themeName,
+                  px: layout.logo.request.small,
+                }),
+              }}
+              onPress={() => pick(suggestion)}
+            />
+          ))}
+        </>
+      ) : null}
       <Gap size="s16" />
       <Input
         ref={amountInput}
@@ -171,6 +274,7 @@ export function SubscriptionForm({
         prefix={currency === null ? undefined : currencySymbol(currency)}
         value={draft.amount}
         onChangeText={(value) => set("amount", value)}
+        onFocus={() => form.setNameActive(false)}
         onBlur={form.blurAmount}
         placeholder={
           currency === null ? copy.amountPlaceholder : toAmountInput(0, currency)
@@ -179,26 +283,31 @@ export function SubscriptionForm({
         error={form.amountError}
       />
       <Gap size="s16" />
-      <SelectField
-        label={copy.every}
-        options={form.cycleOptions}
-        value={draft.cycle}
-        onChange={(value) => set("cycle", value)}
-      />
-      <DateField
-        label={dateLabel}
-        value={draft.date}
-        minimumDate={toLocalDate(start)}
-        maximumDate={toLocalDate(renewalHorizon(start))}
-        onChange={(value) => set("date", value)}
-      />
-      <SelectField
-        label={copy.category}
-        options={categoryOptions}
-        value={draft.category}
-        onChange={(value) => set("category", value)}
-        placeholder={draft.category === noCategory}
-      />
+      <Group inset={groupInset}>
+        <SelectField
+          icon="repeat"
+          label={copy.every}
+          options={form.cycleOptions}
+          value={draft.cycle}
+          onChange={(value) => set("cycle", value)}
+        />
+        <DateField
+          icon="calendar"
+          label={dateLabel}
+          value={draft.date}
+          minimumDate={toLocalDate(start)}
+          maximumDate={toLocalDate(renewalHorizon(start))}
+          onChange={(value) => set("date", value)}
+        />
+        <SelectField
+          icon="tag"
+          label={copy.category}
+          options={categoryOptions}
+          value={draft.category}
+          onChange={(value) => set("category", value)}
+          placeholder={draft.category === noCategory}
+        />
+      </Group>
       <Gap size="s16" />
       <Disclosure
         title={copy.more}
@@ -208,14 +317,17 @@ export function SubscriptionForm({
       {form.expanded ? (
         <View>
           <Gap size="s8" />
-          <ToggleRow
-            label={copy.trial}
-            value={draft.trial}
-            onValueChange={(value) => set("trial", value)}
-          />
+          <Group inset={groupInset}>
+            <ToggleRow
+              icon="trial"
+              label={copy.trial}
+              value={draft.trial}
+              onValueChange={(value) => set("trial", value)}
+            />
+          </Group>
           {draft.trial ? (
             <>
-              <Spacer height={layout.input.hintGap} />
+              <Spacer height={layout.field.hintGap} />
               <T style="caption" color="ink3">
                 {trialHint}
               </T>

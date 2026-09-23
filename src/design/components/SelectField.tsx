@@ -1,26 +1,17 @@
-import {
-  Host,
-  HStack,
-  Image,
-  Menu,
-  Picker,
-  Spacer,
-  Text,
-} from "@expo/ui/swift-ui";
+import { Host, HStack, Image, Menu, Picker, Text } from "@expo/ui/swift-ui";
 import {
   contentShape,
-  font,
   foregroundStyle,
   pickerStyle,
   shapes,
   tag,
 } from "@expo/ui/swift-ui/modifiers";
-import { View } from "react-native";
 
-import { icons, layout, type } from "../tokens";
+import { icons, layout } from "../tokens";
+import { useSwiftFont } from "../swiftText";
 import { useTheme, useThemeName } from "../theme/useTheme";
-import { Hairline } from "../primitives/Hairline";
-import { T } from "../primitives/T";
+import type { IconSource } from "../types";
+import { IconRow } from "./IconRow";
 
 export type SelectOption<TValue extends string> = {
   value: TValue;
@@ -32,6 +23,7 @@ export type SelectFieldProps<TValue extends string> = {
   options: readonly SelectOption<TValue>[];
   value: TValue;
   onChange: (value: TValue) => void;
+  icon?: IconSource;
   placeholder?: boolean;
 };
 
@@ -40,33 +32,24 @@ export function SelectField<TValue extends string>({
   options,
   value,
   onChange,
+  icon,
   placeholder = false,
 }: SelectFieldProps<TValue>) {
   const theme = useTheme();
   const themeName = useThemeName();
+  const valueFont = useSwiftFont("body");
   const selected = options.find((option) => option.value === value);
 
   return (
-    <>
-      <View
-        style={{
-          minHeight: layout.row.minHeight,
-          flexDirection: "row",
-          alignItems: "center",
-        }}
-      >
-        <T style="bodyMedium" numberOfLines={1}>
-          {label}
-        </T>
+    <IconRow
+      icon={icon}
+      title={label}
+      trailing={
         <Host
-          matchContents={{ vertical: true }}
+          matchContents={{ horizontal: true }}
           colorScheme={themeName}
           seedColor={theme.ink}
-          style={{
-            flex: 1,
-            minHeight: layout.row.minHeight,
-            justifyContent: "center",
-          }}
+          style={{ height: layout.row.minHeight - layout.row.paddingVertical * 2 }}
         >
           <Menu
             label={
@@ -75,10 +58,9 @@ export function SelectField<TValue extends string>({
                 spacing={layout.select.gap}
                 modifiers={[contentShape(shapes.rectangle())]}
               >
-                <Spacer />
                 <Text
                   modifiers={[
-                    font({ size: type.body.fontSize }),
+                    ...valueFont,
                     foregroundStyle(placeholder ? theme.ink4 : theme.ink2),
                   ]}
                 >
@@ -105,8 +87,7 @@ export function SelectField<TValue extends string>({
             </Picker>
           </Menu>
         </Host>
-      </View>
-      <Hairline />
-    </>
+      }
+    />
   );
 }

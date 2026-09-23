@@ -32,11 +32,11 @@ export function CurrencySetupScreen() {
   return (
     <Screen keyboard>
       <Gap size="s24" />
-      <T style="heading" accessibilityRole="header">
+      <T style="title" accessibilityRole="header">
         {copy.setupTitle}
       </T>
       <Gap size="s8" />
-      <T style="caption" color="ink2">
+      <T style="body" color="ink2">
         {copy.setupSubtitle}
       </T>
       <Gap size="s24" />

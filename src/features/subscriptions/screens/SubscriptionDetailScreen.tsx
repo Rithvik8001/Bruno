@@ -1,19 +1,27 @@
 import { router } from "expo-router";
 import { useState, type ReactNode } from "react";
 
+import { View } from "react-native";
+
 import {
+  AnimatedMoney,
+  Button,
+  Chip,
   EmptyState,
   Gap,
   IconAction,
-  ListRow,
+  IconRow,
   Loading,
-  Money,
+  Logo,
   NavBar,
+  PillRow,
   Screen,
-  SectionLabel,
   Spacer,
   T,
   TextAction,
+  layout,
+  useThemeName,
+  type ChipTone,
 } from "@/design";
 import { fromLocalDate, nextRenewal, today } from "@/lib/calendar";
 import { formatMoney } from "@/lib/money";
@@ -25,6 +33,7 @@ import {
   formatPer,
   formatRelativeDay,
   formatWeekdayDate,
+  subscriptionLogo,
 } from "../format";
 import { derivedStatus, isBilling } from "../selectors";
 import { useSubscriptions } from "../SubscriptionsProvider";
@@ -35,7 +44,6 @@ import {
 } from "../useSubscriptionAlert";
 
 const copy = subscriptionsCopy.detail;
-const separator = " · ";
 const loadingRows = 4;
 
 type StatusAction = {
@@ -97,20 +105,19 @@ function statusActions(status: SubscriptionStatus): readonly StatusAction[] {
   }
 }
 
-function captionLine(subscription: Subscription, trial: boolean): string {
-  const parts: string[] = [];
+function chips(
+  subscription: Subscription,
+  trial: boolean,
+): { label: string; tone: ChipTone }[] {
+  const items: { label: string; tone: ChipTone }[] = [];
   if (subscription.status === "paused") {
-    parts.push(copy.paused);
+    items.push({ label: copy.paused, tone: "neutral" });
   } else if (subscription.status === "cancelled") {
-    parts.push(copy.cancelled);
+    items.push({ label: copy.cancelled, tone: "neutral" });
   } else if (trial) {
-    parts.push(copy.trial);
+    items.push({ label: copy.trial, tone: "accent" });
   }
-  if (subscription.category !== null) {
-    parts.push(subscriptionsCopy.categories[subscription.category]);
-  }
-  parts.push(formatCycleAdverb(subscription.cycle));
-  return parts.join(separator);
+  return items;
 }
 
 function Shell({
@@ -121,7 +128,7 @@ function Shell({
   action?: { title: string; onPress: () => void };
 }) {
   return (
-    <Screen scroll fill scrollViewProps={{ alwaysBounceVertical: false }}>
+    <Screen scroll fill bounce={false}>
       <NavBar
         left={
           <IconAction
@@ -142,6 +149,7 @@ function Shell({
 }
 
 function Detail({ subscription }: { subscription: Subscription }) {
+  const themeName = useThemeName();
   const { remove, setStatus } = useSubscriptions();
   const { alert, show, showFailure } = useSubscriptionAlert();
   const [busy, setBusy] = useState(false);
@@ -150,6 +158,7 @@ function Detail({ subscription }: { subscription: Subscription }) {
   const renewal = nextRenewal(subscription.anchorDate, subscription.cycle, now);
   const status = derivedStatus(subscription, now);
   const actions = statusActions(subscription.status);
+  const badges = chips(subscription, status === "trial");
 
   const openEdit = () =>
     router.push({
@@ -210,89 +219,89 @@ function Detail({ subscription }: { subscription: Subscription }) {
     });
   };
 
-  const nextLine = !isBilling(status)
-    ? undefined
-    : status === "trial"
-      ? copy.trialUntil.replace("{date}", formatWeekdayDate(renewal))
-      : `${copy.nextPayment.replace("{date}", formatWeekdayDate(renewal))}${separator}${formatRelativeDay(renewal, now)}`;
+  const billing = isBilling(status);
 
   return (
     <Shell action={{ title: copy.edit, onPress: openEdit }}>
       <Gap size="s24" />
+      <Logo {...subscriptionLogo(subscription, themeName, "detail")} size="detail" />
+      <Gap size="s16" />
       <T style="title" accessibilityRole="header">
         {subscription.name}
       </T>
-      <Gap size="s4" />
-      <T style="caption" color="ink3">
-        {captionLine(subscription, status === "trial")}
-      </T>
+      {badges.length === 0 ? null : (
+        <>
+          <Gap size="s12" />
+          <View style={{ flexDirection: "row", gap: layout.chip.gap }}>
+            {badges.map((badge) => (
+              <Chip key={badge.label} label={badge.label} tone={badge.tone} />
+            ))}
+          </View>
+        </>
+      )}
       <Gap size="s24" />
-      <Money
+      <AnimatedMoney
         amount={formatMoney(subscription.amountMinor, subscription.currency)}
         caption={formatPer(subscription.cycle)}
+        size="display"
       />
-      {nextLine === undefined ? null : (
-        <>
-          <Gap size="s8" />
-          <T style="caption" color="ink2">
-            {nextLine}
-          </T>
-        </>
+      <Gap size="s24" />
+      {billing ? (
+        <IconRow
+          icon="calendar"
+          title={status === "trial" ? copy.trialUntil : copy.nextPayment}
+          subtitle={`${formatWeekdayDate(renewal)} · ${formatRelativeDay(renewal, now)}`}
+        />
+      ) : null}
+      <IconRow
+        icon="repeat"
+        title={copy.repeats}
+        subtitle={formatCycleAdverb(subscription.cycle)}
+      />
+      {subscription.category === null ? null : (
+        <IconRow
+          icon="tag"
+          title={copy.category}
+          subtitle={subscriptionsCopy.categories[subscription.category]}
+        />
       )}
-      <SectionLabel title={copy.details} />
-      <>
-        {subscription.category === null ? null : (
-          <ListRow
-            title={copy.category}
-            value={subscriptionsCopy.categories[subscription.category]}
-            mono={false}
-          />
-        )}
-        <ListRow
-          title={copy.billing}
-          value={formatCycleAdverb(subscription.cycle)}
-          mono={false}
+      {subscription.paymentMethod === null ? null : (
+        <IconRow
+          icon="card"
+          title={copy.paymentMethod}
+          subtitle={subscription.paymentMethod}
         />
-        {subscription.paymentMethod === null ? null : (
-          <ListRow
-            title={copy.paymentMethod}
-            value={subscription.paymentMethod}
-            mono={false}
-          />
-        )}
-        <ListRow
-          title={copy.sinceLabel}
-          value={formatMonthYear(
-            fromLocalDate(new Date(subscription.createdAt)),
-          )}
-          mono={false}
-        />
-      </>
+      )}
       {subscription.notes === null ? null : (
-        <>
-          <SectionLabel title={copy.notes} />
-          <T style="body" color="ink2">
-            {subscription.notes}
-          </T>
-        </>
+        <IconRow
+          icon="note"
+          title={copy.notes}
+          subtitle={subscription.notes}
+          subtitleLines={0}
+        />
       )}
+      <IconRow
+        icon="clock"
+        title={copy.sinceLabel}
+        subtitle={formatMonthYear(fromLocalDate(new Date(subscription.createdAt)))}
+      />
       <Spacer grow />
       <Gap size="s32" />
-      <>
-        {actions.map((action, index) => (
-          <ListRow
-            key={action.target}
-            title={action.title}
-            tone={index === 0 ? "ink" : "ink2"}
-            onPress={busy ? undefined : () => askStatus(action)}
-          />
-        ))}
-        <ListRow
-          title={copy.delete}
-          tone="ink2"
-          onPress={busy ? undefined : askDelete}
-        />
-      </>
+      <PillRow
+        buttons={actions.map((action) => ({
+          title: action.title,
+          variant: "secondary",
+          disabled: busy,
+          onPress: () => askStatus(action),
+        }))}
+      />
+      <Gap size="s8" />
+      <Button
+        title={copy.delete}
+        variant="ghost"
+        disabled={busy}
+        onPress={askDelete}
+      />
       {alert}
     </Shell>
   );
@@ -302,7 +311,7 @@ function LoadingDetail() {
   return (
     <Shell>
       <Gap size="s24" />
-      <Loading rows={loadingRows} accessibilityLabel={copy.loading} />
+      <Loading variant="hero" rows={loadingRows} accessibilityLabel={copy.loading} />
     </Shell>
   );
 }
@@ -310,11 +319,15 @@ function LoadingDetail() {
 function NotFound() {
   return (
     <Shell>
-      <Gap size="s24" />
+      <Gap size="s32" />
       <EmptyState
         title={copy.notFoundTitle}
         body={copy.notFoundBody}
-        action={{ title: copy.notFoundAction, onPress: () => router.back() }}
+        action={{
+          title: copy.notFoundAction,
+          onPress: () =>
+            router.canGoBack() ? router.back() : router.replace("/overview"),
+        }}
       />
     </Shell>
   );

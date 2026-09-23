@@ -51,11 +51,7 @@ export function CodeInput({
       {Array.from({ length }, (_, index) => {
         const isActive = focused && index === activeIndex;
         const digit = digits[index];
-        const underline = error
-          ? theme.ink2
-          : digit !== undefined || isActive
-            ? theme.ink
-            : theme.border;
+        const strong = error || isActive;
 
         return (
           <View
@@ -65,8 +61,11 @@ export function CodeInput({
               height: layout.code.cell,
               alignItems: "center",
               justifyContent: "center",
-              borderBottomWidth: layout.code.underline,
-              borderBottomColor: underline,
+              borderRadius: layout.code.radius,
+              borderCurve: "continuous",
+              backgroundColor: theme.canvas,
+              borderWidth: strong ? layout.code.focus : layout.code.border,
+              borderColor: strong ? theme.ink : theme.border,
             }}
           >
             {digit === undefined ? (
@@ -75,7 +74,7 @@ export function CodeInput({
                   style={{
                     width: layout.code.caretWidth,
                     height: layout.code.caretHeight,
-                    backgroundColor: theme.ink,
+                    backgroundColor: theme.accent,
                   }}
                 />
               ) : null

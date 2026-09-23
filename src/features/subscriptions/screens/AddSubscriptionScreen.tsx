@@ -2,6 +2,7 @@ import { router, useNavigation } from "expo-router";
 import { useLayoutEffect, useState } from "react";
 
 import { Button, Gap, Screen, Spacer, T, TextAction } from "@/design";
+import { usePushStatus } from "@/features/notifications";
 import { useProfile } from "@/features/profile";
 import { today } from "@/lib/calendar";
 
@@ -15,7 +16,8 @@ const copy = subscriptionsCopy.form;
 
 export function AddSubscriptionScreen() {
   const { profile } = useProfile();
-  const { add } = useSubscriptions();
+  const { add, subscriptions } = useSubscriptions();
+  const { permission, requestPermission } = usePushStatus();
   const { alert, showFailure } = useSubscriptionAlert();
   const [start] = useState(() => today());
   const [submitting, setSubmitting] = useState(false);
@@ -34,11 +36,15 @@ export function AddSubscriptionScreen() {
     }
 
     setSubmitting(true);
+    const first = subscriptions.length === 0;
     const result = await add(form.input);
     setSubmitting(false);
 
     if (result.ok) {
       router.back();
+      if (first && permission?.status === "undetermined") {
+        void requestPermission();
+      }
       return;
     }
     showFailure(result.reason);
@@ -52,19 +58,18 @@ export function AddSubscriptionScreen() {
         <TextAction title={copy.cancel} onPress={() => router.back()} />
       ),
       headerRight: () => (
-        <TextAction title={copy.confirm} onPress={submit} disabled={!canSubmit} />
+        <TextAction
+          title={copy.confirm}
+          onPress={submit}
+          disabled={!canSubmit}
+          prominent
+        />
       ),
     });
   }, [navigation, canSubmit, submit]);
 
   return (
-    <Screen
-      scroll
-      fill
-      keyboard
-      header
-      scrollViewProps={{ alwaysBounceVertical: false }}
-    >
+    <Screen scroll fill keyboard header bounce={false}>
       <T style="title" accessibilityRole="header">
         {copy.title}
       </T>

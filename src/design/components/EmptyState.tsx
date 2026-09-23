@@ -16,17 +16,41 @@ export type EmptyStateProps = {
   body?: string;
   action?: EmptyStateAction;
   link?: EmptyStateAction;
+  align?: "center" | "start";
   inset?: boolean;
 };
 
-export function EmptyState({ title, body, action, link, inset = false }: EmptyStateProps) {
+export function EmptyState({
+  title,
+  body,
+  action,
+  link,
+  align = "start",
+  inset = false,
+}: EmptyStateProps) {
+  const centered = align === "center";
+  const textAlign = centered ? "center" : "left";
+  const selfAlign = centered ? "center" : "flex-start";
+
   return (
-    <View style={{ paddingHorizontal: inset ? layout.margin : 0 }}>
-      <T style="heading">{title}</T>
+    <View
+      style={{
+        paddingHorizontal: inset ? layout.margin : 0,
+        alignItems: selfAlign,
+      }}
+    >
+      <T style="heading" align={textAlign}>
+        {title}
+      </T>
       {body === undefined ? null : (
         <>
           <Spacer height={layout.emptyState.gap} />
-          <T style="caption" color="ink2">
+          <T
+            style="body"
+            color="ink2"
+            align={textAlign}
+            override={{ maxWidth: layout.emptyState.maxWidth }}
+          >
             {body}
           </T>
         </>
@@ -34,13 +58,13 @@ export function EmptyState({ title, body, action, link, inset = false }: EmptySt
       {action === undefined ? null : (
         <>
           <Spacer height={layout.emptyState.actionGap} />
-          <Button title={action.title} onPress={action.onPress} variant="secondary" size="s" inline />
+          <Button title={action.title} onPress={action.onPress} size="s" inline />
         </>
       )}
       {link === undefined ? null : (
         <>
           <Spacer height={layout.emptyState.gap} />
-          <View style={{ alignSelf: "flex-start" }}>
+          <View style={{ alignSelf: selfAlign }}>
             <TextLink title={link.title} onPress={link.onPress} />
           </View>
         </>

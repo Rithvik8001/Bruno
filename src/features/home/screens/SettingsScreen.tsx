@@ -1,17 +1,22 @@
+import { openSettings } from "expo-linking";
 import { router } from "expo-router";
+import { openBrowserAsync } from "expo-web-browser";
 import { useState } from "react";
 
 import {
   EmptyState,
   Gap,
-  ListRow,
+  Group,
+  IconRow,
   Loading,
   Screen,
-  SectionLabel,
+  SectionHeading,
   SelectField,
   T,
+  TextLink,
   ToggleRow,
   appearancePreferences,
+  layout,
   useAppearance,
   type AppearancePreference,
   type SelectOption,
@@ -23,17 +28,31 @@ import {
   useSession,
 } from "@/features/auth";
 import {
+  formatHour,
+  notificationsCopy,
+  secondHourOptions,
+  sendHourOptions,
+  usePushStatus,
+} from "@/features/notifications";
+import {
+  isNotificationFrequency,
   isReminderLeadDays,
+  isSendHour,
+  notificationFrequencies,
   reminderLeadOptions,
   useProfile,
+  type NotificationFrequency,
   type ProfilePreferences,
 } from "@/features/profile";
+import { subscriptionsCopy } from "@/features/subscriptions";
+import { logoDevHome } from "@/lib/logos";
 import { currencyName } from "@/lib/money";
 
 import { homeCopy } from "../copy";
 
 const copy = homeCopy.settings;
-const loadingRows = 5;
+const loadingRows = 10;
+const groupInset = layout.icon.row + layout.row.gap;
 
 type LeadValue = `${(typeof reminderLeadOptions)[number]}`;
 
@@ -43,6 +62,23 @@ const leadOptions: readonly SelectOption<LeadValue>[] = reminderLeadOptions.map(
     label: copy.leadDays[`${days}`],
   }),
 );
+
+const frequencyOptions: readonly SelectOption<NotificationFrequency>[] =
+  notificationFrequencies.map((value) => ({
+    value,
+    label: copy.frequencyOptions[value],
+  }));
+
+type HourValue = `${number}`;
+
+function hourOptions(hours: readonly number[]): readonly SelectOption<HourValue>[] {
+  return hours.map((hour) => ({
+    value: `${hour}` as HourValue,
+    label: formatHour(hour),
+  }));
+}
+
+const sendOptions = hourOptions(sendHourOptions);
 
 const appearanceOptions: readonly SelectOption<AppearancePreference>[] =
   appearancePreferences.map((value) => ({
@@ -55,8 +91,10 @@ export function SettingsScreen() {
   const { profile, status, retry, update } = useProfile();
   const { preference, setPreference: setAppearance } = useAppearance();
   const { alert, show, showFailure } = useAuthAlert();
+  const { permission, requestPermission, releaseDevice } = usePushStatus();
   const [busy, setBusy] = useState(false);
   const email = session?.user.email;
+  const pushOn = profile?.pushEnabled === true && permission?.status === "granted";
 
   const setPreference = (patch: Partial<ProfilePreferences>) => {
     void update(patch).then((result) => {
@@ -64,6 +102,49 @@ export function SettingsScreen() {
         showFailure("unknown");
       }
     });
+  };
+
+  const togglePush = async (on: boolean) => {
+    if (!on) {
+      setPreference({ pushEnabled: false });
+      return;
+    }
+    const current =
+      permission?.status === "undetermined" ? await requestPermission() : permission;
+    if (current?.status === "granted") {
+      setPreference({ pushEnabled: true });
+      return;
+    }
+    if (current?.status === "denied" && !current.canAskAgain) {
+      show({
+        title: notificationsCopy.denied.title,
+        message: notificationsCopy.denied.message,
+        actions: [
+          { title: notificationsCopy.denied.cancel, role: "cancel" },
+          {
+            title: notificationsCopy.denied.open,
+            onPress: () => {
+              void openSettings();
+            },
+          },
+        ],
+      });
+    }
+  };
+
+  const setSendHour = (hour: number) => {
+    if (profile === null) {
+      return;
+    }
+    setPreference(
+      profile.secondSendHour > hour
+        ? { sendHour: hour }
+        : { sendHour: hour, secondSendHour: hour + 1 },
+    );
+  };
+
+  const signOutHere = () => {
+    void releaseDevice().then(signOut);
   };
 
   const confirmDelete = async () => {
@@ -97,64 +178,133 @@ export function SettingsScreen() {
       <T style="title" accessibilityRole="header">
         {copy.title}
       </T>
-      <SectionLabel top="s24" title={copy.notifications} />
+      <SectionHeading top="s24" title={copy.reminders} />
       {status === "loading" ? (
         <Loading rows={loadingRows} />
       ) : profile === null ? (
         <EmptyState
+          align="start"
           title={copy.loadErrorTitle}
           link={{ title: copy.retry, onPress: retry }}
         />
       ) : (
         <>
-          <ToggleRow
-            label={copy.renewalReminders}
-            value={profile.renewalReminders}
-            onValueChange={(value) =>
-              setPreference({ renewalReminders: value })
-            }
-          />
-          <ToggleRow
-            label={copy.trialReminders}
-            value={profile.trialReminders}
-            onValueChange={(value) => setPreference({ trialReminders: value })}
-          />
-          <ToggleRow
-            label={copy.renewsToday}
-            value={profile.renewsToday}
-            onValueChange={(value) => setPreference({ renewsToday: value })}
-          />
-          <ToggleRow
-            label={copy.monthlyDigest}
-            value={profile.monthlyDigest}
-            onValueChange={(value) => setPreference({ monthlyDigest: value })}
-          />
-          <SelectField
-            label={copy.remindMe}
-            options={leadOptions}
-            value={`${profile.reminderLeadDays}` as LeadValue}
-            onChange={(next) => {
-              const days = Number(next);
-              if (isReminderLeadDays(days)) {
-                setPreference({ reminderLeadDays: days });
+          <Group inset={groupInset}>
+            <ToggleRow
+              icon="bell"
+              label={copy.renewalReminders}
+              value={profile.renewalReminders}
+              onValueChange={(value) =>
+                setPreference({ renewalReminders: value })
               }
-            }}
-          />
+            />
+            <ToggleRow
+              icon="trial"
+              label={copy.trialReminders}
+              value={profile.trialReminders}
+              onValueChange={(value) => setPreference({ trialReminders: value })}
+            />
+            <ToggleRow
+              icon="calendar"
+              label={copy.renewsToday}
+              value={profile.renewsToday}
+              onValueChange={(value) => setPreference({ renewsToday: value })}
+            />
+            <ToggleRow
+              icon="note"
+              label={copy.monthlyDigest}
+              value={profile.monthlyDigest}
+              onValueChange={(value) => setPreference({ monthlyDigest: value })}
+            />
+            <SelectField
+              icon="clock"
+              label={copy.remindMe}
+              options={leadOptions}
+              value={`${profile.reminderLeadDays}` as LeadValue}
+              onChange={(next) => {
+                const days = Number(next);
+                if (isReminderLeadDays(days)) {
+                  setPreference({ reminderLeadDays: days });
+                }
+              }}
+            />
+          </Group>
+          <SectionHeading title={copy.delivery} />
+          <Group inset={groupInset}>
+            <ToggleRow
+              icon="bell"
+              label={copy.push}
+              value={pushOn}
+              onValueChange={(value) => {
+                void togglePush(value);
+              }}
+            />
+            <ToggleRow
+              icon="mail"
+              label={copy.emailChannel}
+              value={profile.emailEnabled}
+              onValueChange={(value) => setPreference({ emailEnabled: value })}
+            />
+          </Group>
+          <SectionHeading title={copy.schedule} />
+          <Group inset={groupInset}>
+            <SelectField
+              icon="repeat"
+              label={copy.frequency}
+              options={frequencyOptions}
+              value={profile.notificationFrequency}
+              onChange={(next) => {
+                if (isNotificationFrequency(next)) {
+                  setPreference({ notificationFrequency: next });
+                }
+              }}
+            />
+            <SelectField
+              icon="clock"
+              label={copy.time}
+              options={sendOptions}
+              value={`${profile.sendHour}` as HourValue}
+              onChange={(next) => {
+                const hour = Number(next);
+                if (isSendHour(hour)) {
+                  setSendHour(hour);
+                }
+              }}
+            />
+            {profile.notificationFrequency === "twice" ? (
+              <SelectField
+                icon="clock"
+                label={copy.secondTime}
+                options={hourOptions(
+                  secondHourOptions.filter((hour) => hour > profile.sendHour),
+                )}
+                value={`${profile.secondSendHour}` as HourValue}
+                onChange={(next) => {
+                  const hour = Number(next);
+                  if (isSendHour(hour) && hour > profile.sendHour) {
+                    setPreference({ secondSendHour: hour });
+                  }
+                }}
+              />
+            ) : null}
+          </Group>
         </>
       )}
-      <SectionLabel title={copy.appearance} />
-      <>
+      <SectionHeading title={copy.appearance} />
+      <Group inset={groupInset}>
         <SelectField
+          icon="appearance"
           label={copy.theme}
           options={appearanceOptions}
           value={preference}
           onChange={setAppearance}
         />
-      </>
-      <SectionLabel title={copy.account} />
-      <>
+      </Group>
+      <SectionHeading title={copy.account} />
+      <Group inset={groupInset}>
         {profile === null ? null : (
-          <ListRow
+          <IconRow
+            icon="currency"
             title={copy.currency}
             value={profile.currency}
             valueNote={currencyName(profile.currency)}
@@ -163,16 +313,29 @@ export function SettingsScreen() {
           />
         )}
         {email === undefined ? null : (
-          <ListRow title={copy.email} value={email} mono={false} />
+          <IconRow icon="person" title={copy.email} subtitle={email} />
         )}
-        <ListRow title={copy.signOut} onPress={busy ? undefined : signOut} />
-        <ListRow
+        <IconRow
+          icon="signOut"
+          title={copy.signOut}
+          onPress={busy ? undefined : signOutHere}
+        />
+        <IconRow
+          icon="trash"
           title={copy.deleteAccount}
           tone="ink2"
           onPress={busy ? undefined : askDelete}
         />
-      </>
-      <Gap size="s32" />
+      </Group>
+      <Gap size="s24" />
+      <TextLink
+        size="note"
+        title={subscriptionsCopy.logos.credit}
+        onPress={() => {
+          void openBrowserAsync(logoDevHome);
+        }}
+      />
+      <Gap size="s16" />
       {alert}
     </Screen>
   );

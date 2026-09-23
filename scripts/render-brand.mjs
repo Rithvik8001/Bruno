@@ -7,14 +7,35 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const brand = resolve(root, "assets/brand");
 const images = resolve(root, "assets/images");
 
-async function render(source, target, width) {
-  const svg = await readFile(resolve(brand, source), "utf8");
-  const png = new Resvg(svg, { fitTo: { mode: "width", value: width } })
+const scales = [
+  ["", 1],
+  ["@2x", 2],
+  ["@3x", 3],
+];
+
+function png(svg, width) {
+  return new Resvg(svg, { fitTo: { mode: "width", value: width } })
     .render()
     .asPng();
-  await writeFile(resolve(images, target), png);
-  console.log(`${target} ${width}px`);
 }
 
-await render("icon.svg", "icon.png", 1024);
-await render("mark.svg", "mark.png", 360);
+async function write(target, data) {
+  await writeFile(target, data);
+  console.log(target.replace(`${root}/`, ""));
+}
+
+async function renderIcon() {
+  const svg = await readFile(resolve(brand, "icon.svg"), "utf8");
+  await write(resolve(images, "icon.png"), png(svg, 1024));
+}
+
+async function renderMark() {
+  const svg = await readFile(resolve(brand, "mark.svg"), "utf8");
+  const base = 40;
+  for (const [suffix, scale] of scales) {
+    await write(resolve(images, `mark${suffix}.png`), png(svg, base * scale));
+  }
+}
+
+await renderIcon();
+await renderMark();

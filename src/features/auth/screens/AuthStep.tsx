@@ -8,7 +8,6 @@ import {
   Screen,
   Spacer,
   T,
-  TextLink,
 } from "@/design";
 
 import { authCopy } from "../copy";
@@ -45,12 +44,7 @@ export function AuthStep({
   children,
 }: AuthStepProps) {
   return (
-    <Screen
-      scroll
-      fill
-      keyboard
-      scrollViewProps={{ alwaysBounceVertical: false }}
-    >
+    <Screen scroll fill keyboard bounce={false}>
       <NavBar
         left={
           onBack === undefined ? null : (
@@ -72,11 +66,11 @@ export function AuthStep({
         }
       />
       <Gap size="s24" />
-      <T style="heading" accessibilityRole="header">
+      <T style="title" accessibilityRole="header">
         {title}
       </T>
       <Gap size="s8" />
-      <T style="caption" color="ink2">
+      <T style="body" color="ink2">
         {subtitle}
       </T>
       <Gap size="s24" />
@@ -91,8 +85,12 @@ export function AuthStep({
       />
       {secondary === undefined ? null : (
         <>
-          <Gap size="s8" />
-          <TextLink title={secondary.title} onPress={secondary.onPress} />
+          <Gap size="s12" />
+          <Button
+            title={secondary.title}
+            variant="secondary"
+            onPress={secondary.onPress}
+          />
         </>
       )}
     </Screen>

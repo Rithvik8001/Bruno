@@ -463,3 +463,28 @@ export function projectMonthly(
   const total = buckets.reduce((sum, bucket) => sum + bucket.totalMinor, 0);
   return { months: buckets, averageMinor: Math.round(total / months) };
 }
+
+export type MonthCharges = {
+  totalMinor: number;
+  count: number;
+};
+
+export function monthCharges(
+  billing: readonly UpcomingSubscription[],
+  today: CalendarDate,
+): MonthCharges {
+  const index = monthIndex(today);
+  let totalMinor = 0;
+  let count = 0;
+  for (const item of billing) {
+    for (let k = 0; k < maxCharges; k += 1) {
+      const date = addCycles(item.nextRenewal, item.subscription.cycle, k);
+      if (monthIndex(date) !== index) {
+        break;
+      }
+      totalMinor += item.subscription.amountMinor;
+      count += 1;
+    }
+  }
+  return { totalMinor, count };
+}

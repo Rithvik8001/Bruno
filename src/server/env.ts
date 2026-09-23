@@ -40,3 +40,16 @@ export function readMailerEnv() {
 export function readCronEnv() {
   return { cronSecret: required("CRON_SECRET", process.env.CRON_SECRET) };
 }
+
+export function readPushEnv() {
+  const token = process.env.EXPO_ACCESS_TOKEN;
+  return {
+    accessToken: token === undefined || token.length === 0 ? null : token,
+  };
+}
+
+export function readLogoEnv() {
+  return {
+    secretKey: required("LOGO_DEV_SECRET_KEY", process.env.LOGO_DEV_SECRET_KEY),
+  };
+}

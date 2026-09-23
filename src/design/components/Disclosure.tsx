@@ -28,13 +28,13 @@ export function Disclosure({ title, expanded, onToggle }: DisclosureProps) {
           gap: layout.disclosure.gap,
         }}
       >
-        <T style="caption" color="ink3">
+        <T style="bodyMedium" color="ink2">
           {title}
         </T>
         <Icon
           name={expanded ? "collapse" : "disclose"}
           size={layout.row.chevron}
-          color="ink4"
+          color="ink3"
         />
       </View>
     </Tappable>

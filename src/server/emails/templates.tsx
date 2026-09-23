@@ -21,7 +21,7 @@ import {
   strongStyle,
 } from "./Layout";
 import { mail } from "./theme";
-import type { DigestEmail, RenewalEmail } from "./types";
+import type { BatchEmail, DigestEmail, RenewalEmail } from "./types";
 
 export function SignupCodeEmail({ code }: { code: string }) {
   return (
@@ -124,6 +124,36 @@ export function RenewsTodayEmail({ input }: { input: RenewalEmail }) {
   return (
     <Layout preview={fill(emailCopy.today.preview, values)}>
       <Text style={bodyStyle}>{fill(emailCopy.today.body, values)}</Text>
+    </Layout>
+  );
+}
+
+export function batchValues(input: BatchEmail): Record<string, string> {
+  return {
+    count: String(input.items.length),
+    first: input.items[0]?.input.name ?? "",
+    rest: String(Math.max(input.items.length - 1, 0)),
+  };
+}
+
+export function ComingUpEmail({ input }: { input: BatchEmail }) {
+  return (
+    <Layout preview={fill(emailCopy.batch.preview, batchValues(input))}>
+      <Text style={bodyStyle}>{emailCopy.batch.lead}</Text>
+      {input.items.map((item, index) => {
+        const values = renewalValues(item.input);
+        return (
+          <FactRow
+            key={item.subscriptionId}
+            label={item.input.name}
+            value={`${fill(emailCopy.batch[item.kind], values)} · ${values.amount}`}
+            last={index === input.items.length - 1}
+          />
+        );
+      })}
+      <Text style={{ ...bodyStyle, marginTop: mail.gap }}>
+        {emailCopy.batch.hint}
+      </Text>
     </Layout>
   );
 }

@@ -19,6 +19,7 @@ import {
   writeStoredPreference,
 } from "@/design";
 import { SessionProvider, useSession } from "@/features/auth";
+import { NotificationsProvider } from "@/features/notifications";
 import { ProfileProvider, useProfile } from "@/features/profile";
 import { SubscriptionsProvider } from "@/features/subscriptions";
 
@@ -65,6 +66,7 @@ function RootNavigator() {
     headerTitle: "",
     headerShadowVisible: false,
     headerStyle: { backgroundColor: theme.canvas },
+    headerTintColor: theme.ink,
   } as const;
 
   return (
@@ -109,9 +111,11 @@ export default function RootLayout() {
       >
         <SessionProvider>
           <ProfileProvider>
-            <SubscriptionsProvider>
-              <RootNavigator />
-            </SubscriptionsProvider>
+            <NotificationsProvider>
+              <SubscriptionsProvider>
+                <RootNavigator />
+              </SubscriptionsProvider>
+            </NotificationsProvider>
           </ProfileProvider>
         </SessionProvider>
       </ThemeProvider>

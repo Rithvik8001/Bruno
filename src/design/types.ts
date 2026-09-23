@@ -1,7 +1,15 @@
 import type { TextStyle } from "react-native";
 import type { SFSymbol } from "sf-symbols-typescript";
 
-import { icons, iconSizes, radius, space, themes, type } from "./tokens";
+import {
+  icons,
+  iconSizes,
+  logoSizes,
+  radius,
+  space,
+  themes,
+  type,
+} from "./tokens";
 
 export type ThemeName = "light" | "dark";
 
@@ -10,12 +18,13 @@ export type Theme = {
   readonly surface: string;
   readonly surface2: string;
   readonly border: string;
-  readonly border2: string;
   readonly ink: string;
   readonly ink2: string;
   readonly ink3: string;
   readonly ink4: string;
   readonly onInk: string;
+  readonly accent: string;
+  readonly onAccent: string;
   readonly bar: string;
   readonly barMuted: string;
 };
@@ -33,6 +42,10 @@ export type IconToken = keyof typeof icons;
 export type IconSizeToken = keyof typeof iconSizes;
 
 export type IconSource = IconToken | SFSymbol;
+
+export type LogoSize = (typeof logoSizes)[number];
+
+export type ChipTone = "neutral" | "accent";
 
 export type ResolvedTextStyle = Pick<
   TextStyle,

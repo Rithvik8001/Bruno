@@ -62,6 +62,15 @@ export const emailCopy = {
     preview: "{amount} today",
     body: "{name} renews today for {amount}.",
   },
+  batch: {
+    subject: "{count} subscriptions coming up",
+    preview: "{first} and {rest} more",
+    lead: "Here is what is coming up.",
+    renewal: "Renews {when}",
+    trial: "Trial ends {when}",
+    renews_today: "Renews today",
+    hint: "If you no longer want one, cancel with the service before its date.",
+  },
   digest: {
     subject: "{month} at a glance",
     preview: "{count} due this month, {total} in all",

@@ -58,7 +58,7 @@ export function CodeStep({
       <T style="label" color="ink3">
         {authCopy.verify.codeLabel}
       </T>
-      <Spacer height={layout.input.labelGap} />
+      <Spacer height={layout.field.labelGap} />
       <CodeInput
         value={code}
         onChangeValue={onChangeCode}
@@ -68,7 +68,7 @@ export function CodeStep({
       />
       {error === undefined ? null : (
         <>
-          <Spacer height={layout.input.hintGap} />
+          <Spacer height={layout.field.hintGap} />
           <T style="caption" color="ink2">
             {error}
           </T>

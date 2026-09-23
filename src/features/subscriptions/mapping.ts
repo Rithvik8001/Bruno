@@ -9,7 +9,11 @@ import {
   type Subscription,
   type SubscriptionStatus,
 } from "./types";
-import { normalizeName, normalizeOptional } from "./validation";
+import {
+  isValidServiceKey,
+  normalizeName,
+  normalizeOptional,
+} from "./validation";
 
 export type SubscriptionRow =
   Database["public"]["Tables"]["subscriptions"]["Row"];
@@ -22,7 +26,7 @@ export type SubscriptionUpdate = Omit<SubscriptionInsert, "currency">;
 export type SubscriptionStatusUpdate = Pick<SubscriptionUpdate, "status">;
 
 export const subscriptionColumns =
-  "id, name, amount_minor, currency, cycle_unit, cycle_count, anchor_date, trial_ends_on, status, category, payment_method, notes, created_at";
+  "id, name, amount_minor, currency, cycle_unit, cycle_count, anchor_date, trial_ends_on, status, category, payment_method, notes, service_key, created_at";
 
 export type SubscriptionSelection = Pick<
   SubscriptionRow,
@@ -38,6 +42,7 @@ export type SubscriptionSelection = Pick<
   | "category"
   | "payment_method"
   | "notes"
+  | "service_key"
   | "created_at"
 >;
 
@@ -71,6 +76,7 @@ export function fromRow(row: SubscriptionSelection): Subscription | null {
     category: isCategory(row.category) ? row.category : null,
     paymentMethod: row.payment_method,
     notes: row.notes,
+    serviceKey: isValidServiceKey(row.service_key) ? row.service_key : null,
     createdAt: row.created_at,
   };
 }
@@ -94,6 +100,7 @@ export function toUpdate(input: NewSubscription): SubscriptionUpdate {
     category: input.category,
     payment_method: normalizeOptional(input.paymentMethod),
     notes: normalizeOptional(input.notes),
+    service_key: input.serviceKey,
   };
 }
 

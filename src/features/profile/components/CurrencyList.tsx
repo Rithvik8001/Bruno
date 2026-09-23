@@ -5,9 +5,9 @@ import {
   EmptyState,
   Gap,
   Icon,
+  IconRow,
   Input,
-  ListRow,
-  SectionLabel,
+  SectionHeading,
   layout,
 } from "@/design";
 import {
@@ -89,6 +89,7 @@ export function CurrencyList({
         autoCorrect={false}
         returnKeyType="done"
       />
+      <Gap size="s16" />
       <FlatList
         data={entries}
         keyExtractor={(entry) => entry.key}
@@ -100,14 +101,17 @@ export function CurrencyList({
         ListEmptyComponent={
           <>
             <Gap size="s24" />
-            <EmptyState title={copy.noMatchTitle} body={copy.noMatchBody} />
+            <EmptyState
+              title={copy.noMatchTitle}
+              body={copy.noMatchBody}
+            />
           </>
         }
         renderItem={({ item }) =>
           item.kind === "label" ? (
-            <SectionLabel title={item.title} top="s24" />
+            <SectionHeading size="small" title={item.title} top="s24" />
           ) : (
-            <ListRow
+            <IconRow
               title={item.currency.name}
               value={item.currency.code}
               accessibilityLabel={

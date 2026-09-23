@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import {
   KeyboardAvoidingView,
+  RefreshControl,
   ScrollView,
   View,
   type ScrollViewProps,
@@ -25,6 +26,11 @@ export function useTabBarSpace(): number {
   return layout.tabBar.height + layout.tabBar.bottom + insets.bottom;
 }
 
+export type ScreenRefresh = {
+  refreshing: boolean;
+  onRefresh: () => void;
+};
+
 export type ScreenProps = {
   children: ReactNode;
   scroll?: boolean;
@@ -33,6 +39,9 @@ export type ScreenProps = {
   withTabBar?: boolean;
   header?: boolean;
   keyboard?: boolean;
+  bounce?: boolean;
+  automaticInsets?: boolean;
+  refresh?: ScreenRefresh;
   scrollViewProps?: Omit<ScrollViewProps, "children" | "contentContainerStyle">;
 };
 
@@ -44,6 +53,9 @@ export function Screen({
   withTabBar = false,
   header = false,
   keyboard = false,
+  bounce = true,
+  automaticInsets = false,
+  refresh,
   scrollViewProps,
 }: ScreenProps) {
   const theme = useTheme();
@@ -65,9 +77,19 @@ export function Screen({
         flexGrow: fill ? 1 : undefined,
       }}
       showsVerticalScrollIndicator={false}
-      contentInsetAdjustmentBehavior="never"
+      contentInsetAdjustmentBehavior={automaticInsets ? "automatic" : "never"}
+      alwaysBounceVertical={bounce}
       keyboardShouldPersistTaps={keyboard ? "handled" : undefined}
       keyboardDismissMode={keyboard ? "interactive" : undefined}
+      refreshControl={
+        refresh === undefined ? undefined : (
+          <RefreshControl
+            refreshing={refresh.refreshing}
+            onRefresh={refresh.onRefresh}
+            tintColor={theme.ink3}
+          />
+        )
+      }
       {...scrollViewProps}
     >
       {children}

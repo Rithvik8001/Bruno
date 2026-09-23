@@ -1,12 +1,12 @@
 export const authCopy = {
   step: {
-    emailTitle: "Your email",
-    emailSubtitleSignUp: "We'll send a six-digit code to confirm it.",
-    emailSubtitleSignIn: "Sign in to your subscriptions.",
+    emailTitle: "What's your email?",
+    emailSubtitleSignUp: "We'll send a six-digit code to confirm it's you.",
+    emailSubtitleSignIn: "Welcome back. Sign in to see your list.",
     emailLabel: "Email",
     emailPlaceholder: "you@example.com",
     continue: "Continue",
-    passwordCreateTitle: "Create a password",
+    passwordCreateTitle: "Pick a password",
     passwordEnterTitle: "Your password",
     passwordEnterLead: "Signing in as ",
     passwordEnterTail: ".",
@@ -30,8 +30,8 @@ export const authCopy = {
     confirm: "Verify now",
   },
   reset: {
-    emailTitle: "Reset your password",
-    emailSubtitle: "We'll send a code to confirm it's you.",
+    emailTitle: "Forgot your password?",
+    emailSubtitle: "No problem. We'll send a code to confirm it's you.",
     passwordTitle: "Choose a new password",
     passwordLabel: "New password",
     passwordHint: "At least 8 characters, with one number.",

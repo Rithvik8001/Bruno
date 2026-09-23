@@ -5,7 +5,11 @@ import {
   type CalendarDate,
 } from "@/lib/calendar";
 
+import { layout, type LogoSize, type ThemeName } from "@/design";
+import { logoUrl } from "@/lib/logos";
+
 import { subscriptionsCopy } from "./copy";
+import type { Subscription } from "./types";
 
 let ledgerDateFormat: Intl.DateTimeFormat | undefined;
 let longDateFormat: Intl.DateTimeFormat | undefined;
@@ -60,6 +64,8 @@ export function formatWeekdayDate(date: CalendarDate): string {
     return `${date.month}/${date.day}`;
   }
 }
+
+
 
 export function formatLongDate(date: CalendarDate): string {
   const local = toLocalDate(date);
@@ -118,4 +124,31 @@ export function formatPer(cycle: BillingCycle): string {
   return cycle.count === 1
     ? subscriptionsCopy.per[cycle.unit]
     : subscriptionsCopy.every.replace("{cycle}", formatCycle(cycle).toLowerCase());
+}
+
+export function formatRelativeTitle(
+  date: CalendarDate,
+  today: CalendarDate,
+): string {
+  const days = daysBetween(today, date);
+  if (days <= 0) {
+    return subscriptionsCopy.relativeTitle.today;
+  }
+  if (days === 1) {
+    return subscriptionsCopy.relativeTitle.tomorrow;
+  }
+  return subscriptionsCopy.relativeTitle.inDays.replace("{days}", String(days));
+}
+
+export function subscriptionLogo(
+  subscription: Pick<Subscription, "name" | "serviceKey">,
+  themeName: ThemeName,
+  size: LogoSize,
+): { name: string; uri: string | null } {
+  const px =
+    size === "detail" ? layout.logo.request.large : layout.logo.request.small;
+  return {
+    name: subscription.name,
+    uri: logoUrl(subscription.serviceKey, { theme: themeName, px }),
+  };
 }
