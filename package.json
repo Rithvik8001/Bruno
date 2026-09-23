@@ -51,7 +51,9 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "render:brand": "bun scripts/render-brand.mjs"
+    "render:brand": "bun scripts/render-brand.mjs",
+    "build:ios": "LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 bunx eas-cli build --platform ios --profile production --local --output build/bruno.ipa",
+    "submit:ios": "bunx eas-cli submit --platform ios --profile production --path build/bruno.ipa"
   },
   "private": true
 }

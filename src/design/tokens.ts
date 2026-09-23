@@ -209,7 +209,7 @@ export const layout = {
 } as const;
 
 export const motion = {
-  duration: { fade: 120 },
+  duration: { fade: 120, inputSync: 120 },
   pressedOpacity: 0.6,
 } as const;
 
@@ -226,6 +226,7 @@ export const icons = {
   disclose: "chevron.down",
   collapse: "chevron.up",
   check: "checkmark",
+  sort: "arrow.up.arrow.down",
 } as const satisfies Record<string, SFSymbol>;
 
 export const iconSizes = { bar: 22, inline: 16, tight: 14 } as const;

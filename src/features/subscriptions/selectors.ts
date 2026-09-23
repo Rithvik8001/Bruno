@@ -204,7 +204,89 @@ export function applyListFilter(
   }
 }
 
+export const listSorts = ["renewal", "monthly", "name"] as const;
+
+export type ListSort = (typeof listSorts)[number];
+
+export function isListSort(value: unknown): value is ListSort {
+  return (
+    typeof value === "string" &&
+    (listSorts as readonly string[]).includes(value)
+  );
+}
+
+function normalizeSearch(text: string): string {
+  return text
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLocaleLowerCase();
+}
+
+export function searchTerms(query: string): string[] {
+  return normalizeSearch(query)
+    .split(/\s+/)
+    .filter((term) => term.length > 0);
+}
+
+export function filterBySearch(
+  items: readonly UpcomingSubscription[],
+  terms: readonly string[],
+  categoryLabel: (category: Category) => string,
+): UpcomingSubscription[] {
+  if (terms.length === 0) {
+    return [...items];
+  }
+  return items.filter((item) => {
+    const { name, category, paymentMethod } = item.subscription;
+    const haystack = normalizeSearch(
+      [name, category === null ? "" : categoryLabel(category), paymentMethod ?? ""].join(
+        "\n",
+      ),
+    );
+    return terms.every((term) => haystack.includes(term));
+  });
+}
+
+function compareNames(a: UpcomingSubscription, b: UpcomingSubscription): number {
+  return a.subscription.name.localeCompare(b.subscription.name, undefined, {
+    sensitivity: "base",
+  });
+}
+
+function compareMonthly(
+  a: UpcomingSubscription,
+  b: UpcomingSubscription,
+): number {
+  const difference =
+    monthlyAmountExact(b.subscription.amountMinor, b.subscription.cycle) -
+    monthlyAmountExact(a.subscription.amountMinor, a.subscription.cycle);
+  return difference !== 0 ? difference : compareNames(a, b);
+}
+
+export function sortLedger(
+  items: readonly UpcomingSubscription[],
+  sort: ListSort,
+): UpcomingSubscription[] {
+  if (sort === "renewal") {
+    return [...items];
+  }
+  const compare = sort === "monthly" ? compareMonthly : compareNames;
+  return [...items].sort((a, b) => {
+    const billingA = isBilling(a.status);
+    const billingB = isBilling(b.status);
+    if (billingA !== billingB) {
+      return billingA ? -1 : 1;
+    }
+    return compare(a, b);
+  });
+}
+
 export type LedgerGroup =
+  | {
+      kind: "list";
+      key: "list";
+      items: UpcomingSubscription[];
+    }
   | {
       kind: "month";
       key: string;
@@ -222,7 +304,9 @@ export type LedgerGroup =
 export function groupLedger(
   items: readonly UpcomingSubscription[],
   currency: string,
+  sort: ListSort = "renewal",
 ): LedgerGroup[] {
+  const flat: UpcomingSubscription[] = [];
   const months = new Map<string, LedgerGroup & { kind: "month" }>();
   const statuses = new Map<
     SubscriptionStatus,
@@ -230,6 +314,10 @@ export function groupLedger(
   >();
 
   for (const item of items) {
+    if (isBilling(item.status) && sort !== "renewal") {
+      flat.push(item);
+      continue;
+    }
     if (isBilling(item.status)) {
       const key = `${item.nextRenewal.year}-${item.nextRenewal.month}`;
       const group = months.get(key) ?? {
@@ -257,7 +345,9 @@ export function groupLedger(
     statuses.set(status, group);
   }
 
-  return [...months.values(), ...statuses.values()];
+  const list: LedgerGroup[] =
+    flat.length === 0 ? [] : [{ kind: "list", key: "list", items: flat }];
+  return [...list, ...months.values(), ...statuses.values()];
 }
 
 export function categorySplit(

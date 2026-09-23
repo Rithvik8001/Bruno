@@ -46,3 +46,5 @@ example
 AGENTS.md
 CLAUDE.md
 .env*
+
+/build

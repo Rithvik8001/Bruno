@@ -38,7 +38,7 @@ import {
 } from "react";
 import { View } from "react-native";
 
-import { layout, type, weights } from "../tokens";
+import { layout, motion, type, weights } from "../tokens";
 import { useTheme, useThemeName } from "../theme/useTheme";
 import { Spacer } from "../primitives/Spacer";
 import { T } from "../primitives/T";
@@ -124,6 +124,7 @@ export function Input({
   const textField = useRef<TextFieldRef>(null);
   const secureField = useRef<SecureFieldRef>(null);
   const emitted = useRef(value);
+  const pendingSubmit = useRef(false);
   const [focused, setFocused] = useState(false);
   const note = error ?? hint;
   const hasError = error !== undefined;
@@ -134,7 +135,11 @@ export function Input({
       emitted.current = value;
       text.set(value);
     }
-  }, [value, text]);
+    if (pendingSubmit.current) {
+      pendingSubmit.current = false;
+      onSubmitEditing?.();
+    }
+  }, [value, text, onSubmitEditing]);
 
   useImperativeHandle(ref, () => ({
     focus: () => {
@@ -145,16 +150,60 @@ export function Input({
     },
   }));
 
-  const change = (next: string) => {
+  const emit = (next: string) => {
+    if (next === emitted.current) {
+      return;
+    }
     emitted.current = next;
     onChangeText(next);
   };
 
+  const nativeText = (fallback: string): string => {
+    const current: unknown = text.get();
+    return typeof current === "string" ? current : fallback;
+  };
+
+  const change = (next: string) => {
+    emit(nativeText(next));
+  };
+
+  const sync = () => {
+    emit(nativeText(emitted.current));
+  };
+
+  const latestSync = useRef(sync);
+
+  useEffect(() => {
+    latestSync.current = sync;
+  });
+
+  useEffect(() => {
+    if (!focused) {
+      return;
+    }
+    const timer = setInterval(
+      () => latestSync.current(),
+      motion.duration.inputSync,
+    );
+    return () => clearInterval(timer);
+  }, [focused]);
+
   const focusChange = (next: boolean) => {
     setFocused(next);
     if (!next) {
+      sync();
       onBlur?.();
     }
+  };
+
+  const submit = () => {
+    const current = nativeText(emitted.current);
+    if (current === emitted.current) {
+      onSubmitEditing?.();
+      return;
+    }
+    pendingSubmit.current = true;
+    emit(current);
   };
 
   const fieldModifiers: ModifierConfig[] = [
@@ -178,7 +227,7 @@ export function Input({
     fieldModifiers.push(submitLabel(returnKeyType));
   }
   if (onSubmitEditing !== undefined) {
-    fieldModifiers.push(onSubmit(onSubmitEditing));
+    fieldModifiers.push(onSubmit(submit));
   }
   if (multiline) {
     fieldModifiers.push(

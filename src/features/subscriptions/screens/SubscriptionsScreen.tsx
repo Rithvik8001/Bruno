@@ -1,18 +1,18 @@
-import { router } from "expo-router";
-import { useState } from "react";
+import { Stack, router } from "expo-router";
+import { useRef, useState } from "react";
 import { RefreshControl, View } from "react-native";
+import type { SearchBarCommands } from "react-native-screens";
 
 import {
   EmptyState,
   Gap,
-  IconAction,
   Loading,
   NativeList,
   Screen,
   SectionLabel,
   T,
   Tabs,
-  layout,
+  icons,
   useTheme,
   type TabOption,
 } from "@/design";
@@ -26,14 +26,20 @@ import { formatLedgerDate, formatMonth } from "../format";
 import {
   applyListFilter,
   displayAmountMinor,
+  filterBySearch,
   groupLedger,
   listFilters,
+  listSorts,
+  searchTerms,
   sortByNextRenewal,
+  sortLedger,
   summarize,
   type LedgerGroup,
   type ListFilter,
+  type ListSort,
   type UpcomingSubscription,
 } from "../selectors";
+import { readSortPreference, writeSortPreference } from "../sortPreference";
 import { useSubscriptions } from "../SubscriptionsProvider";
 import { useSubscriptionAlert } from "../useSubscriptionAlert";
 
@@ -57,11 +63,18 @@ function rowNote(item: UpcomingSubscription): string | undefined {
   return undefined;
 }
 
-function groupLabel(group: LedgerGroup): string {
+function groupLabel(group: LedgerGroup): string | null {
+  if (group.kind === "list") {
+    return null;
+  }
   if (group.kind === "month") {
     return formatMonth(group.month);
   }
   return group.status === "paused" ? copy.groupPaused : copy.groupCancelled;
+}
+
+function categoryLabel(category: keyof typeof subscriptionsCopy.categories): string {
+  return subscriptionsCopy.categories[category];
 }
 
 export function SubscriptionsScreen() {
@@ -71,15 +84,37 @@ export function SubscriptionsScreen() {
   const { alert, showFailure } = useSubscriptionAlert();
   const [filter, setFilter] = useState<ListFilter>("all");
   const [refreshing, setRefreshing] = useState(false);
+  const [sort, setSort] = useState<ListSort>(readSortPreference);
+  const [query, setQuery] = useState("");
+  const searchBar = useRef<SearchBarCommands>(null);
 
   const now = today();
   const currency =
     profile?.currency ?? subscriptions[0]?.currency ?? fallbackCurrency;
   const { monthlyMinor, count } = summarize(subscriptions, now, currency);
+  const terms = searchTerms(query);
   const groups = groupLedger(
-    applyListFilter(sortByNextRenewal(subscriptions, now), filter),
+    sortLedger(
+      filterBySearch(
+        applyListFilter(sortByNextRenewal(subscriptions, now), filter),
+        terms,
+        categoryLabel,
+      ),
+      sort,
+    ),
     currency,
+    sort,
   );
+  const hasList = status === "ready" && subscriptions.length > 0;
+
+  const changeSort = (next: ListSort) => {
+    setSort(next);
+    writeSortPreference(next);
+  };
+  const clearSearch = () => {
+    searchBar.current?.clearText();
+    setQuery("");
+  };
 
   const openAdd = () => router.push("/add-subscription");
   const openDetail = (id: string) =>
@@ -96,8 +131,9 @@ export function SubscriptionsScreen() {
   return (
     <Screen
       scroll
-      withTabBar
+      header
       scrollViewProps={{
+        contentInsetAdjustmentBehavior: "automatic",
         refreshControl: (
           <RefreshControl
             refreshing={refreshing}
@@ -107,19 +143,37 @@ export function SubscriptionsScreen() {
         ),
       }}
     >
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginRight: -layout.nav.side,
-        }}
-      >
-        <T style="title" accessibilityRole="header">
-          {copy.title}
-        </T>
-        <IconAction icon="add" onPress={openAdd} accessibilityLabel={copy.add} />
-      </View>
+      {hasList ? (
+        <Stack.SearchBar
+          ref={searchBar}
+          placeholder={copy.searchPlaceholder}
+          autoCapitalize="none"
+          hideWhenScrolling={false}
+          obscureBackground={false}
+          onChangeText={(event) => setQuery(event.nativeEvent.text)}
+          onCancelButtonPress={() => setQuery("")}
+        />
+      ) : null}
+      <Stack.Toolbar placement="right">
+        {hasList ? (
+          <Stack.Toolbar.Menu icon={icons.sort} accessibilityLabel={copy.sortLabel}>
+            {listSorts.map((value) => (
+              <Stack.Toolbar.MenuAction
+                key={value}
+                isOn={sort === value}
+                onPress={() => changeSort(value)}
+              >
+                {copy.sorts[value]}
+              </Stack.Toolbar.MenuAction>
+            ))}
+          </Stack.Toolbar.Menu>
+        ) : null}
+        <Stack.Toolbar.Button
+          icon={icons.add}
+          onPress={openAdd}
+          accessibilityLabel={copy.add}
+        />
+      </Stack.Toolbar>
       {status === "loading" ? (
         <>
           <Gap size="s24" />
@@ -145,7 +199,6 @@ export function SubscriptionsScreen() {
         </>
       ) : (
         <>
-          <Gap size="s4" />
           <T style="caption" color="ink3">
             {copy.activeCaption
               .replace("{count}", String(count))
@@ -153,7 +206,16 @@ export function SubscriptionsScreen() {
           </T>
           <Gap size="s24" />
           <Tabs options={filterOptions} value={filter} onChange={setFilter} />
-          {groups.length === 0 ? (
+          {groups.length === 0 && terms.length > 0 ? (
+            <>
+              <Gap size="s24" />
+              <EmptyState
+                title={copy.searchEmpty.replace("{query}", query.trim())}
+                body={copy.searchEmptyBody}
+                link={{ title: copy.clearSearch, onPress: clearSearch }}
+              />
+            </>
+          ) : groups.length === 0 ? (
             <>
               <Gap size="s24" />
               <EmptyState
@@ -167,15 +229,19 @@ export function SubscriptionsScreen() {
           ) : (
             groups.map((group) => (
               <View key={group.key}>
-                <SectionLabel
-                  top="s24"
-                  title={groupLabel(group)}
-                  value={
-                    group.kind === "month"
-                      ? formatMoney(group.totalMinor, currency)
-                      : undefined
-                  }
-                />
+                {group.kind === "list" ? (
+                  <Gap size="s24" />
+                ) : (
+                  <SectionLabel
+                    top="s24"
+                    title={groupLabel(group) ?? ""}
+                    value={
+                      group.kind === "month"
+                        ? formatMoney(group.totalMinor, currency)
+                        : undefined
+                    }
+                  />
+                )}
                 <NativeList
                   items={group.items.map((item) => ({
                     key: item.subscription.id,

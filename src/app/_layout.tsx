@@ -1,4 +1,10 @@
-import { Stack } from "expo-router";
+import {
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider as NavigationThemeProvider,
+  Stack,
+  type Theme as NavigationTheme,
+} from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
 import * as SystemUI from "expo-system-ui";
@@ -39,6 +45,20 @@ function RootNavigator() {
     return null;
   }
 
+  const base = themeName === "dark" ? DarkTheme : DefaultTheme;
+  const navigationTheme: NavigationTheme = {
+    ...base,
+    colors: {
+      ...base.colors,
+      primary: theme.ink,
+      background: theme.canvas,
+      card: theme.canvas,
+      text: theme.ink,
+      border: theme.border,
+      notification: theme.ink,
+    },
+  };
+
   const modalOptions = {
     presentation: "fullScreenModal",
     headerShown: true,
@@ -48,7 +68,7 @@ function RootNavigator() {
   } as const;
 
   return (
-    <>
+    <NavigationThemeProvider value={navigationTheme}>
       <StatusBar style={themeName === "dark" ? "light" : "dark"} />
       <Stack
         screenOptions={{
@@ -74,7 +94,7 @@ function RootNavigator() {
           <Stack.Screen name="currency" options={modalOptions} />
         </Stack.Protected>
       </Stack>
-    </>
+    </NavigationThemeProvider>
   );
 }
 

@@ -21,6 +21,16 @@ export const subscriptionsCopy = {
       yearly: "Yearly",
       paused: "Paused",
     },
+    searchPlaceholder: "Search",
+    sortLabel: "Sort",
+    sorts: {
+      renewal: "Next renewal",
+      monthly: "Monthly cost",
+      name: "Name",
+    },
+    searchEmpty: "No matches for “{query}”",
+    searchEmptyBody: "Try a name, category or card.",
+    clearSearch: "Clear search",
   },
   form: {
     title: "New subscription",
