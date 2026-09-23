@@ -23,7 +23,7 @@ import {
   useThemeName,
   type ChipTone,
 } from "@/design";
-import { fromLocalDate, nextRenewal, today } from "@/lib/calendar";
+import { daysBetween, fromLocalDate, nextRenewal, today } from "@/lib/calendar";
 import { formatMoney } from "@/lib/money";
 
 import { subscriptionsCopy } from "../copy";
@@ -44,7 +44,9 @@ import {
 } from "../useSubscriptionAlert";
 
 const copy = subscriptionsCopy.detail;
+const relativeTitle = subscriptionsCopy.relativeTitle;
 const loadingRows = 4;
+const soonDays = 1;
 
 type StatusAction = {
   title: string;
@@ -108,14 +110,25 @@ function statusActions(status: SubscriptionStatus): readonly StatusAction[] {
 function chips(
   subscription: Subscription,
   trial: boolean,
+  daysUntil: number,
 ): { label: string; tone: ChipTone }[] {
   const items: { label: string; tone: ChipTone }[] = [];
   if (subscription.status === "paused") {
     items.push({ label: copy.paused, tone: "neutral" });
-  } else if (subscription.status === "cancelled") {
+    return items;
+  }
+  if (subscription.status === "cancelled") {
     items.push({ label: copy.cancelled, tone: "neutral" });
-  } else if (trial) {
+    return items;
+  }
+  if (trial) {
     items.push({ label: copy.trial, tone: "accent" });
+  }
+  if (daysUntil <= soonDays) {
+    items.push({
+      label: daysUntil <= 0 ? relativeTitle.today : relativeTitle.tomorrow,
+      tone: "accent",
+    });
   }
   return items;
 }
@@ -158,7 +171,7 @@ function Detail({ subscription }: { subscription: Subscription }) {
   const renewal = nextRenewal(subscription.anchorDate, subscription.cycle, now);
   const status = derivedStatus(subscription, now);
   const actions = statusActions(subscription.status);
-  const badges = chips(subscription, status === "trial");
+  const badges = chips(subscription, status === "trial", daysBetween(now, renewal));
 
   const openEdit = () =>
     router.push({

@@ -40,7 +40,11 @@ export function OnboardingScreen() {
       <Spacer grow />
       <Gap size="s32" />
       <Entering index={1}>
-        <Button title={onboardingCopy.primary} onPress={() => openAuth("signUp")} />
+        <Button
+          title={onboardingCopy.primary}
+          variant="accent"
+          onPress={() => openAuth("signUp")}
+        />
         <Gap size="s12" />
         <Button
           title={onboardingCopy.secondary}

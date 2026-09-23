@@ -15,7 +15,7 @@ export default function TabsLayout() {
         <NativeTabs.Trigger.Icon
           sf={{ default: icons.tabOverview, selected: icons.tabOverviewSelected }}
         />
-        <NativeTabs.Trigger.Label>{homeCopy.tabs.overview}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label hidden>{homeCopy.tabs.overview}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="subscriptions" disableAutomaticContentInsets>
         <NativeTabs.Trigger.Icon
@@ -24,21 +24,19 @@ export default function TabsLayout() {
             selected: icons.tabSubscriptionsSelected,
           }}
         />
-        <NativeTabs.Trigger.Label>
-          {homeCopy.tabs.subscriptions}
-        </NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label hidden>{homeCopy.tabs.subscriptions}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="insights" disableAutomaticContentInsets>
         <NativeTabs.Trigger.Icon
           sf={{ default: icons.tabInsights, selected: icons.tabInsightsSelected }}
         />
-        <NativeTabs.Trigger.Label>{homeCopy.tabs.insights}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label hidden>{homeCopy.tabs.insights}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="settings" disableAutomaticContentInsets>
         <NativeTabs.Trigger.Icon
           sf={{ default: icons.tabSettings, selected: icons.tabSettingsSelected }}
         />
-        <NativeTabs.Trigger.Label>{homeCopy.tabs.settings}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label hidden>{homeCopy.tabs.settings}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
     </NativeTabs>
   );

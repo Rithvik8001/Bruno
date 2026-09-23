@@ -58,7 +58,13 @@ export function EmptyState({
       {action === undefined ? null : (
         <>
           <Spacer height={layout.emptyState.actionGap} />
-          <Button title={action.title} onPress={action.onPress} size="s" inline />
+          <Button
+            title={action.title}
+            onPress={action.onPress}
+            variant="accent"
+            size="s"
+            inline
+          />
         </>
       )}
       {link === undefined ? null : (

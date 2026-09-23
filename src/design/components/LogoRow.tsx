@@ -43,7 +43,7 @@ export function LogoRow({
         .join(", ")}
       style={({ pressed }) => ({
         minHeight: layout.row.logoMinHeight,
-        paddingVertical: layout.row.paddingVertical,
+        paddingVertical: layout.row.logoPaddingVertical,
         marginHorizontal: -layout.margin,
         paddingHorizontal: layout.margin,
         flexDirection: "row",

@@ -16,9 +16,10 @@ export type ShareBarProps = {
   amount: string;
   share: number;
   caption: string;
+  active?: boolean;
 };
 
-function Fill({ share }: { share: number }) {
+function Fill({ share, active }: { share: number; active: boolean }) {
   const theme = useTheme();
   const reduceMotion = useReduceMotion();
   const scale = useSharedValue(reduceMotion ? 1 : 0);
@@ -45,7 +46,7 @@ function Fill({ share }: { share: number }) {
             width: `${Math.max(0, Math.min(1, share)) * 100}%`,
             height: layout.bar.height,
             borderRadius: layout.bar.trackRadius,
-            backgroundColor: theme.bar,
+            backgroundColor: active ? theme.accent : theme.bar,
             transformOrigin: "left",
           },
           grow,
@@ -55,7 +56,13 @@ function Fill({ share }: { share: number }) {
   );
 }
 
-export function ShareBar({ label, amount, share, caption }: ShareBarProps) {
+export function ShareBar({
+  label,
+  amount,
+  share,
+  caption,
+  active = false,
+}: ShareBarProps) {
   return (
     <View
       accessible
@@ -75,7 +82,7 @@ export function ShareBar({ label, amount, share, caption }: ShareBarProps) {
           {amount}
         </T>
       </View>
-      <Fill share={share} />
+      <Fill share={share} active={active} />
       <T style="caption" color="ink3" numberOfLines={1}>
         {caption}
       </T>

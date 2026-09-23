@@ -19,12 +19,17 @@ import {
   type SegmentOption,
 } from "@/design";
 import { useProfile } from "@/features/profile";
-import { today } from "@/lib/calendar";
+import { daysBetween, today, type CalendarDate } from "@/lib/calendar";
 import { fallbackCurrency, formatMoney } from "@/lib/money";
 
 import { subscriptionsCopy } from "../copy";
 import { failureMessage } from "../errors";
-import { formatLedgerDate, formatMonth, subscriptionLogo } from "../format";
+import {
+  formatLedgerDate,
+  formatMonth,
+  formatRelativeTitle,
+  subscriptionLogo,
+} from "../format";
 import {
   applyListFilter,
   displayAmountMinor,
@@ -49,6 +54,7 @@ import { useSubscriptionAlert } from "../useSubscriptionAlert";
 const copy = subscriptionsCopy.list;
 const loadingRows = 6;
 const enteringGroups = 6;
+const soonDays = 1;
 
 const filterOptions: readonly SegmentOption<ListFilter>[] = listFilters.map(
   (value) => ({ value, label: copy.filters[value] }),
@@ -56,9 +62,13 @@ const filterOptions: readonly SegmentOption<ListFilter>[] = listFilters.map(
 
 function rowChip(
   item: UpcomingSubscription,
+  now: CalendarDate,
 ): { label: string; tone: ChipTone } | undefined {
   if (item.status === "trial") {
     return { label: copy.trialNote, tone: "accent" };
+  }
+  if (item.status === "active" && daysBetween(now, item.nextRenewal) <= soonDays) {
+    return { label: formatRelativeTitle(item.nextRenewal, now), tone: "accent" };
   }
   if (item.status === "paused") {
     return { label: copy.groupPaused, tone: "neutral" };
@@ -248,7 +258,7 @@ export function SubscriptionsScreen() {
                         item.subscription.currency,
                       )}
                       valueNote={rowNote(item)}
-                      chip={rowChip(item)}
+                      chip={rowChip(item, now)}
                       logo={{
                         ...subscriptionLogo(item.subscription, themeName, "row"),
                         muted: group.kind === "status",

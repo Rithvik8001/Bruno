@@ -20,7 +20,6 @@ export function Chip({ label, tone = "neutral" }: ChipProps) {
         paddingHorizontal: layout.chip.paddingHorizontal,
         borderRadius: radius.pill,
         justifyContent: "center",
-        alignSelf: "flex-start",
         backgroundColor: tone === "accent" ? theme.accent : theme.surface,
       }}
     >

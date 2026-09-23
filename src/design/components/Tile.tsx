@@ -1,13 +1,16 @@
 import type { ReactNode } from "react";
 import { Pressable, View } from "react-native";
 
-import { layout, radius } from "../tokens";
+import { layout, motion, radius } from "../tokens";
 import { useTheme } from "../theme/useTheme";
 import { Spacer } from "../primitives/Spacer";
 import { T } from "../primitives/T";
 
+export type TileTone = "surface" | "accent";
+
 export type TileProps = {
   label: string;
+  tone?: TileTone;
   value: string;
   caption?: string;
   leading?: ReactNode;
@@ -22,9 +25,14 @@ export function Tile({
   leading,
   onPress,
   accessibilityLabel,
+  tone = "surface",
 }: TileProps) {
   const theme = useTheme();
   const interactive = onPress !== undefined;
+  const accent = tone === "accent";
+  const text = accent ? "onAccent" : "ink";
+  const muted = accent ? "onAccent" : "ink3";
+  const mutedStyle = accent ? { opacity: layout.tile.mutedOpacity } : undefined;
 
   return (
     <Pressable
@@ -41,7 +49,12 @@ export function Tile({
         padding: layout.tile.padding,
         borderRadius: radius.tile,
         borderCurve: "continuous",
-        backgroundColor: pressed && interactive ? theme.surface2 : theme.surface,
+        backgroundColor: accent
+          ? theme.accent
+          : pressed && interactive
+            ? theme.surface2
+            : theme.surface,
+        opacity: accent && pressed && interactive ? motion.pressedOpacity : 1,
         justifyContent: "space-between",
       })}
     >
@@ -53,7 +66,12 @@ export function Tile({
         }}
       >
         {leading ?? null}
-        <T style="label" color="ink3" numberOfLines={1} override={{ flexShrink: 1 }}>
+        <T
+          style="label"
+          color={muted}
+          numberOfLines={1}
+          override={[{ flexShrink: 1 }, mutedStyle]}
+        >
           {label}
         </T>
       </View>
@@ -61,6 +79,7 @@ export function Tile({
         <Spacer height={layout.tile.gap} />
         <T
           style="numLarge"
+          color={text}
           numberOfLines={1}
           adjustsFontSizeToFit
           minimumFontScale={layout.money.minimumScale}
@@ -70,9 +89,9 @@ export function Tile({
         {caption === undefined ? null : (
           <T
             style="caption"
-            color="ink3"
+            color={muted}
             numberOfLines={1}
-            override={{ marginTop: layout.row.subGap }}
+            override={[{ marginTop: layout.row.subGap }, mutedStyle]}
           >
             {caption}
           </T>

@@ -49,6 +49,7 @@ export function CurrencySetupScreen() {
       <Gap size="s16" />
       <Button
         title={copy.setupContinue(selected)}
+        variant="accent"
         onPress={submit}
         loading={saving}
       />

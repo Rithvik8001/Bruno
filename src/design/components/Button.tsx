@@ -2,7 +2,7 @@ import {
   Button as SwiftButton,
   HStack,
   Host,
-  ProgressView,
+  Image,
   Text,
 } from "@expo/ui/swift-ui";
 import {
@@ -12,16 +12,18 @@ import {
   disabled as disabledModifier,
   foregroundStyle,
   frame,
-  progressViewStyle,
+  symbolEffect,
   tint,
 } from "@expo/ui/swift-ui/modifiers";
 import { View } from "react-native";
 
-import { layout } from "../tokens";
+import { icons, layout } from "../tokens";
+import { useReduceMotion } from "../theme/useAccessibility";
 import { useTheme, useThemeName } from "../theme/useTheme";
 import { useSwiftFont } from "../swiftText";
+import { useTypeStyle } from "../typography";
 
-export type ButtonVariant = "primary" | "secondary" | "ghost";
+export type ButtonVariant = "primary" | "accent" | "secondary" | "ghost";
 
 export type ButtonSize = "m" | "s";
 
@@ -46,23 +48,29 @@ export function Button({
 }: ButtonProps) {
   const theme = useTheme();
   const themeName = useThemeName();
+  const reduceMotion = useReduceMotion();
   const labelFont = useSwiftFont("captionStrong");
   const bodyFont = useSwiftFont("bodyMedium");
+  const iconSize = useTypeStyle(size === "m" ? "bodyMedium" : "captionStrong").fontSize;
   const inactive = disabled || loading;
 
-  const label = inactive
+  const label = disabled
     ? theme.ink4
     : variant === "primary"
       ? theme.onInk
-      : variant === "secondary"
-        ? theme.ink
-        : theme.ink2;
+      : variant === "accent"
+        ? theme.onAccent
+        : variant === "secondary"
+          ? theme.ink
+          : theme.ink2;
 
-  const fill = inactive
+  const fill = disabled
     ? theme.surface
     : variant === "primary"
       ? theme.ink
-      : theme.surface;
+      : variant === "accent"
+        ? theme.accent
+        : theme.surface;
 
   const minHeight = size === "m" ? layout.pill.height : layout.pill.heightSmall;
 
@@ -103,8 +111,20 @@ export function Button({
             ]}
           >
             {loading ? (
-              <ProgressView
-                modifiers={[progressViewStyle("circular"), tint(theme.ink3)]}
+              <Image
+                systemName={icons.loading}
+                size={iconSize}
+                color={label}
+                modifiers={
+                  reduceMotion
+                    ? []
+                    : [
+                        symbolEffect(
+                          { effect: "rotate", direction: "clockwise" },
+                          { options: { repeat: "continuous" } },
+                        ),
+                      ]
+                }
               />
             ) : (
               <Text

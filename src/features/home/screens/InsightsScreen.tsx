@@ -186,11 +186,12 @@ export function InsightsScreen() {
             </Entering>
           ) : (
             <Entering index={1}>
-              {split.map((entry) => {
+              {split.map((entry, index) => {
                 const count = categoryCount(billing, entry.category);
                 return (
                   <ShareBar
                     key={entry.category}
+                    active={index === 0}
                     label={subscriptionsCopy.categories[entry.category]}
                     amount={formatMoney(entry.monthlyMinor, currency)}
                     share={entry.share}

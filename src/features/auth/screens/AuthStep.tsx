@@ -79,6 +79,7 @@ export function AuthStep({
       <Gap size="s24" />
       <Button
         title={primary.title}
+        variant="accent"
         onPress={primary.onPress}
         disabled={primary.disabled}
         loading={primary.loading}

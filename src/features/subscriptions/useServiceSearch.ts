@@ -7,34 +7,39 @@ import {
   type ServiceSuggestion,
 } from "./logos";
 
-export function useServiceSearch(
-  query: string,
-  active: boolean,
-): { results: ServiceSuggestion[] } {
+export type ServiceSearch = {
+  results: ServiceSuggestion[];
+  searching: boolean;
+};
+
+export function useServiceSearch(query: string, active: boolean): ServiceSearch {
   const [results, setResults] = useState<ServiceSuggestion[]>([]);
+  const [pending, setPending] = useState<string | null>(null);
   const trimmed = query.trim();
+  const eligible = active && trimmed.length >= searchMinLength;
 
   useEffect(() => {
-    if (!active || trimmed.length < searchMinLength) {
+    if (!eligible) {
       setResults([]);
+      setPending(null);
       return;
     }
+    setPending(trimmed);
     const controller = new AbortController();
     const timer = setTimeout(() => {
       void searchServices(trimmed, controller.signal).then((result) => {
         if (controller.signal.aborted) {
           return;
         }
-        if (result.ok) {
-          setResults(result.data);
-        }
+        setResults(result.ok ? result.data : []);
+        setPending((current) => (current === trimmed ? null : current));
       });
     }, searchDebounceMs);
     return () => {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [trimmed, active]);
+  }, [trimmed, eligible]);
 
-  return { results };
+  return { results, searching: eligible && pending !== null };
 }

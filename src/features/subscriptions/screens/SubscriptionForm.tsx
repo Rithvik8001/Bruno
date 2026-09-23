@@ -7,6 +7,7 @@ import {
   Gap,
   Group,
   Input,
+  Loading,
   Logo,
   LogoRow,
   SectionHeading,
@@ -57,6 +58,7 @@ import {
 
 const copy = subscriptionsCopy.form;
 const groupInset = layout.icon.row + layout.row.gap;
+const skeletonRows = 3;
 
 const presetOptions: readonly SelectOption<CycleChoice>[] = cyclePresets.map(
   (preset) => ({ value: preset, label: subscriptionsCopy.cycles[preset] }),
@@ -191,11 +193,11 @@ export function SubscriptionForm({
   const { draft, set, currency, start } = form;
   const nameChanged = normalizeName(draft.name) !== form.pickedName;
   const searching = form.nameActive && nameChanged;
-  const { results } = useServiceSearch(draft.name, searching);
-  const showSuggestions =
-    searching &&
-    draft.name.trim().length >= searchMinLength &&
-    results.length > 0;
+  const search = useServiceSearch(draft.name, searching);
+  const eligible = searching && draft.name.trim().length >= searchMinLength;
+  const showSuggestions = eligible && search.results.length > 0;
+  const showSearching = eligible && search.results.length === 0 && search.searching;
+  const showNoMatches = eligible && search.results.length === 0 && !search.searching;
 
   const focusAmount = () => {
     form.setNameActive(false);
@@ -230,6 +232,13 @@ export function SubscriptionForm({
         returnKeyType="next"
         onFocus={() => form.setNameActive(true)}
         onSubmitEditing={focusAmount}
+        hint={
+          form.nameActive && draft.serviceKey === null && !showNoMatches
+            ? copy.nameHint
+            : showNoMatches
+              ? copy.noMatches
+              : undefined
+        }
       />
       {draft.serviceKey === null ? null : (
         <View
@@ -246,10 +255,16 @@ export function SubscriptionForm({
           <TextLink title={copy.removeLogo} onPress={form.removeLogo} />
         </View>
       )}
+      {showSearching ? (
+        <>
+          <SectionHeading size="small" top="s16" bottom="s4" title={copy.searching} />
+          <Loading rows={skeletonRows} accessibilityLabel={copy.searching} />
+        </>
+      ) : null}
       {showSuggestions ? (
         <>
           <SectionHeading size="small" top="s16" bottom="s4" title={copy.suggestions} />
-          {results.slice(0, layout.suggestions.max).map((suggestion) => (
+          {search.results.slice(0, layout.suggestions.max).map((suggestion) => (
             <LogoRow
               key={suggestion.domain}
               title={suggestion.name}

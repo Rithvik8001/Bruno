@@ -6,7 +6,7 @@ export type ServiceSuggestion = {
   domain: string;
 };
 
-export const searchDebounceMs = 250;
+export const searchDebounceMs = 150;
 export const searchMinLength = 2;
 
 function isSuggestion(value: unknown): value is ServiceSuggestion {

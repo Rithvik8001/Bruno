@@ -65,6 +65,7 @@ export function OverviewScreen() {
   const next = billing[0];
   const upNext = billing.slice(0, upNextLimit);
 
+
   const openAdd = () => router.push("/add-subscription");
   const openInsights = () => router.push("/insights");
   const openList = () => router.push("/subscriptions");
@@ -152,6 +153,7 @@ export function OverviewScreen() {
                 />
               ) : (
                 <Tile
+                  tone="accent"
                   label={next.subscription.name}
                   leading={
                     <Logo

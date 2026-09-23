@@ -198,8 +198,9 @@ export const layout = {
   },
   row: {
     minHeight: 64,
-    logoMinHeight: 68,
+    logoMinHeight: 76,
     paddingVertical: 10,
+    logoPaddingVertical: 14,
     gap: 14,
     subGap: 2,
     chevron: 14,
@@ -213,7 +214,7 @@ export const layout = {
     request: { small: 128, large: 256 },
     letterScale: 0.45,
   },
-  tile: { padding: 20, gap: 12, minHeight: 120, logoGap: 8 },
+  tile: { padding: 20, gap: 12, minHeight: 120, logoGap: 8, mutedOpacity: 0.65 },
   chip: { height: 28, paddingHorizontal: 10, gap: 6 },
   chart: {
     height: 120,
@@ -289,6 +290,7 @@ export const icons = {
   person: "person",
   signOut: "rectangle.portrait.and.arrow.right",
   trial: "gift",
+  loading: "arrow.trianglehead.2.clockwise",
 } as const satisfies Record<string, SFSymbol>;
 
 export const iconSizes = { bar: 22, inline: 16, tight: 14 } as const;
