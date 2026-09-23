@@ -3,7 +3,7 @@ import {
   isValidPassword,
   normalizeEmail,
 } from "@/features/auth/validation";
-import { startSignUp } from "@/server/accounts";
+import { AccountExistsError, startSignUp } from "@/server/accounts";
 import { json, readJson, readString } from "@/server/http";
 import { clientIp, consume, rateLimits } from "@/server/rateLimit";
 
@@ -32,6 +32,9 @@ export async function POST(request: Request): Promise<Response> {
     await startSignUp(email, password);
     return json(200, { ok: true });
   } catch (error) {
+    if (error instanceof AccountExistsError) {
+      return json(409, { error: "account_exists" });
+    }
     console.error("[bruno auth] signup failed", error);
     return json(500, { error: "server_error" });
   }

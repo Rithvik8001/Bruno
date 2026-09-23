@@ -2,6 +2,7 @@ import { Host, HStack, Image, Menu, Picker, Text } from "@expo/ui/swift-ui";
 import {
   contentShape,
   foregroundStyle,
+  frame,
   pickerStyle,
   shapes,
   tag,
@@ -39,6 +40,7 @@ export function SelectField<TValue extends string>({
   const themeName = useThemeName();
   const valueFont = useSwiftFont("body");
   const selected = options.find((option) => option.value === value);
+  const controlHeight = layout.row.minHeight - layout.row.paddingVertical * 2;
 
   return (
     <IconRow
@@ -46,46 +48,50 @@ export function SelectField<TValue extends string>({
       title={label}
       trailing={
         <Host
-          matchContents={{ horizontal: true }}
+          matchContents
           colorScheme={themeName}
           seedColor={theme.ink}
-          style={{ height: layout.row.minHeight - layout.row.paddingVertical * 2 }}
         >
-          <Menu
-            label={
-              <HStack
-                alignment="center"
-                spacing={layout.select.gap}
-                modifiers={[contentShape(shapes.rectangle())]}
-              >
-                <Text
-                  modifiers={[
-                    ...valueFont,
-                    foregroundStyle(placeholder ? theme.ink4 : theme.ink2),
-                  ]}
-                >
-                  {selected?.label ?? ""}
-                </Text>
-                <Image
-                  systemName={icons.select}
-                  size={layout.select.chevron}
-                  color={theme.ink4}
-                />
-              </HStack>
-            }
+          <HStack
+            alignment="center"
+            modifiers={[frame({ height: controlHeight })]}
           >
-            <Picker<TValue>
-              selection={value}
-              onSelectionChange={onChange}
-              modifiers={[pickerStyle("inline")]}
+            <Menu
+              label={
+                <HStack
+                  alignment="center"
+                  spacing={layout.select.gap}
+                  modifiers={[contentShape(shapes.rectangle())]}
+                >
+                  <Text
+                    modifiers={[
+                      ...valueFont,
+                      foregroundStyle(placeholder ? theme.ink4 : theme.ink2),
+                    ]}
+                  >
+                    {selected?.label ?? ""}
+                  </Text>
+                  <Image
+                    systemName={icons.select}
+                    size={layout.select.chevron}
+                    color={theme.ink4}
+                  />
+                </HStack>
+              }
             >
-              {options.map((option) => (
-                <Text key={option.value} modifiers={[tag(option.value)]}>
-                  {option.label}
-                </Text>
-              ))}
-            </Picker>
-          </Menu>
+              <Picker<TValue>
+                selection={value}
+                onSelectionChange={onChange}
+                modifiers={[pickerStyle("inline")]}
+              >
+                {options.map((option) => (
+                  <Text key={option.value} modifiers={[tag(option.value)]}>
+                    {option.label}
+                  </Text>
+                ))}
+              </Picker>
+            </Menu>
+          </HStack>
         </Host>
       }
     />

@@ -26,7 +26,7 @@ export function Group({ children, inset = 0 }: GroupProps) {
             {item}
           </View>
         ))}
-        <Hairline />
+        <Hairline inset={inset} />
       </View>
     </GroupContext>
   );

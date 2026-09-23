@@ -25,7 +25,7 @@ export function OnboardingScreen() {
       <Spacer height={layout.onboarding.markTop} />
       <View style={{ flexDirection: "row", alignItems: "center", gap: layout.row.gap }}>
         <BrandMark size={layout.onboarding.mark} />
-        <T style="heading">{onboardingCopy.wordmark}</T>
+        <T style="title">{onboardingCopy.wordmark}</T>
       </View>
       <Spacer grow />
       <Entering index={0}>

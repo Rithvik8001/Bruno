@@ -4,6 +4,7 @@ export type AuthFailure =
   | "invalid"
   | "invalidCode"
   | "invalidCredentials"
+  | "exists"
   | "unverified"
   | "rateLimited"
   | "network"
@@ -42,6 +43,9 @@ async function post(
     }
     if (response.status === 401) {
       return failure("invalidCode");
+    }
+    if (response.status === 409) {
+      return failure("exists");
     }
     if (response.status === 429) {
       return failure("rateLimited");

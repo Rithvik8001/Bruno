@@ -12,6 +12,8 @@ export class UnauthorizedError extends Error {}
 
 export class MailFailedError extends Error {}
 
+export class AccountExistsError extends Error {}
+
 const existingAccountCodes = ["email_exists", "user_already_exists"];
 const welcomeSentinel = "2000-01-01";
 
@@ -45,6 +47,9 @@ async function issueCodeForExisting(
     user.email_confirmed_at !== undefined && user.email_confirmed_at !== null;
 
   if (confirmed) {
+    if (password !== null) {
+      throw new AccountExistsError();
+    }
     await deliverAlreadyRegistered(email);
     return;
   }

@@ -1,5 +1,9 @@
-import { DatePicker, Host } from "@expo/ui/swift-ui";
-import { datePickerStyle, labelsHidden } from "@expo/ui/swift-ui/modifiers";
+import { DatePicker, HStack, Host } from "@expo/ui/swift-ui";
+import {
+  datePickerStyle,
+  frame,
+  labelsHidden,
+} from "@expo/ui/swift-ui/modifiers";
 
 import { layout } from "../tokens";
 import { useTheme, useThemeName } from "../theme/useTheme";
@@ -25,6 +29,7 @@ export function DateField({
 }: DateFieldProps) {
   const theme = useTheme();
   const themeName = useThemeName();
+  const controlHeight = layout.row.minHeight - layout.row.paddingVertical * 2;
 
   return (
     <IconRow
@@ -32,19 +37,23 @@ export function DateField({
       title={label}
       trailing={
         <Host
-          matchContents={{ horizontal: true }}
+          matchContents
           colorScheme={themeName}
           seedColor={theme.ink}
-          style={{ height: layout.row.minHeight - layout.row.paddingVertical * 2 }}
         >
-          <DatePicker
-            title={label}
-            selection={value}
-            range={{ start: minimumDate, end: maximumDate }}
-            displayedComponents={["date"]}
-            onDateChange={onChange}
-            modifiers={[datePickerStyle("compact"), labelsHidden()]}
-          />
+          <HStack
+            alignment="center"
+            modifiers={[frame({ height: controlHeight })]}
+          >
+            <DatePicker
+              title={label}
+              selection={value}
+              range={{ start: minimumDate, end: maximumDate }}
+              displayedComponents={["date"]}
+              onDateChange={onChange}
+              modifiers={[datePickerStyle("compact"), labelsHidden()]}
+            />
+          </HStack>
         </Host>
       }
     />

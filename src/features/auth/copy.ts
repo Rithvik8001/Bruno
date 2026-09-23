@@ -1,7 +1,7 @@
 export const authCopy = {
   step: {
     emailTitle: "What's your email?",
-    emailSubtitleSignUp: "We'll send a six-digit code to confirm it's you.",
+    emailSubtitleSignUp: "Next you'll pick a password, then we'll email you a six-digit code.",
     emailSubtitleSignIn: "Welcome back. Sign in to see your list.",
     emailLabel: "Email",
     emailPlaceholder: "you@example.com",
@@ -11,7 +11,7 @@ export const authCopy = {
     passwordEnterLead: "Signing in as ",
     passwordEnterTail: ".",
     passwordLabel: "Password",
-    passwordHint: "At least 8 characters, with one number.",
+    passwordHint: "At least 8 characters, with one number. We'll email you a code right after.",
     createAccount: "Create account",
     signIn: "Sign in",
     forgot: "Forgot password?",
@@ -56,6 +56,7 @@ export const authCopy = {
   errors: {
     invalidEmail: "That email does not look right.",
     invalidCredentials: "Email or password is incorrect.",
+    emailExists: "That email already has an account. Sign in instead.",
     invalidCode: "That code is wrong or has expired.",
     rateLimited: "Too many attempts. Wait a minute and try again.",
     alertTitle: "Something went wrong",

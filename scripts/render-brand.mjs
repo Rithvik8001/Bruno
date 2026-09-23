@@ -31,7 +31,7 @@ async function renderIcon() {
 
 async function renderMark() {
   const svg = await readFile(resolve(brand, "mark.svg"), "utf8");
-  const base = 40;
+  const base = 72;
   for (const [suffix, scale] of scales) {
     await write(resolve(images, `mark${suffix}.png`), png(svg, base * scale));
   }

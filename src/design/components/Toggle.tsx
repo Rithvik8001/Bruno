@@ -29,7 +29,7 @@ export function Toggle({
   return (
     <Host
       colorScheme={themeName}
-      seedColor={theme.accent}
+      seedColor={theme.accentStrong}
       style={{
         width: layout.toggle.width,
         height: layout.toggle.height,
@@ -40,7 +40,7 @@ export function Toggle({
         isOn={value}
         label={accessibilityLabel}
         onIsOnChange={onValueChange}
-        modifiers={[labelsHidden(), tint(theme.accent), disabledModifier(disabled)]}
+        modifiers={[labelsHidden(), tint(theme.accentStrong), disabledModifier(disabled)]}
       />
     </Host>
   );

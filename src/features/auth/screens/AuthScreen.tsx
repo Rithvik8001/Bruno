@@ -82,7 +82,7 @@ export function AuthScreen({ mode }: AuthScreenProps) {
       }
       return;
     }
-    if (result.reason === "invalid") {
+    if (result.reason === "invalid" || result.reason === "exists") {
       setEmailError(failureMessage(result.reason));
       setStage("email");
       return;

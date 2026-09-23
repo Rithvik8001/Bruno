@@ -3,8 +3,32 @@
     {
       "layers": [
         {
-          "image-name": "b.svg",
-          "name": "b",
+          "image-name": "shine.svg",
+          "name": "shine",
+          "position": {
+            "scale": 1,
+            "translation-in-points": [
+              0,
+              0
+            ]
+          },
+          "fill-specializations": [
+            {
+              "value": {
+                "solid": "extended-srgb:1.00000,1.00000,1.00000,1.00000"
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "extended-srgb:1.00000,1.00000,1.00000,1.00000"
+              }
+            }
+          ]
+        },
+        {
+          "image-name": "lime.svg",
+          "name": "lime",
           "position": {
             "scale": 1,
             "translation-in-points": [
@@ -21,7 +45,103 @@
             {
               "appearance": "dark",
               "value": {
-                "solid": "extended-srgb:0.65098,1.00000,0.47843,1.00000"
+                "solid": "extended-srgb:0.62353,0.90980,0.43922,1.00000"
+              }
+            }
+          ]
+        },
+        {
+          "image-name": "details.svg",
+          "name": "details",
+          "position": {
+            "scale": 1,
+            "translation-in-points": [
+              0,
+              0
+            ]
+          },
+          "fill-specializations": [
+            {
+              "value": {
+                "solid": "extended-srgb:0.00000,0.00000,0.00000,1.00000"
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "extended-srgb:0.00000,0.00000,0.00000,1.00000"
+              }
+            }
+          ]
+        },
+        {
+          "image-name": "face.svg",
+          "name": "face",
+          "position": {
+            "scale": 1,
+            "translation-in-points": [
+              0,
+              0
+            ]
+          },
+          "fill-specializations": [
+            {
+              "value": {
+                "solid": "extended-srgb:1.00000,1.00000,1.00000,1.00000"
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "extended-srgb:1.00000,1.00000,1.00000,1.00000"
+              }
+            }
+          ]
+        },
+        {
+          "image-name": "body.svg",
+          "name": "body",
+          "position": {
+            "scale": 1,
+            "translation-in-points": [
+              0,
+              0
+            ]
+          },
+          "fill-specializations": [
+            {
+              "value": {
+                "solid": "extended-srgb:0.00000,0.00000,0.00000,1.00000"
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "extended-srgb:0.00000,0.00000,0.00000,1.00000"
+              }
+            }
+          ]
+        },
+        {
+          "image-name": "collar.svg",
+          "name": "collar",
+          "position": {
+            "scale": 1,
+            "translation-in-points": [
+              0,
+              0
+            ]
+          },
+          "fill-specializations": [
+            {
+              "value": {
+                "solid": "extended-srgb:0.62353,0.90980,0.43922,1.00000"
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "extended-srgb:0.62353,0.90980,0.43922,1.00000"
               }
             }
           ]
@@ -46,13 +166,13 @@
   "fill-specializations": [
     {
       "value": {
-        "solid": "extended-srgb:0.00000,0.00000,0.00000,1.00000"
+        "solid": "extended-srgb:1.00000,1.00000,1.00000,1.00000"
       }
     },
     {
       "appearance": "dark",
       "value": {
-        "solid": "extended-srgb:0.00000,0.00000,0.00000,1.00000"
+        "solid": "extended-srgb:1.00000,1.00000,1.00000,1.00000"
       }
     }
   ]

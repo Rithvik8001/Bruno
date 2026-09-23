@@ -24,6 +24,7 @@ export type Theme = {
   readonly ink4: string;
   readonly onInk: string;
   readonly accent: string;
+  readonly accentStrong: string;
   readonly onAccent: string;
   readonly bar: string;
   readonly barMuted: string;

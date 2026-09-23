@@ -9,6 +9,8 @@ export function failureMessage(reason: AuthFailure): string {
       return authCopy.errors.invalidCode;
     case "invalidCredentials":
       return authCopy.errors.invalidCredentials;
+    case "exists":
+      return authCopy.errors.emailExists;
     case "rateLimited":
       return authCopy.errors.rateLimited;
     case "network":
