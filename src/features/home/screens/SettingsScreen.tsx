@@ -4,6 +4,7 @@ import { openBrowserAsync } from "expo-web-browser";
 import { useState } from "react";
 
 import {
+  Divider,
   EmptyState,
   Gap,
   Group,
@@ -52,7 +53,6 @@ import { homeCopy } from "../copy";
 
 const copy = homeCopy.settings;
 const loadingRows = 10;
-const groupInset = layout.icon.row + layout.row.gap;
 
 type LeadValue = `${(typeof reminderLeadOptions)[number]}`;
 
@@ -205,7 +205,7 @@ export function SettingsScreen() {
         />
       ) : (
         <>
-          <Group inset={groupInset}>
+          <Group>
             <ToggleRow
               icon="bell"
               label={copy.renewalReminders}
@@ -245,8 +245,9 @@ export function SettingsScreen() {
               }}
             />
           </Group>
-          <SectionHeading title={copy.delivery} />
-          <Group inset={groupInset}>
+          <Divider />
+          <SectionHeading top={null} title={copy.delivery} />
+          <Group>
             <ToggleRow
               icon="bell"
               label={copy.push}
@@ -264,8 +265,9 @@ export function SettingsScreen() {
               onValueChange={(value) => setPreference({ emailEnabled: value })}
             />
           </Group>
-          <SectionHeading title={copy.schedule} />
-          <Group inset={groupInset}>
+          <Divider />
+          <SectionHeading top={null} title={copy.schedule} />
+          <Group>
             <SelectField
               icon="repeat"
               label={copy.frequency}
@@ -308,8 +310,9 @@ export function SettingsScreen() {
           </Group>
         </>
       )}
-      <SectionHeading title={copy.appearance} />
-      <Group inset={groupInset}>
+      <Divider />
+      <SectionHeading top={null} title={copy.appearance} />
+      <Group>
         <SelectField
           icon="appearance"
           label={copy.theme}
@@ -318,8 +321,9 @@ export function SettingsScreen() {
           onChange={setAppearance}
         />
       </Group>
-      <SectionHeading title={copy.account} />
-      <Group inset={groupInset}>
+      <Divider />
+      <SectionHeading top={null} title={copy.account} />
+      <Group>
         {profile === null ? null : (
           <IconRow
             icon="currency"
@@ -345,7 +349,7 @@ export function SettingsScreen() {
           onPress={busy ? undefined : askDelete}
         />
       </Group>
-      <Gap size="s24" />
+      <Divider />
       <TextLink
         size="note"
         title={subscriptionsCopy.logos.credit}

@@ -3,6 +3,7 @@ import { useDeferredValue, useRef, useState } from "react";
 import type { SearchBarCommands } from "react-native-screens";
 
 import {
+  Appear,
   EmptyState,
   Entering,
   Gap,
@@ -129,6 +130,7 @@ function flatten(groups: readonly LedgerGroup[]): ListItem[] {
 type SubscriptionRowProps = {
   item: UpcomingSubscription;
   muted: boolean;
+  highlight: boolean;
   now: CalendarDate;
   themeName: ThemeName;
   onOpen: (id: string) => void;
@@ -137,6 +139,7 @@ type SubscriptionRowProps = {
 function SubscriptionRow({
   item,
   muted,
+  highlight,
   now,
   themeName,
   onOpen,
@@ -156,6 +159,7 @@ function SubscriptionRow({
         muted,
       }}
       tone={muted ? "ink2" : "ink"}
+      highlight={highlight}
       onPress={() => onOpen(item.subscription.id)}
     />
   );
@@ -168,7 +172,8 @@ function categoryLabel(category: keyof typeof subscriptionsCopy.categories): str
 export function SubscriptionsScreen() {
   const themeName = useThemeName();
   const { profile } = useProfile();
-  const { status, failure, subscriptions, refresh } = useSubscriptions();
+  const { status, failure, subscriptions, recentId, refresh } =
+    useSubscriptions();
   const { alert, showFailure } = useSubscriptionAlert();
   const pull = usePullToRefresh(refresh, showFailure);
   const [filter, setFilter] = useState<ListFilter>("all");
@@ -228,6 +233,7 @@ export function SubscriptionsScreen() {
         <SubscriptionRow
           item={entry.item}
           muted={entry.muted}
+          highlight={entry.item.subscription.id === recentId}
           now={now}
           themeName={themeName}
           onOpen={openDetail}
@@ -236,7 +242,7 @@ export function SubscriptionsScreen() {
     return index < enteringItems ? (
       <Entering index={index}>{content}</Entering>
     ) : (
-      content
+      <Appear>{content}</Appear>
     );
   };
 

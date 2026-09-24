@@ -1,12 +1,16 @@
 import {
   Pressable,
+  type GestureResponderEvent,
   type PressableProps,
   type StyleProp,
   type ViewStyle,
 } from "react-native";
+import Animated from "react-native-reanimated";
 import type { ReactNode } from "react";
 
-import { motion } from "../tokens";
+import { usePressScale } from "./PressScale";
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export type TappableProps = Omit<PressableProps, "style" | "children"> & {
   children: ReactNode;
@@ -17,18 +21,27 @@ export function Tappable({
   children,
   style,
   disabled,
+  onPressIn,
+  onPressOut,
   ...rest
 }: TappableProps) {
+  const press = usePressScale("control", true);
+
   return (
-    <Pressable
+    <AnimatedPressable
       disabled={disabled}
-      style={({ pressed }) => [
-        style,
-        pressed && !disabled ? { opacity: motion.pressedOpacity } : null,
-      ]}
+      style={[style, press.animatedStyle]}
+      onPressIn={(event: GestureResponderEvent) => {
+        press.onPressIn();
+        onPressIn?.(event);
+      }}
+      onPressOut={(event: GestureResponderEvent) => {
+        press.onPressOut();
+        onPressOut?.(event);
+      }}
       {...rest}
     >
       {children}
-    </Pressable>
+    </AnimatedPressable>
   );
 }

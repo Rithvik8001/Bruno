@@ -8,6 +8,7 @@ import {
 } from "react";
 import { AppState } from "react-native";
 
+import { motion } from "@/design";
 import { useSession } from "@/features/auth";
 import { useProfile } from "@/features/profile";
 import {
@@ -38,6 +39,7 @@ export type SubscriptionsState = {
   status: SubscriptionsStatus;
   failure: DataFailure | null;
   subscriptions: readonly Subscription[];
+  recentId: string | null;
   refresh: () => Promise<DataResult<void>>;
   add: (input: NewSubscription) => Promise<DataResult<Subscription>>;
   update: (
@@ -66,6 +68,7 @@ export function SubscriptionsProvider({ children }: { children: ReactNode }) {
   const { profile } = useProfile();
   const userId = session?.user.id ?? null;
   const [loaded, setLoaded] = useState<Loaded | null>(null);
+  const [recentId, setRecentId] = useState<string | null>(null);
   const sequence = useRef(0);
   const inFlight = useRef(false);
   const lastSuccess = useRef<number | null>(null);
@@ -75,6 +78,14 @@ export function SubscriptionsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     currency.current = profile?.currency ?? null;
   }, [profile]);
+
+  useEffect(() => {
+    if (recentId === null) {
+      return;
+    }
+    const timer = setTimeout(() => setRecentId(null), motion.duration.recent);
+    return () => clearTimeout(timer);
+  }, [recentId]);
 
   const load = async (
     owner: string,
@@ -155,6 +166,7 @@ export function SubscriptionsProvider({ children }: { children: ReactNode }) {
 
     const result = await createSubscription(input, currency.current);
     if (result.ok) {
+      setRecentId(result.data.id);
       setLoaded((previous) =>
         previous !== null && previous.userId === userId
           ? {
@@ -251,6 +263,7 @@ export function SubscriptionsProvider({ children }: { children: ReactNode }) {
           : "ready",
     failure: current?.failure ?? null,
     subscriptions: current?.subscriptions ?? none,
+    recentId,
     refresh,
     add,
     update,

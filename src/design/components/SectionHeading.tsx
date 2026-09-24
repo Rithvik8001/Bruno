@@ -65,10 +65,8 @@ export function SectionHeading({
               gap: layout.select.gap,
             }}
           >
-            <T style="captionStrong" color="ink2">
-              {action.title}
-            </T>
-            <Icon name="chevron" size={layout.row.chevron} color="ink3" />
+            <T style="captionStrong">{action.title}</T>
+            <Icon name="chevron" size={layout.row.chevron} />
           </Tappable>
         ) : value !== undefined ? (
           <T style={small ? "label" : "num"} color="ink2" numberOfLines={1}>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   AnimatedMoney,
   BarChart,
+  Divider,
   EmptyState,
   Entering,
   Gap,
@@ -181,7 +182,7 @@ export function InsightsScreen() {
                 activeKey={monthKey(now)}
                 accessibilityLabel={copy.chart}
               />
-              <Gap size="s32" />
+              <Divider />
               <StatList items={monthStats} />
             </Entering>
           ) : (
@@ -206,7 +207,8 @@ export function InsightsScreen() {
               })}
               {facts.length === 0 ? null : (
                 <>
-                  <SectionHeading title={copy.facts} />
+                  <Divider />
+                  <SectionHeading top={null} title={copy.facts} />
                   <StatList items={facts} />
                 </>
               )}

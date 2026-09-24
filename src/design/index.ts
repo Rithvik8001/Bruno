@@ -68,6 +68,7 @@ export {
 export { BrandMark, type BrandMarkProps } from "./primitives/BrandMark";
 export { Gap, type GapProps } from "./primitives/Gap";
 export { Spacer, type SpacerProps } from "./primitives/Spacer";
+export { Divider } from "./primitives/Divider";
 export { Hairline, type HairlineProps } from "./primitives/Hairline";
 export {
   Icon,
@@ -104,7 +105,8 @@ export {
   type ButtonVariant,
 } from "./components/Button";
 export { PillRow, type PillRowProps } from "./components/PillRow";
-export { Tile, type TileProps } from "./components/Tile";
+export { PillLink, type PillLinkProps } from "./components/PillLink";
+export { Appear, type AppearProps } from "./components/Appear";
 export { CodeInput, type CodeInputProps } from "./components/CodeInput";
 export { DateField, type DateFieldProps } from "./components/DateField";
 export { Disclosure, type DisclosureProps } from "./components/Disclosure";

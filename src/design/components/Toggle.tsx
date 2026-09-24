@@ -4,6 +4,7 @@ import {
   labelsHidden,
   tint,
 } from "@expo/ui/swift-ui/modifiers";
+import { useState } from "react";
 
 import { layout } from "../tokens";
 import { useTheme, useThemeName } from "../theme/useTheme";
@@ -65,16 +66,24 @@ export function ToggleRow({
   subtitleLines,
   disabled,
 }: ToggleRowProps) {
+  const [bounce, setBounce] = useState(0);
+
   return (
     <IconRow
       icon={icon}
+      iconBounce={bounce}
       title={label}
       subtitle={subtitle}
       subtitleLines={subtitleLines}
       trailing={
         <Toggle
           value={value}
-          onValueChange={onValueChange}
+          onValueChange={(next) => {
+            if (next) {
+              setBounce((count) => count + 1);
+            }
+            onValueChange(next);
+          }}
           disabled={disabled}
           accessibilityLabel={label}
         />

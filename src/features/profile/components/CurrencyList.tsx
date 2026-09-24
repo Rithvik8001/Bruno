@@ -121,7 +121,7 @@ export function CurrencyList({
               }
               trailing={
                 item.currency.code === selected ? (
-                  <Icon name="check" size="inline" />
+                  <Icon name="check" size="inline" bounce={1} />
                 ) : undefined
               }
               onPress={

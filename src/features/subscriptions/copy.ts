@@ -63,6 +63,10 @@ export const subscriptionsCopy = {
   detail: {
     back: "Back",
     edit: "Edit",
+    renews: "Renews {when}",
+    trialEnds: "Free trial ends {when}",
+    details: "Details",
+    actions: "What you can do",
     trialUntil: "Free until",
     paused: "Paused",
     cancelled: "Cancelled",

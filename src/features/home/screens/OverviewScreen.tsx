@@ -1,20 +1,21 @@
 import { router } from "expo-router";
-import { View } from "react-native";
 
 import {
   AnimatedMoney,
+  Appear,
+  Divider,
   EmptyState,
   Entering,
   Gap,
   Loading,
-  Logo,
   LogoRow,
+  PillLink,
   PillRow,
   Screen,
   SectionHeading,
+  Spacer,
   StatList,
   T,
-  Tile,
   layout,
   useThemeName,
   type StatItem,
@@ -47,7 +48,8 @@ const loadingRows = 4;
 export function OverviewScreen() {
   const themeName = useThemeName();
   const { profile } = useProfile();
-  const { status, failure, subscriptions, refresh } = useSubscriptions();
+  const { status, failure, subscriptions, recentId, refresh } =
+    useSubscriptions();
   const { alert, showFailure } = useSubscriptionAlert();
   const pull = usePullToRefresh(refresh, showFailure);
 
@@ -63,9 +65,7 @@ export function OverviewScreen() {
   const trials = billing.filter((item) => item.status === "trial").length;
   const month = monthCharges(billing, now);
   const monthEnd = { ...now, day: daysInMonth(now.year, now.month) };
-  const next = billing[0];
   const upNext = billing.slice(0, upNextLimit);
-
 
   const openAdd = () => router.push("/add-subscription");
   const openInsights = () => router.push("/insights");
@@ -74,6 +74,14 @@ export function OverviewScreen() {
     router.push({ pathname: "/subscription", params: { id } });
 
   const stats: StatItem[] = [
+    {
+      key: "toCome",
+      label: copy.stillToCome,
+      value: formatMoney(month.totalMinor, currency),
+      note: (month.count === 1 ? copy.chargesOne : copy.chargesMany)
+        .replace("{count}", String(month.count))
+        .replace("{date}", formatLedgerDate(monthEnd)),
+    },
     { key: "active", label: copy.active, value: String(counts.active) },
   ];
   if (trials > 0) {
@@ -97,12 +105,18 @@ export function OverviewScreen() {
 
   return (
     <Screen scroll withTabBar refresh={pull}>
+      <T style="title" accessibilityRole="header">
+        {homeCopy.tabs.overview}
+      </T>
       {status === "loading" ? (
-        <Loading
-          variant="hero"
-          rows={loadingRows}
-          accessibilityLabel={subscriptionsCopy.list.loading}
-        />
+        <>
+          <Gap size="s24" />
+          <Loading
+            variant="hero"
+            rows={loadingRows}
+            accessibilityLabel={subscriptionsCopy.list.loading}
+          />
+        </>
       ) : status === "error" ? (
         <>
           <Gap size="s32" />
@@ -124,10 +138,7 @@ export function OverviewScreen() {
       ) : (
         <>
           <Entering index={0}>
-            <T style="label" color="ink3">
-              {copy.thisMonth}
-            </T>
-            <Gap size="s4" />
+            <Spacer height={layout.hero.top} />
             <AnimatedMoney amount={formatMoney(monthlyMinor, currency)} />
             <Gap size="s4" />
             <T style="caption" color="ink3">
@@ -135,63 +146,29 @@ export function OverviewScreen() {
                 ? copy.perMonthOne
                 : copy.perMonthMany.replace("{count}", String(count))}
             </T>
-            <Gap size="s24" />
+            <Spacer height={layout.hero.gap} />
+            <PillLink title={copy.insights} onPress={openInsights} />
+            <Spacer height={layout.hero.actionsTop} />
             <PillRow
               buttons={[
                 { title: copy.add, onPress: openAdd },
-                { title: copy.insights, onPress: openInsights, variant: "secondary" },
+                { title: copy.seeAll, onPress: openList, variant: "secondary" },
               ]}
             />
           </Entering>
-          <Gap size="s24" />
           <Entering index={1}>
-            <View style={{ flexDirection: "row", gap: layout.pill.gap }}>
-              {next === undefined ? (
-                <Tile
-                  label={copy.upNext}
-                  value={copy.nothingDue}
-                  caption={copy.nothingDueCaption}
-                />
-              ) : (
-                <Tile
-                  tone="accent"
-                  label={next.subscription.name}
-                  leading={
-                    <Logo
-                      {...subscriptionLogo(next.subscription, themeName, "tiny")}
-                      size="tiny"
-                    />
-                  }
-                  value={formatMoney(
-                    next.subscription.amountMinor,
-                    next.subscription.currency,
-                  )}
-                  caption={`${formatRelativeTitle(next.nextRenewal, now)} · ${formatCycleAdverb(next.subscription.cycle)}`}
-                  onPress={() => openDetail(next.subscription.id)}
-                />
-              )}
-              <Tile
-                label={copy.stillToCome}
-                value={formatMoney(month.totalMinor, currency)}
-                caption={(month.count === 1 ? copy.chargesOne : copy.chargesMany)
-                  .replace("{count}", String(month.count))
-                  .replace("{date}", formatLedgerDate(monthEnd))}
-              />
-            </View>
-          </Entering>
-          <Entering index={2}>
-            <SectionHeading
-              title={copy.upNext}
-              action={{ title: copy.seeAll, onPress: openList }}
-            />
+            <SectionHeading title={copy.upNext} bottom="s4" />
             {upNext.length === 0 ? (
-              <T style="body" color="ink3">
-                {copy.nothingThisWeek}
-              </T>
+              <>
+                <Gap size="s8" />
+                <T style="body" color="ink3">
+                  {copy.nothingThisWeek}
+                </T>
+              </>
             ) : (
               upNext.map((item) => (
+                <Appear key={item.subscription.id}>
                 <LogoRow
-                  key={item.subscription.id}
                   title={item.subscription.name}
                   subtitle={`${formatRelativeTitle(item.nextRenewal, now)} · ${formatCycleAdverb(item.subscription.cycle)}`}
                   value={formatMoney(
@@ -199,13 +176,16 @@ export function OverviewScreen() {
                     item.subscription.currency,
                   )}
                   logo={subscriptionLogo(item.subscription, themeName, "row")}
+                  highlight={item.subscription.id === recentId}
                   onPress={() => openDetail(item.subscription.id)}
                 />
+                </Appear>
               ))
             )}
           </Entering>
-          <Entering index={3}>
-            <SectionHeading title={copy.thisMonth} />
+          <Entering index={2}>
+            <Divider />
+            <SectionHeading top={null} title={copy.thisMonth} bottom="s4" />
             <StatList items={stats} />
           </Entering>
         </>

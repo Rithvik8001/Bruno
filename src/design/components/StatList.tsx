@@ -1,7 +1,6 @@
 import { View } from "react-native";
 
 import { layout } from "../tokens";
-import { Hairline } from "../primitives/Hairline";
 import { T } from "../primitives/T";
 
 export type StatItem = {
@@ -18,9 +17,8 @@ export type StatListProps = {
 export function StatList({ items }: StatListProps) {
   return (
     <View>
-      {items.map((item, index) => (
+      {items.map((item) => (
         <View key={item.key}>
-          {index === 0 ? null : <Hairline />}
           <View
             accessible
             accessibilityLabel={[item.label, item.value, item.note]
@@ -49,7 +47,6 @@ export function StatList({ items }: StatListProps) {
           </View>
         </View>
       ))}
-      <Hairline />
     </View>
   );
 }

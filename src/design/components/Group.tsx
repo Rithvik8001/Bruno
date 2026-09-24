@@ -1,8 +1,6 @@
 import { Children, createContext, use, type ReactNode } from "react";
 import { View } from "react-native";
 
-import { Hairline } from "../primitives/Hairline";
-
 const GroupContext = createContext(false);
 
 export function useInGroup(): boolean {
@@ -11,22 +9,17 @@ export function useInGroup(): boolean {
 
 export type GroupProps = {
   children: ReactNode;
-  inset?: number;
 };
 
-export function Group({ children, inset = 0 }: GroupProps) {
+export function Group({ children }: GroupProps) {
   const items = Children.toArray(children);
 
   return (
     <GroupContext value>
       <View>
         {items.map((item, index) => (
-          <View key={index}>
-            {index === 0 ? null : <Hairline inset={inset} />}
-            {item}
-          </View>
+          <View key={index}>{item}</View>
         ))}
-        <Hairline inset={inset} />
       </View>
     </GroupContext>
   );

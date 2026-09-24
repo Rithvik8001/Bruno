@@ -1,15 +1,18 @@
 import type { ReactElement, ReactNode } from "react";
 import {
-  FlatList,
   KeyboardAvoidingView,
   RefreshControl,
   ScrollView,
   View,
   type ScrollViewProps,
 } from "react-native";
+import Animated, {
+  LinearTransition,
+  ReduceMotion,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { layout } from "../tokens";
+import { layout, motion } from "../tokens";
 import { useTheme } from "../theme/useTheme";
 
 export function useScreenTop(): number {
@@ -60,6 +63,7 @@ export function Screen({
   scrollViewProps,
 }: ScreenProps) {
   const theme = useTheme();
+  const background = theme.canvas;
   const top = useScreenTop();
   const bottom = useScreenBottom();
   const tabBarSpace = useTabBarSpace();
@@ -70,7 +74,7 @@ export function Screen({
 
   const content = scroll ? (
     <ScrollView
-      style={{ flex: 1, backgroundColor: theme.canvas }}
+      style={{ flex: 1, backgroundColor: background }}
       contentContainerStyle={{
         paddingTop,
         paddingBottom,
@@ -99,7 +103,7 @@ export function Screen({
     <View
       style={{
         flex: 1,
-        backgroundColor: theme.canvas,
+        backgroundColor: background,
         paddingTop,
         paddingBottom,
         paddingHorizontal,
@@ -116,7 +120,7 @@ export function Screen({
   return (
     <KeyboardAvoidingView
       behavior="padding"
-      style={{ flex: 1, backgroundColor: theme.canvas }}
+      style={{ flex: 1, backgroundColor: background }}
     >
       {content}
     </KeyboardAvoidingView>
@@ -150,8 +154,11 @@ export function ScreenList<Item>({
   const tabBarSpace = useTabBarSpace();
 
   return (
-    <FlatList
+    <Animated.FlatList
       data={data}
+      itemLayoutAnimation={LinearTransition.duration(
+        motion.duration.list,
+      ).reduceMotion(ReduceMotion.System)}
       keyExtractor={keyExtractor}
       renderItem={({ item, index }) => renderItem(item, index)}
       ListHeaderComponent={header}

@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 import { View } from "react-native";
 import Animated, {
+  FadeOut,
+  ReduceMotion,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
@@ -19,7 +21,13 @@ export type LoadingProps = {
 
 const restOpacity = 0.5;
 
-function Bar({ width, height }: { width: number | `${number}%`; height: number }) {
+function Bar({
+  width,
+  height,
+}: {
+  width: number | `${number}%`;
+  height: number;
+}) {
   const theme = useTheme();
   return (
     <View
@@ -49,7 +57,11 @@ export function Loading({
       return;
     }
     opacity.set(
-      withRepeat(withTiming(restOpacity, { duration: motion.duration.pulse }), -1, true),
+      withRepeat(
+        withTiming(restOpacity, { duration: motion.duration.pulse }),
+        -1,
+        true,
+      ),
     );
   }, [opacity, reduceMotion]);
 
@@ -57,40 +69,58 @@ export function Loading({
     <Animated.View
       accessibilityRole="progressbar"
       accessibilityLabel={accessibilityLabel}
-      style={pulse}
+      exiting={FadeOut.duration(motion.duration.fade).reduceMotion(
+        ReduceMotion.System,
+      )}
     >
-      {variant === "hero" ? (
-        <View style={{ paddingBottom: layout.bottom, gap: layout.loading.gap }}>
-          <Bar width={`${layout.loading.short * 100}%`} height={layout.loading.bar} />
-          <Bar width={`${layout.loading.long * 100}%`} height={layout.loading.hero} />
-        </View>
-      ) : null}
-      <View>
-        {Array.from({ length: rows }, (_, index) => (
+      <Animated.View style={pulse}>
+        {variant === "hero" ? (
           <View
-            key={index}
-            style={{
-              minHeight: layout.row.logoMinHeight,
-              flexDirection: "row",
-              alignItems: "center",
-              gap: layout.row.gap,
-            }}
+            style={{ paddingBottom: layout.bottom, gap: layout.loading.gap }}
           >
-            <View
-              style={{
-                width: layout.logo.row,
-                height: layout.logo.row,
-                borderRadius: radius.pill,
-                backgroundColor: theme.surface,
-              }}
+            <Bar
+              width={`${layout.loading.short * 100}%`}
+              height={layout.loading.bar}
             />
-            <View style={{ flex: 1, gap: layout.loading.gap }}>
-              <Bar width={`${layout.loading.long * 100}%`} height={layout.loading.bar} />
-              <Bar width={`${layout.loading.short * 100}%`} height={layout.loading.bar} />
-            </View>
+            <Bar
+              width={`${layout.loading.long * 100}%`}
+              height={layout.loading.hero}
+            />
           </View>
-        ))}
-      </View>
+        ) : null}
+        <View>
+          {Array.from({ length: rows }, (_, index) => (
+            <View
+              key={index}
+              style={{
+                minHeight: layout.row.logoMinHeight,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: layout.row.gap,
+              }}
+            >
+              <View
+                style={{
+                  width: layout.logo.row,
+                  height: layout.logo.row,
+                  borderRadius: radius.pill,
+                  backgroundColor: theme.surface,
+                }}
+              />
+              <View style={{ flex: 1, gap: layout.loading.gap }}>
+                <Bar
+                  width={`${layout.loading.long * 100}%`}
+                  height={layout.loading.bar}
+                />
+                <Bar
+                  width={`${layout.loading.short * 100}%`}
+                  height={layout.loading.bar}
+                />
+              </View>
+            </View>
+          ))}
+        </View>
+      </Animated.View>
     </Animated.View>
   );
 }

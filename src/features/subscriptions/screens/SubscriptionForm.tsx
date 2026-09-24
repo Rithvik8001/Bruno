@@ -57,7 +57,6 @@ import {
 } from "../validation";
 
 const copy = subscriptionsCopy.form;
-const groupInset = layout.icon.row + layout.row.gap;
 const skeletonRows = 3;
 
 const presetOptions: readonly SelectOption<CycleChoice>[] = cyclePresets.map(
@@ -298,7 +297,7 @@ export function SubscriptionForm({
         error={form.amountError}
       />
       <Gap size="s16" />
-      <Group inset={groupInset}>
+      <Group>
         <SelectField
           icon="repeat"
           label={copy.every}
@@ -332,7 +331,7 @@ export function SubscriptionForm({
       {form.expanded ? (
         <View>
           <Gap size="s8" />
-          <Group inset={groupInset}>
+          <Group>
             <ToggleRow
               icon="trial"
               label={copy.trial}

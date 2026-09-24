@@ -29,8 +29,9 @@ export function TextLink({
     >
       <T
         style={size === "note" ? "note" : "captionStrong"}
-        color={disabled ? "ink4" : size === "note" ? "ink3" : "ink2"}
+        color={disabled ? "ink4" : size === "note" ? "ink3" : "ink"}
         numberOfLines={1}
+        override={{ textDecorationLine: "underline" }}
       >
         {title}
       </T>

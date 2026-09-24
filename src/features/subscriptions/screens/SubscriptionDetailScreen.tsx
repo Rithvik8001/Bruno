@@ -5,8 +5,8 @@ import { View } from "react-native";
 
 import {
   AnimatedMoney,
-  Button,
   Chip,
+  Divider,
   EmptyState,
   Gap,
   IconAction,
@@ -14,14 +14,14 @@ import {
   Loading,
   Logo,
   NavBar,
-  PillRow,
   Screen,
-  Spacer,
+  SectionHeading,
   T,
   TextAction,
   layout,
   useThemeName,
   type ChipTone,
+  type IconToken,
 } from "@/design";
 import { daysBetween, fromLocalDate, nextRenewal } from "@/lib/calendar";
 import { formatMoney } from "@/lib/money";
@@ -51,6 +51,7 @@ const soonDays = 1;
 
 type StatusAction = {
   title: string;
+  icon: IconToken;
   target: SubscriptionStatus;
   prompt: Pick<SubscriptionAlertConfig, "title" | "message"> & {
     confirm: string;
@@ -58,6 +59,7 @@ type StatusAction = {
 };
 
 const pauseAction: StatusAction = {
+  icon: "pause",
   title: copy.pause,
   target: "paused",
   prompt: {
@@ -68,6 +70,7 @@ const pauseAction: StatusAction = {
 };
 
 const resumeAction: StatusAction = {
+  icon: "resume",
   title: copy.resume,
   target: "active",
   prompt: {
@@ -78,6 +81,7 @@ const resumeAction: StatusAction = {
 };
 
 const cancelAction: StatusAction = {
+  icon: "cancel",
   title: copy.cancel,
   target: "cancelled",
   prompt: {
@@ -88,6 +92,7 @@ const cancelAction: StatusAction = {
 };
 
 const reactivateAction: StatusAction = {
+  icon: "reactivate",
   title: copy.reactivate,
   target: "active",
   prompt: {
@@ -235,6 +240,14 @@ function Detail({ subscription }: { subscription: Subscription }) {
 
   const billing = isBilling(status);
 
+  const when = `${formatWeekdayDate(renewal)} · ${formatRelativeDay(renewal, now)}`;
+  const summary = !billing
+    ? formatCycleAdverb(subscription.cycle)
+    : (status === "trial" ? copy.trialEnds : copy.renews).replace(
+        "{when}",
+        formatRelativeDay(renewal, now),
+      );
+
   return (
     <Shell action={{ title: copy.edit, onPress: openEdit }}>
       <Gap size="s24" />
@@ -242,6 +255,10 @@ function Detail({ subscription }: { subscription: Subscription }) {
       <Gap size="s16" />
       <T style="title" accessibilityRole="header">
         {subscription.name}
+      </T>
+      <Gap size="s4" />
+      <T style="caption" color="ink3">
+        {summary}
       </T>
       {badges.length === 0 ? null : (
         <>
@@ -253,18 +270,19 @@ function Detail({ subscription }: { subscription: Subscription }) {
           </View>
         </>
       )}
-      <Gap size="s24" />
+      <Gap size="s20" />
       <AnimatedMoney
         amount={formatMoney(subscription.amountMinor, subscription.currency)}
         caption={formatPer(subscription.cycle)}
         size="display"
       />
-      <Gap size="s24" />
+      <Divider />
+      <SectionHeading top={null} bottom="s4" title={copy.details} />
       {billing ? (
         <IconRow
           icon="calendar"
           title={status === "trial" ? copy.trialUntil : copy.nextPayment}
-          subtitle={`${formatWeekdayDate(renewal)} · ${formatRelativeDay(renewal, now)}`}
+          subtitle={when}
         />
       ) : null}
       <IconRow
@@ -299,23 +317,24 @@ function Detail({ subscription }: { subscription: Subscription }) {
         title={copy.sinceLabel}
         subtitle={formatMonthYear(fromLocalDate(new Date(subscription.createdAt)))}
       />
-      <Spacer grow />
-      <Gap size="s32" />
-      <PillRow
-        buttons={actions.map((action) => ({
-          title: action.title,
-          variant: "secondary",
-          disabled: busy,
-          onPress: () => askStatus(action),
-        }))}
-      />
-      <Gap size="s8" />
-      <Button
+      <Divider />
+      <SectionHeading top={null} bottom="s4" title={copy.actions} />
+      {actions.map((action) => (
+        <IconRow
+          key={action.target + action.title}
+          icon={action.icon}
+          title={action.title}
+          chevron
+          onPress={busy ? undefined : () => askStatus(action)}
+        />
+      ))}
+      <IconRow
+        icon="trash"
         title={copy.delete}
-        variant="ghost"
-        disabled={busy}
-        onPress={askDelete}
+        chevron
+        onPress={busy ? undefined : askDelete}
       />
+      <Gap size="s24" />
       {alert}
     </Shell>
   );
