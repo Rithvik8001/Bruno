@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabase, timeoutFetch } from "@/lib/supabase";
 
 export type AuthFailure =
   | "invalid"
@@ -29,7 +29,7 @@ async function post(
   body: Record<string, string>,
 ): Promise<AuthResult> {
   try {
-    const response = await fetch(path, {
+    const response = await timeoutFetch(path, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -91,7 +91,7 @@ async function announceVerified(): Promise<void> {
     if (token === undefined) {
       return;
     }
-    await fetch("/api/auth/welcome", {
+    await timeoutFetch("/api/auth/welcome", {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -175,7 +175,7 @@ export async function deleteAccount(): Promise<AuthResult> {
       return failure("unknown");
     }
 
-    const response = await fetch("/api/auth/delete", {
+    const response = await timeoutFetch("/api/auth/delete", {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
     });

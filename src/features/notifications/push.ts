@@ -60,16 +60,54 @@ export async function requestPushPermission(): Promise<PushPermission> {
   }
 }
 
-export async function getPushToken(): Promise<string | null> {
-  const projectId: unknown = Constants.expoConfig?.extra?.eas?.projectId;
-  if (typeof projectId !== "string") {
-    return null;
+function projectId(): string | null {
+  const fromEas: unknown = Constants.easConfig?.projectId;
+  if (typeof fromEas === "string" && fromEas.length > 0) {
+    return fromEas;
   }
+  const fromConfig: unknown = Constants.expoConfig?.extra?.eas?.projectId;
+  return typeof fromConfig === "string" && fromConfig.length > 0 ? fromConfig : null;
+}
+
+export type PushTokenResult =
+  | { ok: true; token: string; deviceToken: string }
+  | { ok: false; reason: string };
+
+const tokenTimeoutMs = 15_000;
+
+function describeError(error: unknown): string {
+  if (error instanceof Error) {
+    const code = "code" in error && typeof error.code === "string" ? `${error.code}: ` : "";
+    return `${code}${error.message}`;
+  }
+  return String(error);
+}
+
+function withTimeout<T>(task: Promise<T>, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${label} timed out`)), tokenTimeoutMs);
+  });
+  return Promise.race([task, timeout]).finally(() => clearTimeout(timer));
+}
+
+export async function getPushToken(): Promise<PushTokenResult> {
+  const id = projectId();
   try {
-    const { data } = await Notifications.getExpoPushTokenAsync({ projectId });
-    return data;
-  } catch {
-    return null;
+    const devicePushToken = await withTimeout(
+      Notifications.getDevicePushTokenAsync(),
+      "apns",
+    );
+    const { data } = await withTimeout(
+      Notifications.getExpoPushTokenAsync({
+        devicePushToken,
+        ...(id === null ? {} : { projectId: id }),
+      }),
+      "expo",
+    );
+    return { ok: true, token: data, deviceToken: devicePushToken.data };
+  } catch (error) {
+    return { ok: false, reason: describeError(error) };
   }
 }
 

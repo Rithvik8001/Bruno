@@ -36,15 +36,23 @@ import {
   deliverMonthlyDigest,
   deliverReminder,
 } from "@/server/mailer";
-import { checkPushReceipts } from "@/server/push";
+import {
+  checkPushReceipts,
+  settlePushOutcomes,
+  type PushOutcome,
+} from "@/server/push";
 import { pushBatch, pushDigest, pushReminder } from "@/server/pushes";
 import { supabaseAdmin } from "@/server/supabaseAdmin";
+import {
+  subrequestCount,
+  subrequestTrace,
+  trackSubrequests,
+} from "@/server/subrequests";
 
-const pageSize = 1000;
-const userChunk = 200;
 const sendSpacingMs = 550;
-const budgetMs = 50_000;
+const budgetMs = 25_000;
 const receiptBudgetMs = 8_000;
+const sendsPerRun = 4;
 const digestCategories = 3;
 const maxDigestCharges = 40;
 const fallbackZone = "UTC";
@@ -55,6 +63,7 @@ type Frequency = "event" | "daily" | "twice";
 
 type ProfileRow = {
   id: string;
+  email: string | null;
   currency: string;
   timezone: string | null;
   renewal_reminders: boolean;
@@ -77,12 +86,20 @@ type Claim = {
 
 type Recipient = { email: string | null; tokens: readonly string[] };
 
+type SendResult = boolean | PushOutcome;
+
 type Planned = {
   userId: string;
   channel: Channel;
   gate: Claim | null;
   claims: Claim[];
-  send: (claimed: readonly Claim[]) => Promise<boolean>;
+  send: (claimed: readonly Claim[]) => Promise<SendResult>;
+};
+
+type Context = {
+  profiles: ProfileRow[];
+  tokens: { user_id: string; token: string }[];
+  subscriptions: (SubscriptionSelection & { user_id: string })[];
 };
 
 const channels: readonly Channel[] = ["email", "push"];
@@ -274,7 +291,7 @@ function sendItem(
   channel: Channel,
   recipient: Recipient,
   item: ReminderItem,
-): Promise<boolean> {
+): Promise<SendResult> {
   return channel === "email" && recipient.email !== null
     ? deliverReminder(recipient.email, item.kind, item.subscriptionId, item.input)
     : pushReminder(recipient.tokens, item.kind, item.subscriptionId, item.input);
@@ -287,7 +304,7 @@ function sendBatch(
   day: CalendarDate,
   slot: BatchSlot,
   items: ReminderItem[],
-): Promise<boolean> {
+): Promise<SendResult> {
   return channel === "email" && recipient.email !== null
     ? deliverBatch(recipient.email, userId, day, slot, { items })
     : pushBatch(recipient.tokens, items, day, slot);
@@ -298,7 +315,7 @@ function sendDigest(
   recipient: Recipient,
   userId: string,
   input: DigestEmail,
-): Promise<boolean> {
+): Promise<SendResult> {
   return channel === "email" && recipient.email !== null
     ? deliverMonthlyDigest(recipient.email, userId, input)
     : pushDigest(recipient.tokens, input);
@@ -371,95 +388,62 @@ function fanOut(
   return planned;
 }
 
-async function loadProfiles(): Promise<ProfileRow[]> {
-  const admin = supabaseAdmin();
-  const rows: ProfileRow[] = [];
-  for (let from = 0; ; from += pageSize) {
-    const { data, error } = await admin
-      .from("profiles")
-      .select(
-        "id, currency, timezone, renewal_reminders, trial_reminders, renews_today, monthly_digest, reminder_lead_days, push_enabled, email_enabled, notification_frequency, send_hour, second_send_hour",
-      )
-      .order("id")
-      .range(from, from + pageSize - 1);
-    if (error !== null) {
-      throw error;
-    }
-    rows.push(...data);
-    if (data.length < pageSize) {
-      return rows;
-    }
+async function loadContext(): Promise<Context> {
+  const { data, error } = await supabaseAdmin().rpc("notification_context");
+  if (error !== null) {
+    throw error;
   }
+  const raw = data as unknown as Partial<Context> | null;
+  return {
+    profiles: raw?.profiles ?? [],
+    tokens: raw?.tokens ?? [],
+    subscriptions: raw?.subscriptions ?? [],
+  };
 }
 
-async function loadEmails(): Promise<Map<string, string>> {
-  const admin = supabaseAdmin().auth.admin;
-  const emails = new Map<string, string>();
-  for (let page = 1; ; page += 1) {
-    const { data, error } = await admin.listUsers({ page, perPage: pageSize });
-    if (error !== null) {
-      throw error;
-    }
-    for (const user of data.users) {
-      if (user.email !== undefined) {
-        emails.set(user.id, user.email);
-      }
-    }
-    if (data.users.length < pageSize) {
-      return emails;
-    }
-  }
-}
-
-async function loadPushTokens(
-  userIds: readonly string[],
-): Promise<Map<string, string[]>> {
-  const admin = supabaseAdmin();
+function groupTokens(context: Context): Map<string, string[]> {
   const grouped = new Map<string, string[]>();
-  for (let start = 0; start < userIds.length; start += userChunk) {
-    const chunk = userIds.slice(start, start + userChunk);
-    const { data, error } = await admin
-      .from("push_tokens")
-      .select("user_id, token")
-      .in("user_id", chunk);
-    if (error !== null) {
-      throw error;
-    }
-    for (const row of data as { user_id: string; token: string }[]) {
-      const list = grouped.get(row.user_id) ?? [];
-      list.push(row.token);
-      grouped.set(row.user_id, list);
-    }
+  for (const row of context.tokens) {
+    const list = grouped.get(row.user_id) ?? [];
+    list.push(row.token);
+    grouped.set(row.user_id, list);
   }
   return grouped;
 }
 
-async function loadSubscriptions(
-  userIds: readonly string[],
-): Promise<Map<string, Subscription[]>> {
-  const admin = supabaseAdmin();
+function groupSubscriptions(context: Context): Map<string, Subscription[]> {
   const grouped = new Map<string, Subscription[]>();
-  for (let start = 0; start < userIds.length; start += userChunk) {
-    const chunk = userIds.slice(start, start + userChunk);
-    const { data, error } = await admin
-      .from("subscriptions")
-      .select(`${subscriptionColumns}, user_id`)
-      .in("user_id", chunk)
-      .eq("status", "active");
-    if (error !== null) {
-      throw error;
+  for (const row of context.subscriptions) {
+    const subscription = fromRow(row);
+    if (subscription === null) {
+      continue;
     }
-    for (const row of data as (SubscriptionSelection & { user_id: string })[]) {
-      const subscription = fromRow(row);
-      if (subscription === null) {
-        continue;
-      }
-      const list = grouped.get(row.user_id) ?? [];
-      list.push(subscription);
-      grouped.set(row.user_id, list);
-    }
+    const list = grouped.get(row.user_id) ?? [];
+    list.push(subscription);
+    grouped.set(row.user_id, list);
   }
   return grouped;
+}
+
+function claimRows(claims: readonly Claim[]) {
+  return claims.map((claim) => ({
+    kind: claim.kind,
+    subscription_id: claim.subscriptionId,
+    due_on: toDbDate(claim.dueOn),
+  }));
+}
+
+function shuffle<T>(items: readonly T[]): T[] {
+  const copy = [...items];
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+function delivered(result: SendResult): boolean {
+  return typeof result === "boolean" ? result : result.delivered;
 }
 
 export async function POST(request: Request): Promise<Response> {
@@ -471,14 +455,20 @@ export async function POST(request: Request): Promise<Response> {
   const startedAt = Date.now();
   const deadline = startedAt + budgetMs;
   const now = new Date();
+  trackSubrequests();
+
+  if (new URL(request.url).searchParams.get("task") === "receipts") {
+    const receipts = await checkPushReceipts(startedAt + receiptBudgetMs);
+    return json(200, { receipts, requests: subrequestCount() });
+  }
 
   try {
-    const receipts = await checkPushReceipts(startedAt + receiptBudgetMs);
+    const context = await loadContext();
+    const tokens = groupTokens(context);
+    const subscriptions = groupSubscriptions(context);
 
-    const profiles = await loadProfiles();
-    const eligible: { profile: ProfileRow; today: CalendarDate; slot: BatchSlot }[] =
-      [];
-    for (const profile of profiles) {
+    const planned: Planned[] = [];
+    for (const profile of context.profiles) {
       const parts =
         localParts(now, profile.timezone ?? fallbackZone) ??
         localParts(now, fallbackZone);
@@ -486,33 +476,11 @@ export async function POST(request: Request): Promise<Response> {
         continue;
       }
       const slot = slotFor(profile, parts.hour);
-      const anyOn =
-        profile.renewal_reminders ||
-        profile.trial_reminders ||
-        profile.renews_today ||
-        profile.monthly_digest;
-      const anyChannel = profile.email_enabled || profile.push_enabled;
-      if (slot !== null && anyOn && anyChannel) {
-        eligible.push({ profile, today: parts.date, slot });
+      if (slot === null || (!profile.email_enabled && !profile.push_enabled)) {
+        continue;
       }
-    }
-
-    const emailUsers = eligible.filter((entry) => entry.profile.email_enabled);
-    const pushUsers = eligible.filter((entry) => entry.profile.push_enabled);
-    const emails = emailUsers.length === 0 ? new Map<string, string>() : await loadEmails();
-    const tokens =
-      pushUsers.length === 0
-        ? new Map<string, string[]>()
-        : await loadPushTokens(pushUsers.map((entry) => entry.profile.id));
-    const subscriptions =
-      eligible.length === 0
-        ? new Map<string, Subscription[]>()
-        : await loadSubscriptions(eligible.map((entry) => entry.profile.id));
-
-    const planned: Planned[] = [];
-    for (const { profile, today, slot } of eligible) {
       const recipient: Recipient = {
-        email: emails.get(profile.id) ?? null,
+        email: profile.email,
         tokens: tokens.get(profile.id) ?? [],
       };
       const list = subscriptions.get(profile.id) ?? [];
@@ -520,10 +488,10 @@ export async function POST(request: Request): Promise<Response> {
         ...fanOut(
           profile,
           recipient,
-          today,
+          parts.date,
           slot,
-          reminderItems(profile, today, list),
-          digestFor(profile, today, list),
+          reminderItems(profile, parts.date, list),
+          digestFor(profile, parts.date, list),
         ),
       );
     }
@@ -531,82 +499,93 @@ export async function POST(request: Request): Promise<Response> {
     const admin = supabaseAdmin();
     const sent = { email: 0, push: 0 };
     let failed = 0;
-    let truncated = false;
-    const releaseErrors: string[] = [];
+    const outcomes: PushOutcome[] = [];
+    const releases: { user_id: string; channel: Channel; claims: ReturnType<typeof claimRows> }[] = [];
+    const batch = shuffle(planned).slice(0, sendsPerRun);
+    const truncated = planned.length > batch.length;
 
-    const args = (item: Planned, claim: Claim) => ({
-      p_user_id: item.userId,
-      p_subscription_id: claim.subscriptionId,
-      p_kind: claim.kind,
-      p_due_on: toDbDate(claim.dueOn),
-      p_channel: item.channel,
-    });
-    const claim = async (item: Planned, entry: Claim): Promise<boolean> => {
-      const result = await admin.rpc("claim_notification", args(item, entry));
+    let claimedPerItem: (Claim[] | null)[] = [];
+    if (batch.length > 0) {
+      const result = await admin.rpc("claim_batches", {
+        p_batches: batch.map((item) => ({
+          user_id: item.userId,
+          channel: item.channel,
+          gate: item.gate === null ? null : claimRows([item.gate])[0],
+          claims: claimRows(item.claims),
+        })),
+      });
       if (result.error !== null) {
         throw result.error;
       }
-      return result.data === true;
-    };
-    const release = async (item: Planned, entry: Claim): Promise<void> => {
-      const result = await admin.rpc("release_notification", args(item, entry));
-      if (result.error !== null) {
-        releaseErrors.push(result.error.message);
-      }
-    };
+      const indexes = result.data as unknown as (number[] | null)[];
+      claimedPerItem = batch.map((item, position) => {
+        const list = indexes[position];
+        return list === null || list === undefined
+          ? null
+          : list
+              .map((index) => item.claims[index])
+              .filter((entry): entry is Claim => entry !== undefined);
+      });
+    }
 
-    for (const item of planned) {
+    for (const [position, item] of batch.entries()) {
+      const claimed = claimedPerItem[position];
+      if (claimed === null || claimed === undefined || claimed.length === 0) {
+        continue;
+      }
       if (Date.now() > deadline) {
-        truncated = true;
-        break;
-      }
-      if (item.gate !== null && !(await claim(item, item.gate))) {
+        releases.push({
+          user_id: item.userId,
+          channel: item.channel,
+          claims: claimRows(item.gate === null ? claimed : [item.gate, ...claimed]),
+        });
         continue;
       }
-      const claimed: Claim[] = [];
-      for (const entry of item.claims) {
-        if (await claim(item, entry)) {
-          claimed.push(entry);
-        }
+      const result = await item.send(claimed);
+      if (typeof result !== "boolean") {
+        outcomes.push(result);
       }
-      if (claimed.length === 0) {
-        if (item.gate !== null) {
-          await release(item, item.gate);
-        }
-        continue;
-      }
-      const ok = await item.send(claimed);
-      if (ok) {
+      if (delivered(result)) {
         sent[item.channel] += 1;
       } else {
         failed += 1;
-        for (const entry of claimed) {
-          await release(item, entry);
-        }
-        if (item.gate !== null) {
-          await release(item, item.gate);
-        }
+        releases.push({
+          user_id: item.userId,
+          channel: item.channel,
+          claims: claimRows(item.gate === null ? claimed : [item.gate, ...claimed]),
+        });
       }
       if (item.channel === "email") {
         await wait(sendSpacingMs);
       }
     }
 
+    await settlePushOutcomes(outcomes);
+    const releaseErrors: string[] = [];
+    if (releases.length > 0) {
+      const result = await admin.rpc("release_batches", { p_batches: releases });
+      if (result.error !== null) {
+        releaseErrors.push(result.error.message);
+      }
+    }
+
     return json(200, {
-      checked: profiles.length,
-      eligible: eligible.length,
+      checked: context.profiles.length,
       planned: planned.length,
+      attempted: batch.length,
       emailSent: sent.email,
       pushSent: sent.push,
       failed,
       truncated,
-      receipts,
+      requests: subrequestCount(),
       releaseErrors,
     });
   } catch (error) {
     console.error("[bruno cron] notifications failed", error);
     return json(500, {
       error: "server_error",
+      requests: subrequestCount(),
+      trace: subrequestTrace(),
       detail: error instanceof Error ? error.message : JSON.stringify(error),
     });
   }

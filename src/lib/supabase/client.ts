@@ -3,6 +3,7 @@ import { AppState } from "react-native";
 
 import type { Database } from "./database.types";
 import { sessionStorage } from "./sessionStorage";
+import { timeoutFetch } from "./timeoutFetch";
 
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const publishableKey = process.env.EXPO_PUBLIC_SUPABASE_KEY;
@@ -23,6 +24,7 @@ export const supabase = createClient<Database>(url, publishableKey, {
     persistSession: true,
     detectSessionInUrl: false,
   },
+  global: { fetch: timeoutFetch },
 });
 
 function isStoredSession(value: unknown): value is Session {

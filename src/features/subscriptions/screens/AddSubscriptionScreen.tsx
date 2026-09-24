@@ -1,5 +1,5 @@
 import { router, useNavigation } from "expo-router";
-import { useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { Button, Gap, Screen, Spacer, T, TextAction } from "@/design";
 import { usePushStatus } from "@/features/notifications";
@@ -51,6 +51,11 @@ export function AddSubscriptionScreen() {
   };
 
   const navigation = useNavigation();
+  const latestSubmit = useRef(submit);
+
+  useEffect(() => {
+    latestSubmit.current = submit;
+  });
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -60,13 +65,15 @@ export function AddSubscriptionScreen() {
       headerRight: () => (
         <TextAction
           title={copy.confirm}
-          onPress={submit}
+          onPress={() => {
+            void latestSubmit.current();
+          }}
           disabled={!canSubmit}
           prominent
         />
       ),
     });
-  }, [navigation, canSubmit, submit]);
+  }, [navigation, canSubmit]);
 
   return (
     <Screen scroll fill keyboard header bounce={false}>

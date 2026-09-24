@@ -12,11 +12,16 @@ export type PushMessage = {
   ttl: number;
 };
 
+type Failure = {
+  error?: string;
+  apns?: { reason?: string };
+};
+
 type Ticket =
   | { status: "ok"; id: string }
-  | { status: "error"; message?: string; details?: { error?: string } };
+  | { status: "error"; message?: string; details?: Failure };
 
-type Receipt = { status: "ok" | "error"; details?: { error?: string } };
+type Receipt = { status: "ok" | "error"; details?: Failure };
 
 const sendUrl = "https://exp.host/--/api/v2/push/send";
 const receiptsUrl = "https://exp.host/--/api/v2/push/getReceipts";
@@ -24,7 +29,17 @@ const chunkSize = 100;
 const receiptBatch = 1000;
 const receiptDelayMs = 15 * 60_000;
 const receiptMaxAgeMs = 24 * 3_600_000;
-const unregistered = "DeviceNotRegistered";
+const deadErrors = ["DeviceNotRegistered"];
+const deadReasons = ["BadDeviceToken", "Unregistered", "DeviceTokenNotForTopic"];
+
+function isDead(details: Failure | undefined): boolean {
+  return (
+    details !== undefined &&
+    ((details.error !== undefined && deadErrors.includes(details.error)) ||
+      (details.apns?.reason !== undefined &&
+        deadReasons.includes(details.apns.reason)))
+  );
+}
 
 export const pushTtlSeconds = 12 * 3600;
 
@@ -108,12 +123,16 @@ async function pruneTokens(tokens: readonly string[]): Promise<number> {
   return count ?? 0;
 }
 
+export type PushOutcome = {
+  delivered: boolean;
+  receipts: { ticket_id: string; token: string }[];
+  dead: string[];
+};
+
 export async function sendPushMessages(
   messages: readonly PushMessage[],
-): Promise<boolean> {
-  let delivered = false;
-  const dead: string[] = [];
-  const receipts: { ticket_id: string; token: string }[] = [];
+): Promise<PushOutcome> {
+  const outcome: PushOutcome = { delivered: false, receipts: [], dead: [] };
 
   for (let start = 0; start < messages.length; start += chunkSize) {
     const chunk = messages.slice(start, start + chunkSize);
@@ -127,10 +146,10 @@ export async function sendPushMessages(
         return;
       }
       if (ticket.status === "ok") {
-        delivered = true;
-        receipts.push({ ticket_id: ticket.id, token });
-      } else if (ticket.details?.error === unregistered) {
-        dead.push(token);
+        outcome.delivered = true;
+        outcome.receipts.push({ ticket_id: ticket.id, token });
+      } else if (isDead(ticket.details)) {
+        outcome.dead.push(token);
       } else {
         console.error(
           "[bruno push] ticket error",
@@ -140,7 +159,14 @@ export async function sendPushMessages(
       }
     });
   }
+  return outcome;
+}
 
+export async function settlePushOutcomes(
+  outcomes: readonly PushOutcome[],
+): Promise<void> {
+  const dead = outcomes.flatMap((outcome) => outcome.dead);
+  const receipts = outcomes.flatMap((outcome) => outcome.receipts);
   await pruneTokens(dead);
   if (receipts.length > 0) {
     const { error } = await supabaseAdmin()
@@ -150,7 +176,6 @@ export async function sendPushMessages(
       console.error("[bruno push] receipt store failed", error.message);
     }
   }
-  return delivered;
 }
 
 export async function checkPushReceipts(
@@ -187,10 +212,7 @@ export async function checkPushReceipts(
         continue;
       }
       answered.push(row.ticket_id);
-      if (
-        receipt.status === "error" &&
-        receipt.details?.error === unregistered
-      ) {
+      if (receipt.status === "error" && isDead(receipt.details)) {
         dead.push(row.token);
       }
     }

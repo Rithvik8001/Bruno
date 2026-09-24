@@ -185,6 +185,7 @@ export const layout = {
   disabledOpacity: 0.5,
   nav: { height: 44, side: 12, symbol: 17, circle: 44 },
   button: { fillWidth: 10000 },
+  list: { initialRows: 12, window: 7 },
   pill: { height: 56, heightSmall: 40, paddingHorizontal: 20, gap: 12 },
   field: {
     height: 56,
@@ -247,7 +248,14 @@ export const layout = {
 } as const;
 
 export const motion = {
-  duration: { fade: 120, enter: 260, count: 600, pulse: 900, inputSync: 120 },
+  duration: {
+    fade: 120,
+    enter: 260,
+    count: 600,
+    pulse: 900,
+    inputSync: 120,
+    alertGap: 350,
+  },
   spring: { damping: 20, stiffness: 220, mass: 1 },
   pressedOpacity: 0.6,
   stagger: 30,

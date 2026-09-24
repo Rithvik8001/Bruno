@@ -1,6 +1,5 @@
 import { Stack, router } from "expo-router";
-import { useRef, useState } from "react";
-import { View } from "react-native";
+import { useDeferredValue, useRef, useState } from "react";
 import type { SearchBarCommands } from "react-native-screens";
 
 import {
@@ -9,7 +8,7 @@ import {
   Gap,
   Loading,
   LogoRow,
-  Screen,
+  ScreenList,
   SectionHeading,
   Segmented,
   T,
@@ -17,9 +16,10 @@ import {
   useThemeName,
   type ChipTone,
   type SegmentOption,
+  type ThemeName,
 } from "@/design";
 import { useProfile } from "@/features/profile";
-import { daysBetween, today, type CalendarDate } from "@/lib/calendar";
+import { daysBetween, type CalendarDate } from "@/lib/calendar";
 import { fallbackCurrency, formatMoney } from "@/lib/money";
 
 import { subscriptionsCopy } from "../copy";
@@ -50,10 +50,11 @@ import { readSortPreference, writeSortPreference } from "../sortPreference";
 import { useSubscriptions } from "../SubscriptionsProvider";
 import { usePullToRefresh } from "../usePullToRefresh";
 import { useSubscriptionAlert } from "../useSubscriptionAlert";
+import { useToday } from "../useToday";
 
 const copy = subscriptionsCopy.list;
 const loadingRows = 6;
-const enteringGroups = 6;
+const enteringItems = 8;
 const soonDays = 1;
 
 const filterOptions: readonly SegmentOption<ListFilter>[] = listFilters.map(
@@ -99,6 +100,67 @@ function groupLabel(group: LedgerGroup): string | null {
   return group.status === "paused" ? copy.groupPaused : copy.groupCancelled;
 }
 
+type ListItem =
+  | { kind: "heading"; key: string; group: LedgerGroup }
+  | { kind: "gap"; key: string }
+  | {
+      kind: "row";
+      key: string;
+      item: UpcomingSubscription;
+      muted: boolean;
+    };
+
+function flatten(groups: readonly LedgerGroup[]): ListItem[] {
+  return groups.flatMap((group): ListItem[] => [
+    group.kind === "list"
+      ? { kind: "gap", key: `gap-${group.key}` }
+      : { kind: "heading", key: `heading-${group.key}`, group },
+    ...group.items.map(
+      (item): ListItem => ({
+        kind: "row",
+        key: item.subscription.id,
+        item,
+        muted: group.kind === "status",
+      }),
+    ),
+  ]);
+}
+
+type SubscriptionRowProps = {
+  item: UpcomingSubscription;
+  muted: boolean;
+  now: CalendarDate;
+  themeName: ThemeName;
+  onOpen: (id: string) => void;
+};
+
+function SubscriptionRow({
+  item,
+  muted,
+  now,
+  themeName,
+  onOpen,
+}: SubscriptionRowProps) {
+  return (
+    <LogoRow
+      title={item.subscription.name}
+      subtitle={formatLedgerDate(item.nextRenewal)}
+      value={formatMoney(
+        displayAmountMinor(item.subscription),
+        item.subscription.currency,
+      )}
+      valueNote={rowNote(item)}
+      chip={rowChip(item, now)}
+      logo={{
+        ...subscriptionLogo(item.subscription, themeName, "row"),
+        muted,
+      }}
+      tone={muted ? "ink2" : "ink"}
+      onPress={() => onOpen(item.subscription.id)}
+    />
+  );
+}
+
 function categoryLabel(category: keyof typeof subscriptionsCopy.categories): string {
   return subscriptionsCopy.categories[category];
 }
@@ -114,11 +176,12 @@ export function SubscriptionsScreen() {
   const [query, setQuery] = useState("");
   const searchBar = useRef<SearchBarCommands>(null);
 
-  const now = today();
+  const now = useToday();
   const currency =
     profile?.currency ?? subscriptions[0]?.currency ?? fallbackCurrency;
   const { monthlyMinor, count } = summarize(subscriptions, now, currency);
-  const terms = searchTerms(query);
+  const deferredQuery = useDeferredValue(query);
+  const terms = searchTerms(deferredQuery);
   const groups = groupLedger(
     sortLedger(
       filterBySearch(
@@ -132,6 +195,7 @@ export function SubscriptionsScreen() {
     sort,
   );
   const hasList = status === "ready" && subscriptions.length > 0;
+  const items = hasList ? flatten(groups) : [];
 
   const changeSort = (next: ListSort) => {
     setSort(next);
@@ -146,8 +210,38 @@ export function SubscriptionsScreen() {
   const openDetail = (id: string) =>
     router.push({ pathname: "/subscription", params: { id } });
 
-  return (
-    <Screen scroll header automaticInsets refresh={pull}>
+  const renderItem = (entry: ListItem, index: number) => {
+    const content =
+      entry.kind === "gap" ? (
+        <Gap size="s16" />
+      ) : entry.kind === "heading" ? (
+        <SectionHeading
+          top="s24"
+          title={groupLabel(entry.group) ?? ""}
+          value={
+            entry.group.kind === "month"
+              ? formatMoney(entry.group.totalMinor, currency)
+              : undefined
+          }
+        />
+      ) : (
+        <SubscriptionRow
+          item={entry.item}
+          muted={entry.muted}
+          now={now}
+          themeName={themeName}
+          onOpen={openDetail}
+        />
+      );
+    return index < enteringItems ? (
+      <Entering index={index}>{content}</Entering>
+    ) : (
+      content
+    );
+  };
+
+  const header = (
+    <>
       {hasList ? (
         <Stack.SearchBar
           ref={searchBar}
@@ -215,7 +309,7 @@ export function SubscriptionsScreen() {
             <>
               <Gap size="s32" />
               <EmptyState
-                title={copy.searchEmpty.replace("{query}", query.trim())}
+                title={copy.searchEmpty.replace("{query}", deferredQuery.trim())}
                 body={copy.searchEmptyBody}
                 link={{ title: copy.clearSearch, onPress: clearSearch }}
               />
@@ -231,56 +325,22 @@ export function SubscriptionsScreen() {
                 link={{ title: copy.showAll, onPress: () => setFilter("all") }}
               />
             </>
-          ) : (
-            groups.map((group, index) => {
-              const block = (
-                <View>
-                  {group.kind === "list" ? (
-                    <Gap size="s16" />
-                  ) : (
-                    <SectionHeading
-                      top="s24"
-                      title={groupLabel(group) ?? ""}
-                      value={
-                        group.kind === "month"
-                          ? formatMoney(group.totalMinor, currency)
-                          : undefined
-                      }
-                    />
-                  )}
-                  {group.items.map((item) => (
-                    <LogoRow
-                      key={item.subscription.id}
-                      title={item.subscription.name}
-                      subtitle={formatLedgerDate(item.nextRenewal)}
-                      value={formatMoney(
-                        displayAmountMinor(item.subscription),
-                        item.subscription.currency,
-                      )}
-                      valueNote={rowNote(item)}
-                      chip={rowChip(item, now)}
-                      logo={{
-                        ...subscriptionLogo(item.subscription, themeName, "row"),
-                        muted: group.kind === "status",
-                      }}
-                      tone={group.kind === "status" ? "ink2" : "ink"}
-                      onPress={() => openDetail(item.subscription.id)}
-                    />
-                  ))}
-                </View>
-              );
-              return index < enteringGroups ? (
-                <Entering key={group.key} index={index}>
-                  {block}
-                </Entering>
-              ) : (
-                <View key={group.key}>{block}</View>
-              );
-            })
-          )}
+          ) : null}
         </>
       )}
       {alert}
-    </Screen>
+    </>
+  );
+
+  return (
+    <ScreenList
+      data={items}
+      keyExtractor={(entry) => entry.key}
+      renderItem={renderItem}
+      header={header}
+      underHeader
+      automaticInsets
+      refresh={pull}
+    />
   );
 }

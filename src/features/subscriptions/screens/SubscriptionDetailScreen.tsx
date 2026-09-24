@@ -23,7 +23,7 @@ import {
   useThemeName,
   type ChipTone,
 } from "@/design";
-import { daysBetween, fromLocalDate, nextRenewal, today } from "@/lib/calendar";
+import { daysBetween, fromLocalDate, nextRenewal } from "@/lib/calendar";
 import { formatMoney } from "@/lib/money";
 
 import { subscriptionsCopy } from "../copy";
@@ -42,6 +42,7 @@ import {
   useSubscriptionAlert,
   type SubscriptionAlertConfig,
 } from "../useSubscriptionAlert";
+import { useToday } from "../useToday";
 
 const copy = subscriptionsCopy.detail;
 const relativeTitle = subscriptionsCopy.relativeTitle;
@@ -167,7 +168,7 @@ function Detail({ subscription }: { subscription: Subscription }) {
   const { alert, show, showFailure } = useSubscriptionAlert();
   const [busy, setBusy] = useState(false);
 
-  const now = today();
+  const now = useToday();
   const renewal = nextRenewal(subscription.anchorDate, subscription.cycle, now);
   const status = derivedStatus(subscription, now);
   const actions = statusActions(subscription.status);

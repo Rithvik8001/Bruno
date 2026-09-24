@@ -1,5 +1,5 @@
 import { router, useNavigation } from "expo-router";
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import {
   Button,
@@ -31,6 +31,12 @@ type HeaderProps = {
 
 function useModalHeader({ canSave, onSave }: HeaderProps) {
   const navigation = useNavigation();
+  const latestSave = useRef(onSave);
+  const hasSave = onSave !== null;
+
+  useEffect(() => {
+    latestSave.current = onSave;
+  });
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -38,18 +44,18 @@ function useModalHeader({ canSave, onSave }: HeaderProps) {
         <TextAction title={formCopy.cancel} onPress={() => router.back()} />
       ),
       headerRight:
-        onSave === null
-          ? () => null
-          : () => (
+        hasSave
+          ? () => (
               <TextAction
                 title={copy.confirm}
-                onPress={onSave}
+                onPress={() => latestSave.current?.()}
                 disabled={!canSave}
                 prominent
               />
-            ),
+            )
+          : () => null,
     });
-  }, [navigation, canSave, onSave]);
+  }, [navigation, canSave, hasSave]);
 }
 
 function EditForm({ subscription }: { subscription: Subscription }) {

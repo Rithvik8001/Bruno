@@ -1,5 +1,6 @@
-import type { ReactNode } from "react";
+import type { ReactElement, ReactNode } from "react";
 import {
+  FlatList,
   KeyboardAvoidingView,
   RefreshControl,
   ScrollView,
@@ -119,5 +120,60 @@ export function Screen({
     >
       {content}
     </KeyboardAvoidingView>
+  );
+}
+
+export type ScreenListProps<Item> = {
+  data: readonly Item[];
+  keyExtractor: (item: Item) => string;
+  renderItem: (item: Item, index: number) => ReactElement;
+  header: ReactElement;
+  withTabBar?: boolean;
+  underHeader?: boolean;
+  automaticInsets?: boolean;
+  refresh?: ScreenRefresh;
+};
+
+export function ScreenList<Item>({
+  data,
+  keyExtractor,
+  renderItem,
+  header,
+  withTabBar = false,
+  underHeader = false,
+  automaticInsets = false,
+  refresh,
+}: ScreenListProps<Item>) {
+  const theme = useTheme();
+  const top = useScreenTop();
+  const bottom = useScreenBottom();
+  const tabBarSpace = useTabBarSpace();
+
+  return (
+    <FlatList
+      data={data}
+      keyExtractor={keyExtractor}
+      renderItem={({ item, index }) => renderItem(item, index)}
+      ListHeaderComponent={header}
+      initialNumToRender={layout.list.initialRows}
+      windowSize={layout.list.window}
+      style={{ flex: 1, backgroundColor: theme.canvas }}
+      contentContainerStyle={{
+        paddingTop: underHeader ? layout.topInset : top,
+        paddingBottom: withTabBar ? tabBarSpace + layout.bottom : bottom,
+        paddingHorizontal: layout.margin,
+      }}
+      showsVerticalScrollIndicator={false}
+      contentInsetAdjustmentBehavior={automaticInsets ? "automatic" : "never"}
+      refreshControl={
+        refresh === undefined ? undefined : (
+          <RefreshControl
+            refreshing={refresh.refreshing}
+            onRefresh={refresh.onRefresh}
+            tintColor={theme.ink3}
+          />
+        )
+      }
+    />
   );
 }

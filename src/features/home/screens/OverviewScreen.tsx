@@ -33,8 +33,9 @@ import {
   usePullToRefresh,
   useSubscriptionAlert,
   useSubscriptions,
+  useToday,
 } from "@/features/subscriptions";
-import { daysInMonth, today } from "@/lib/calendar";
+import { daysInMonth } from "@/lib/calendar";
 import { fallbackCurrency, formatMoney } from "@/lib/money";
 
 import { homeCopy } from "../copy";
@@ -50,7 +51,7 @@ export function OverviewScreen() {
   const { alert, showFailure } = useSubscriptionAlert();
   const pull = usePullToRefresh(refresh, showFailure);
 
-  const now = today();
+  const now = useToday();
   const currency =
     profile?.currency ?? subscriptions[0]?.currency ?? fallbackCurrency;
   const { monthlyMinor, yearlyMinor, billing, count } = summarize(

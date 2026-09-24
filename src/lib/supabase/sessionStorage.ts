@@ -29,20 +29,48 @@ async function decrypt(key: string, value: string): Promise<string | null> {
   return aesjs.utils.utf8.fromBytes(decrypted);
 }
 
+const cache = new Map<string, string | null>();
+let writes: Promise<void> = Promise.resolve();
+
+function queue(task: () => Promise<void>): Promise<void> {
+  const next = writes.then(task, task);
+  writes = next.catch(() => {});
+  return next;
+}
+
+async function readDisk(key: string): Promise<string | null> {
+  try {
+    const stored = await Storage.getItem(key);
+    return stored === null ? null : await decrypt(key, stored);
+  } catch {
+    return null;
+  }
+}
+
 export const sessionStorage = {
   async getItem(key: string): Promise<string | null> {
-    try {
-      const stored = await Storage.getItem(key);
-      return stored === null ? null : await decrypt(key, stored);
-    } catch {
-      return null;
+    const cached = cache.get(key);
+    if (cached !== undefined) {
+      return cached;
     }
+    await writes;
+    const value = await readDisk(key);
+    if (!cache.has(key)) {
+      cache.set(key, value);
+    }
+    return cache.get(key) ?? null;
   },
-  async setItem(key: string, value: string): Promise<void> {
-    await Storage.setItem(key, await encrypt(key, value));
+  setItem(key: string, value: string): Promise<void> {
+    cache.set(key, value);
+    return queue(async () => {
+      await Storage.setItem(key, await encrypt(key, value));
+    });
   },
-  async removeItem(key: string): Promise<void> {
-    await Storage.removeItem(key);
-    await SecureStore.deleteItemAsync(key);
+  removeItem(key: string): Promise<void> {
+    cache.set(key, null);
+    return queue(async () => {
+      await Storage.removeItem(key);
+      await SecureStore.deleteItemAsync(key);
+    });
   },
 };

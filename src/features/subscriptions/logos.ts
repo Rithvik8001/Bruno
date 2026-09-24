@@ -1,5 +1,11 @@
 import { isValidServiceKey } from "@/lib/logos";
-import { dataFailure, dataSuccess, supabase, type DataResult } from "@/lib/supabase";
+import {
+  dataFailure,
+  dataSuccess,
+  supabase,
+  timeoutFetch,
+  type DataResult,
+} from "@/lib/supabase";
 
 export type ServiceSuggestion = {
   name: string;
@@ -31,7 +37,7 @@ export async function searchServices(
     if (token === undefined) {
       return dataFailure("session");
     }
-    const response = await fetch(
+    const response = await timeoutFetch(
       `/api/logos/search?q=${encodeURIComponent(query)}`,
       { headers: { Authorization: `Bearer ${token}` }, signal },
     );

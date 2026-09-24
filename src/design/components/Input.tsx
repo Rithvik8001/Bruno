@@ -13,6 +13,7 @@ import {
   autocorrectionDisabled,
   background,
   buttonStyle,
+  contentShape,
   foregroundStyle,
   frame,
   keyboardType as keyboardTypeModifier,
@@ -326,7 +327,13 @@ export function Input({
                   }),
                 ]}
               >
-                <Text modifiers={[...suffixFont, foregroundStyle(theme.ink2)]}>
+                <Text
+                  modifiers={[
+                    ...suffixFont,
+                    foregroundStyle(theme.ink2),
+                    contentShape(shapes.rectangle()),
+                  ]}
+                >
                   {suffix.title}
                 </Text>
               </SwiftButton>

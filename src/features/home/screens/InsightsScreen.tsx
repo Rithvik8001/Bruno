@@ -29,10 +29,10 @@ import {
   usePullToRefresh,
   useSubscriptionAlert,
   useSubscriptions,
+  useToday,
   yearlyAmountMinor,
   type UpcomingSubscription,
 } from "@/features/subscriptions";
-import { today } from "@/lib/calendar";
 import { fallbackCurrency, formatMoney } from "@/lib/money";
 
 import { homeCopy } from "../copy";
@@ -70,7 +70,7 @@ export function InsightsScreen() {
   const pull = usePullToRefresh(refresh, showFailure);
   const [view, setView] = useState<View>("months");
 
-  const now = today();
+  const now = useToday();
   const currency =
     profile?.currency ?? subscriptions[0]?.currency ?? fallbackCurrency;
   const { monthlyMinor, yearlyMinor, billing } = summarize(

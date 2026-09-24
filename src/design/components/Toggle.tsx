@@ -52,6 +52,7 @@ export type ToggleRowProps = {
   onValueChange: (value: boolean) => void;
   icon?: IconSource;
   subtitle?: string;
+  subtitleLines?: number;
   disabled?: boolean;
 };
 
@@ -61,6 +62,7 @@ export function ToggleRow({
   onValueChange,
   icon,
   subtitle,
+  subtitleLines,
   disabled,
 }: ToggleRowProps) {
   return (
@@ -68,6 +70,7 @@ export function ToggleRow({
       icon={icon}
       title={label}
       subtitle={subtitle}
+      subtitleLines={subtitleLines}
       trailing={
         <Toggle
           value={value}

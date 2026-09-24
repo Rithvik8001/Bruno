@@ -10,7 +10,12 @@ import type {
   ReminderKind,
   RenewalEmail,
 } from "./emails/types";
-import { pushTtlSeconds, sendPushMessages, type PushMessage } from "./push";
+import {
+  pushTtlSeconds,
+  sendPushMessages,
+  type PushMessage,
+  type PushOutcome,
+} from "./push";
 import { pushCopy } from "./pushCopy";
 
 const batchLines = 4;
@@ -53,7 +58,7 @@ export function pushReminder(
   kind: ReminderKind,
   subscriptionId: string,
   input: RenewalEmail,
-): Promise<boolean> {
+): Promise<PushOutcome> {
   return sendPushMessages(
     messages(
       tokens,
@@ -68,10 +73,10 @@ export function pushBatch(
   items: readonly ReminderItem[],
   day: CalendarDate,
   slot: BatchSlot,
-): Promise<boolean> {
+): Promise<PushOutcome> {
   const first = items[0];
   if (first === undefined) {
-    return Promise.resolve(false);
+    return Promise.resolve({ delivered: false, receipts: [], dead: [] });
   }
   if (items.length === 1) {
     return pushReminder(tokens, first.kind, first.subscriptionId, first.input);
@@ -101,7 +106,7 @@ export function pushBatch(
 export function pushDigest(
   tokens: readonly string[],
   input: DigestEmail,
-): Promise<boolean> {
+): Promise<PushOutcome> {
   const values = digestValues(input);
   const lead =
     input.rows.length === 0

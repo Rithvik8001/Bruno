@@ -1,5 +1,6 @@
 export { subscriptionsCopy } from "./copy";
 export { usePullToRefresh } from "./usePullToRefresh";
+export { useToday } from "./useToday";
 export { failureMessage } from "./errors";
 export {
   formatCycle,

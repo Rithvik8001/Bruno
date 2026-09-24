@@ -25,7 +25,11 @@ import type { PushPermission } from "./types";
 
 export type PushStatus = {
   permission: PushPermission | null;
+  registered: boolean;
+  registering: boolean;
+  registrationError: string | null;
   requestPermission: () => Promise<PushPermission>;
+  retryRegistration: () => void;
   releaseDevice: () => Promise<void>;
 };
 
@@ -54,16 +58,33 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const { status: profileStatus } = useProfile();
   const userId = session?.user.id ?? null;
   const [permission, setPermission] = useState<PushPermission | null>(null);
+  const [registered, setRegistered] = useState(() => readStoredPushToken() !== null);
+  const [registering, setRegistering] = useState(false);
+  const [registrationError, setRegistrationError] = useState<string | null>(null);
   const [refresh, setRefresh] = useState(0);
   const [pending, setPending] = useState<Href | null>(null);
   const handled = useRef<string | null>(null);
+  const inFlight = useRef(false);
+  const failed = useRef(false);
+  const deviceToken = useRef<string | null>(null);
+  const registeredToken = useRef<string | null>(null);
 
   useEffect(() => {
     let active = true;
     const read = () => {
       getPushPermission().then((next) => {
-        if (active) {
-          setPermission(next);
+        if (!active) {
+          return;
+        }
+        setPermission((previous) =>
+          previous !== null &&
+          previous.status === next.status &&
+          previous.canAskAgain === next.canAskAgain
+            ? previous
+            : next,
+        );
+        if (failed.current && !inFlight.current) {
+          setRefresh((value) => value + 1);
         }
       });
     };
@@ -85,22 +106,58 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     }
     let active = true;
     if (permission.status === "granted") {
-      getPushToken().then(async (token) => {
-        if (!active || token === null) {
+      setRegistering(true);
+      inFlight.current = true;
+      getPushToken().then(async (fetched) => {
+        if (!active) {
           return;
         }
-        const result = await registerPushToken(token);
-        if (active && result.ok) {
-          writeStoredPushToken(token);
+        if (!fetched.ok) {
+          inFlight.current = false;
+          failed.current = true;
+          setRegistered(false);
+          setRegistering(false);
+          setRegistrationError(fetched.reason);
+          return;
         }
+        deviceToken.current = fetched.deviceToken;
+        if (
+          registeredToken.current === fetched.token &&
+          readStoredPushToken() === fetched.token
+        ) {
+          inFlight.current = false;
+          failed.current = false;
+          setRegistered(true);
+          setRegistering(false);
+          setRegistrationError(null);
+          return;
+        }
+        const result = await registerPushToken(fetched.token);
+        if (!active) {
+          return;
+        }
+        inFlight.current = false;
+        failed.current = !result.ok;
+        if (result.ok) {
+          registeredToken.current = fetched.token;
+          writeStoredPushToken(fetched.token);
+        }
+        setRegistered(result.ok);
+        setRegistering(false);
+        setRegistrationError(result.ok ? null : result.reason);
       });
       return () => {
         active = false;
+        inFlight.current = false;
       };
     }
+    setRegistering(false);
+    failed.current = false;
     const stored = readStoredPushToken();
     if (permission.status === "denied" && stored !== null) {
       writeStoredPushToken(null);
+      registeredToken.current = null;
+      setRegistered(false);
       void unregisterPushToken(stored);
     }
     return () => {
@@ -109,7 +166,10 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   }, [userId, permission, refresh]);
 
   useEffect(() => {
-    const subscription = Notifications.addPushTokenListener(() => {
+    const subscription = Notifications.addPushTokenListener((token) => {
+      if (inFlight.current || token.data === deviceToken.current) {
+        return;
+      }
       setRefresh((value) => value + 1);
     });
     return () => subscription.remove();
@@ -155,10 +215,26 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     }
     await withTimeout(unregisterPushToken(stored), releaseTimeoutMs);
     writeStoredPushToken(null);
+    registeredToken.current = null;
+    setRegistered(false);
+  };
+
+  const retryRegistration = () => {
+    setRefresh((value) => value + 1);
   };
 
   return (
-    <PushContext value={{ permission, requestPermission, releaseDevice }}>
+    <PushContext
+      value={{
+        permission,
+        registered,
+        registering,
+        registrationError,
+        requestPermission,
+        retryRegistration,
+        releaseDevice,
+      }}
+    >
       {children}
     </PushContext>
   );

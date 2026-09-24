@@ -8,10 +8,12 @@ import {
 import {
   buttonBorderShape,
   buttonStyle,
+  contentShape,
   controlSize,
   disabled as disabledModifier,
   foregroundStyle,
   frame,
+  shapes,
   symbolEffect,
   tint,
 } from "@expo/ui/swift-ui/modifiers";
@@ -108,6 +110,7 @@ export function Button({
                       minHeight: minHeight - layout.pill.gap * 2,
                     },
               ),
+              contentShape(shapes.rectangle()),
             ]}
           >
             {loading ? (

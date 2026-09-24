@@ -225,10 +225,21 @@ export type Database = {
         };
         Returns: boolean;
       };
+      claim_batches: { Args: { p_batches: Json }; Returns: Json };
+      claim_notifications: {
+        Args: {
+          p_channel: string;
+          p_claims: Json;
+          p_gate: Json;
+          p_user_id: string;
+        };
+        Returns: number[] | null;
+      };
       currency_digits: {
         Args: { code: string };
         Returns: number;
       };
+      notification_context: { Args: Record<string, never>; Returns: Json };
       register_push_token: {
         Args: { p_token: string };
         Returns: undefined;
@@ -241,6 +252,11 @@ export type Database = {
           p_subscription_id: string | null;
           p_user_id: string;
         };
+        Returns: undefined;
+      };
+      release_batches: { Args: { p_batches: Json }; Returns: undefined };
+      release_notifications: {
+        Args: { p_channel: string; p_claims: Json; p_user_id: string };
         Returns: undefined;
       };
       unregister_push_token: {

@@ -2,15 +2,19 @@ import {
   createContext,
   use,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
+import { AppState } from "react-native";
 
 import { useSession } from "@/features/auth";
 import { useProfile } from "@/features/profile";
 import {
   dataFailure,
   dataSuccess,
+  staleAfterMs,
+  withRetry,
   type DataFailure,
   type DataResult,
 } from "@/lib/supabase";
@@ -62,27 +66,71 @@ export function SubscriptionsProvider({ children }: { children: ReactNode }) {
   const { profile } = useProfile();
   const userId = session?.user.id ?? null;
   const [loaded, setLoaded] = useState<Loaded | null>(null);
+  const sequence = useRef(0);
+  const inFlight = useRef(false);
+  const lastSuccess = useRef<number | null>(null);
+  const failed = useRef(false);
+  const currency = useRef<string | null>(null);
 
   useEffect(() => {
+    currency.current = profile?.currency ?? null;
+  }, [profile]);
+
+  const load = async (
+    owner: string,
+    retry: boolean,
+  ): Promise<DataResult<void>> => {
+    sequence.current += 1;
+    const mine = sequence.current;
+    inFlight.current = true;
+    const result = await (retry
+      ? withRetry(listSubscriptions)
+      : listSubscriptions());
+    if (mine !== sequence.current) {
+      return result.ok ? dataSuccess(undefined) : result;
+    }
+    inFlight.current = false;
+    failed.current = !result.ok;
+    if (result.ok) {
+      lastSuccess.current = Date.now();
+    }
+    setLoaded((previous) => {
+      if (result.ok) {
+        return { userId: owner, subscriptions: result.data, failure: null };
+      }
+      if (previous !== null && previous.userId === owner) {
+        return { ...previous, failure: result.reason };
+      }
+      return { userId: owner, subscriptions: none, failure: result.reason };
+    });
+    return result.ok ? dataSuccess(undefined) : result;
+  };
+
+  useEffect(() => {
+    lastSuccess.current = null;
+    failed.current = false;
     if (userId === null) {
+      sequence.current += 1;
+      inFlight.current = false;
       setLoaded(null);
       return;
     }
-
-    let active = true;
-    listSubscriptions().then((result) => {
-      if (!active) {
+    void load(userId, true);
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state !== "active" || inFlight.current) {
         return;
       }
-      setLoaded(
-        result.ok
-          ? { userId, subscriptions: result.data, failure: null }
-          : { userId, subscriptions: none, failure: result.reason },
-      );
+      const stale =
+        lastSuccess.current === null ||
+        Date.now() - lastSuccess.current >= staleAfterMs;
+      if (stale || failed.current) {
+        void load(userId, true);
+      }
     });
-
     return () => {
-      active = false;
+      sequence.current += 1;
+      inFlight.current = false;
+      subscription.remove();
     };
   }, [userId]);
 
@@ -92,17 +140,7 @@ export function SubscriptionsProvider({ children }: { children: ReactNode }) {
     if (userId === null) {
       return dataFailure("session");
     }
-    const result = await listSubscriptions();
-    setLoaded((previous) => {
-      if (result.ok) {
-        return { userId, subscriptions: result.data, failure: null };
-      }
-      if (previous !== null && previous.userId === userId) {
-        return { ...previous, failure: result.reason };
-      }
-      return { userId, subscriptions: none, failure: result.reason };
-    });
-    return result.ok ? dataSuccess(undefined) : result;
+    return load(userId, false);
   };
 
   const add = async (
@@ -111,11 +149,11 @@ export function SubscriptionsProvider({ children }: { children: ReactNode }) {
     if (userId === null) {
       return dataFailure("session");
     }
-    if (profile === null) {
+    if (currency.current === null) {
       return dataFailure("profileMissing");
     }
 
-    const result = await createSubscription(input, profile.currency);
+    const result = await createSubscription(input, currency.current);
     if (result.ok) {
       setLoaded((previous) =>
         previous !== null && previous.userId === userId

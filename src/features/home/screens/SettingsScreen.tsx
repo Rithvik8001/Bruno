@@ -91,10 +91,25 @@ export function SettingsScreen() {
   const { profile, status, retry, update } = useProfile();
   const { preference, setPreference: setAppearance } = useAppearance();
   const { alert, show, showFailure } = useAuthAlert();
-  const { permission, requestPermission, releaseDevice } = usePushStatus();
+  const {
+    permission,
+    registered,
+    registering,
+    registrationError,
+    requestPermission,
+    retryRegistration,
+    releaseDevice,
+  } = usePushStatus();
   const [busy, setBusy] = useState(false);
   const email = session?.user.email;
-  const pushOn = profile?.pushEnabled === true && permission?.status === "granted";
+  const granted = permission?.status === "granted";
+  const pushOn = profile?.pushEnabled === true && granted;
+  const pushHint =
+    !pushOn || registered
+      ? undefined
+      : registering
+        ? notificationsCopy.registering
+        : notificationsCopy.unregistered(registrationError);
 
   const setPreference = (patch: Partial<ProfilePreferences>) => {
     void update(patch).then((result) => {
@@ -113,6 +128,7 @@ export function SettingsScreen() {
       permission?.status === "undetermined" ? await requestPermission() : permission;
     if (current?.status === "granted") {
       setPreference({ pushEnabled: true });
+      retryRegistration();
       return;
     }
     if (current?.status === "denied" && !current.canAskAgain) {
@@ -234,6 +250,8 @@ export function SettingsScreen() {
             <ToggleRow
               icon="bell"
               label={copy.push}
+              subtitle={pushHint}
+              subtitleLines={3}
               value={pushOn}
               onValueChange={(value) => {
                 void togglePush(value);

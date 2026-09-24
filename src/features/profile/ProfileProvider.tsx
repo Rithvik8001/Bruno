@@ -2,14 +2,17 @@ import {
   createContext,
   use,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
+import { AppState } from "react-native";
 
 import { useSession } from "@/features/auth";
 import {
   dataFailure,
   dataSuccess,
+  withRetry,
   type DataFailure,
   type DataResult,
 } from "@/lib/supabase";
@@ -47,26 +50,44 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [attempt, setAttempt] = useState(0);
 
+  const failed = useRef(false);
+
   useEffect(() => {
+    failed.current = false;
     if (userId === null) {
       setLoaded(null);
       return;
     }
 
     let active = true;
-    loadProfile(userId, getDeviceTimeZone()).then((result) => {
-      if (!active) {
-        return;
-      }
-      setLoaded(
-        result.ok
-          ? { userId, profile: result.data, failure: null }
-          : { userId, profile: null, failure: result.reason },
+    let loading = false;
+    const load = () => {
+      loading = true;
+      void withRetry(() => loadProfile(userId, getDeviceTimeZone())).then(
+        (result) => {
+          if (!active) {
+            return;
+          }
+          loading = false;
+          failed.current = !result.ok;
+          setLoaded(
+            result.ok
+              ? { userId, profile: result.data, failure: null }
+              : { userId, profile: null, failure: result.reason },
+          );
+        },
       );
+    };
+    load();
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active" && failed.current && !loading) {
+        load();
+      }
     });
 
     return () => {
       active = false;
+      subscription.remove();
     };
   }, [userId, attempt]);
 

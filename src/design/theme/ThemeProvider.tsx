@@ -8,6 +8,7 @@ import {
   type AppearancePreference,
   type ThemeContextValue,
 } from "./ThemeContext";
+import { AccessibilityProvider } from "./useAccessibility";
 
 export type ThemeProviderProps = {
   children: ReactNode;
@@ -44,5 +45,9 @@ export function ThemeProvider({
     [themeName, preference, setPreference],
   );
 
-  return <ThemeContext value={value}>{children}</ThemeContext>;
+  return (
+    <ThemeContext value={value}>
+      <AccessibilityProvider>{children}</AccessibilityProvider>
+    </ThemeContext>
+  );
 }
