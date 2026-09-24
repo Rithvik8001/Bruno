@@ -61,7 +61,6 @@ export function EmptyState({
           <Button
             title={action.title}
             onPress={action.onPress}
-            variant="accent"
             size="s"
             inline
           />

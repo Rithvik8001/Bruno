@@ -118,7 +118,10 @@ export function pushDigest(
     messages(
       tokens,
       {
-        title: fill(pushCopy.digest.title, values),
+        title: fill(
+          input.rows.length === 0 ? pushCopy.digest.titleNone : pushCopy.digest.title,
+          values,
+        ),
         body: `${lead} ${fill(emailCopy.digest.monthly, values)}`,
         url: pushCopy.urls.overview,
         collapseId: `digest/${toDbDate(input.month).slice(0, 7)}`,

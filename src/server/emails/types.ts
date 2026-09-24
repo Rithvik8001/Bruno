@@ -2,6 +2,7 @@ import type { BillingCycle, CalendarDate } from "@/lib/calendar";
 
 export type RenewalEmail = {
   name: string;
+  serviceKey: string | null;
   amountMinor: number;
   currency: string;
   renewsOn: CalendarDate;
@@ -11,6 +12,7 @@ export type RenewalEmail = {
 
 export type DigestRow = {
   name: string;
+  serviceKey: string | null;
   dueOn: CalendarDate;
   amountMinor: number;
 };

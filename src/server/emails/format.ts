@@ -1,10 +1,13 @@
 import type { BillingCycle, CalendarDate } from "@/lib/calendar";
-import { formatMoney } from "@/lib/money";
+import { logoUrl } from "@/lib/logos";
+import { formatMoney, monthlyAmountExact } from "@/lib/money";
 
 import { emailCopy } from "./copy";
+import { mail } from "./theme";
 
 const locale = "en-US";
 const maxRows = 8;
+const monthsPerYear = 12;
 
 function utcDate(date: CalendarDate): Date {
   return new Date(Date.UTC(date.year, date.month - 1, date.day));
@@ -67,6 +70,30 @@ export function formatCycleName(cycle: BillingCycle): string {
   return cycle.count === 1
     ? emailCopy.cycleOne[cycle.unit]
     : `${cycle.count} ${emailCopy.units[cycle.unit]}`;
+}
+
+export function capitalize(text: string): string {
+  return text.length === 0 ? text : text[0].toUpperCase() + text.slice(1);
+}
+
+export function yearlyAmountMinor(amountMinor: number, cycle: BillingCycle): number {
+  return Math.round(monthlyAmountExact(amountMinor, cycle) * monthsPerYear);
+}
+
+export function emailLogoUrl(serviceKey: string | null): string | null {
+  return logoUrl(serviceKey, {
+    theme: "light",
+    px: mail.logo.request,
+    fallback: "monogram",
+  });
+}
+
+export function initial(name: string): string {
+  return name.trim().slice(0, 1).toUpperCase();
+}
+
+export function markUrl(): string {
+  return `${mail.assetOrigin}${mail.markPath}`;
 }
 
 export function fill(template: string, values: Record<string, string>): string {

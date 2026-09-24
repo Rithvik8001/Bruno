@@ -18,7 +18,7 @@ import {
   TrialReminderEmail,
   WelcomeEmail,
   batchValues,
-  digestValues,
+  digestSubject,
   renewalValues,
 } from "./emails/templates";
 import type {
@@ -191,7 +191,7 @@ export function deliverRenewsToday(
 ): Promise<boolean> {
   return sendEmail({
     to: email,
-    subject: fill(emailCopy.today.subject, renewalValues(input)),
+    subject: fill(emailCopy.renewsToday.subject, renewalValues(input)),
     react: <RenewsTodayEmail input={input} />,
     idempotencyKey: `renews-today/${subscriptionId}/${toDbDate(input.renewsOn)}`,
     kind: "renews_today",
@@ -206,7 +206,7 @@ export function deliverMonthlyDigest(
   const month: CalendarDate = { ...input.month, day: 1 };
   return sendEmail({
     to: email,
-    subject: fill(emailCopy.digest.subject, digestValues(input)),
+    subject: digestSubject(input),
     react: <MonthlyDigestEmail input={input} />,
     idempotencyKey: `digest/${userId}/${toDbDate(month).slice(0, 7)}`,
     kind: "monthly_digest",

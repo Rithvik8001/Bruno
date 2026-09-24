@@ -8,6 +8,7 @@ import {
   EmptyState,
   Entering,
   Gap,
+  Invite,
   Loading,
   Screen,
   SectionHeading,
@@ -120,20 +121,31 @@ export function InsightsScreen() {
           {
             key: "save",
             label: copy.wouldSave,
-            value: formatMoney(yearlyAmountMinor(priciest.subscription), currency),
+            value: formatMoney(
+              yearlyAmountMinor(priciest.subscription),
+              currency,
+            ),
             note: copy.perYear,
           },
         ];
 
   return (
-    <Screen scroll withTabBar refresh={pull}>
+    <Screen
+      scroll
+      fill={status === "ready" && billing.length === 0}
+      withTabBar
+      refresh={pull}
+    >
       <T style="title" accessibilityRole="header">
         {copy.title}
       </T>
       {status === "loading" ? (
         <>
           <Gap size="s24" />
-          <Loading rows={loadingRows} accessibilityLabel={subscriptionsCopy.list.loading} />
+          <Loading
+            rows={loadingRows}
+            accessibilityLabel={subscriptionsCopy.list.loading}
+          />
         </>
       ) : status === "error" ? (
         <>
@@ -141,18 +153,20 @@ export function InsightsScreen() {
           <EmptyState
             title={copy.errorTitle}
             body={failureMessage(failure ?? "unknown")}
-            link={{ title: subscriptionsCopy.list.retry, onPress: pull.onRefresh }}
+            link={{
+              title: subscriptionsCopy.list.retry,
+              onPress: pull.onRefresh,
+            }}
           />
         </>
       ) : billing.length === 0 ? (
-        <>
-          <Gap size="s32" />
-          <EmptyState
-            title={copy.emptyTitle}
-            body={copy.emptyBody}
-            action={{ title: copy.emptyAction, onPress: openAdd }}
-          />
-        </>
+        <Invite
+          icon={copy.invite.icon}
+          title={copy.invite.title}
+          body={copy.invite.body}
+          benefits={copy.invite.benefits}
+          action={{ title: copy.invite.action, onPress: openAdd }}
+        />
       ) : (
         <>
           <Gap size="s24" />
@@ -161,10 +175,16 @@ export function InsightsScreen() {
               {copy.yearEyebrow}
             </T>
             <Gap size="s4" />
-            <AnimatedMoney amount={formatMoney(yearlyMinor, currency)} size="display" />
+            <AnimatedMoney
+              amount={formatMoney(yearlyMinor, currency)}
+              size="display"
+            />
             <Gap size="s4" />
             <T style="caption" color="ink3">
-              {copy.perMonthCaption.replace("{monthly}", formatMoney(monthlyMinor, currency))}
+              {copy.perMonthCaption.replace(
+                "{monthly}",
+                formatMoney(monthlyMinor, currency),
+              )}
             </T>
             <Gap size="s24" />
             <Segmented options={views} value={view} onChange={setView} />
@@ -200,7 +220,10 @@ export function InsightsScreen() {
                       ? copy.categoryCaptionOne
                       : copy.categoryCaptionMany
                     )
-                      .replace("{share}", String(Math.round(entry.share * percent)))
+                      .replace(
+                        "{share}",
+                        String(Math.round(entry.share * percent)),
+                      )
                       .replace("{count}", String(count))}
                   />
                 );

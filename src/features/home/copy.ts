@@ -24,9 +24,29 @@ export const homeCopy = {
     paused: "Paused",
     cancelled: "Cancelled",
     aYear: "A year",
-    emptyTitle: "No subscriptions yet",
-    emptyBody: "Add the first one you pay for.",
-    emptyAction: "Add subscription",
+    invite: {
+      icon: "plus",
+      title: "Every subscription,\none calm list",
+      body: "Add what you pay for and Bruno does the remembering.",
+      benefits: [
+        {
+          icon: "bell",
+          title: "A nudge before every charge",
+          caption: "1, 3 or 7 days ahead, your call",
+        },
+        {
+          icon: "sum",
+          title: "Your real monthly total",
+          caption: "Yearly plans included, no maths needed",
+        },
+        {
+          icon: "calendar",
+          title: "Every renewal in one place",
+          caption: "Sorted by whatever's next",
+        },
+      ],
+      action: "Add your first subscription",
+    },
     errorTitle: "Couldn't load your list",
   },
   insights: {
@@ -45,9 +65,29 @@ export const homeCopy = {
     priciest: "Priciest",
     wouldSave: "Dropping it saves",
     perYear: "a year",
-    emptyTitle: "Nothing to show yet",
-    emptyBody: "Add a subscription and the numbers show up here.",
-    emptyAction: "Add subscription",
+    invite: {
+      icon: "chart.bar.xaxis",
+      title: "Numbers need\nsubscriptions",
+      body: "Add a couple and Insights shows where the money really goes.",
+      benefits: [
+        {
+          icon: "chart.bar",
+          title: "Your year at a glance",
+          caption: "Month by month, the next 12 months",
+        },
+        {
+          icon: "chart.pie",
+          title: "Where it all goes",
+          caption: "Split by category",
+        },
+        {
+          icon: "lightbulb",
+          title: "What you could keep",
+          caption: "Your priciest one, in the spotlight",
+        },
+      ],
+      action: "Add a subscription",
+    },
     errorTitle: "Couldn't load your numbers",
   },
   settings: {

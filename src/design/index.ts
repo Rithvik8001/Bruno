@@ -107,6 +107,11 @@ export {
 export { PillRow, type PillRowProps } from "./components/PillRow";
 export { PillLink, type PillLinkProps } from "./components/PillLink";
 export { Appear, type AppearProps } from "./components/Appear";
+export {
+  Invite,
+  type InviteBenefit,
+  type InviteProps,
+} from "./components/Invite";
 export { CodeInput, type CodeInputProps } from "./components/CodeInput";
 export { DateField, type DateFieldProps } from "./components/DateField";
 export { Disclosure, type DisclosureProps } from "./components/Disclosure";

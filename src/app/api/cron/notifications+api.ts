@@ -159,6 +159,7 @@ function renewalInput(
 ): RenewalEmail {
   return {
     name: subscription.name,
+    serviceKey: subscription.serviceKey,
     amountMinor: subscription.amountMinor,
     currency: subscription.currency,
     renewsOn,
@@ -182,6 +183,7 @@ function digestInput(
       }
       rows.push({
         name: item.subscription.name,
+        serviceKey: item.subscription.serviceKey,
         dueOn: date,
         amountMinor: item.subscription.amountMinor,
       });

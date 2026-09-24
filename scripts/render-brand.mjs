@@ -1,11 +1,12 @@
 import { Resvg } from "@resvg/resvg-js";
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const brand = resolve(root, "assets/brand");
 const images = resolve(root, "assets/images");
+const email = resolve(root, "public/email");
 
 const scales = [
   ["", 1],
@@ -37,5 +38,12 @@ async function renderMark() {
   }
 }
 
+async function renderEmailMark() {
+  const svg = await readFile(resolve(brand, "mark.svg"), "utf8");
+  await mkdir(email, { recursive: true });
+  await write(resolve(email, "mark.png"), png(svg, 144));
+}
+
 await renderIcon();
 await renderMark();
+await renderEmailMark();

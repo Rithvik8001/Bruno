@@ -3,10 +3,30 @@ export const subscriptionsCopy = {
     title: "Subscriptions",
     add: "Add subscription",
     loading: "Loading your subscriptions.",
-    emptyBody: "Add the first one you pay for.",
-    emptyAction: "Add subscription",
     retry: "Try again",
-    emptyTitle: "No subscriptions yet",
+    invite: {
+      icon: "creditcard",
+      title: "Your list\nstarts here",
+      body: "Streaming, the gym, that app you forgot about. Add them once and they stay sorted.",
+      benefits: [
+        {
+          icon: "magnifyingglass",
+          title: "Logos found for you",
+          caption: "Type a name, pick the match",
+        },
+        {
+          icon: "arrow.up.arrow.down",
+          title: "Sorted your way",
+          caption: "By next renewal, cost or name",
+        },
+        {
+          icon: "pause.circle",
+          title: "Pause or cancel anytime",
+          caption: "Keep the history, drop the charge",
+        },
+      ],
+      action: "Add your first subscription",
+    },
     errorTitle: "Couldn't load your list",
     filterEmpty: "No {filter} subscriptions",
     showAll: "Show all",

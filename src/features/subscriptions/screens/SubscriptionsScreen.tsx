@@ -7,8 +7,10 @@ import {
   EmptyState,
   Entering,
   Gap,
+  Invite,
   Loading,
   LogoRow,
+  Screen,
   ScreenList,
   SectionHeading,
   Segmented,
@@ -69,8 +71,14 @@ function rowChip(
   if (item.status === "trial") {
     return { label: copy.trialNote, tone: "accent" };
   }
-  if (item.status === "active" && daysBetween(now, item.nextRenewal) <= soonDays) {
-    return { label: formatRelativeTitle(item.nextRenewal, now), tone: "accent" };
+  if (
+    item.status === "active" &&
+    daysBetween(now, item.nextRenewal) <= soonDays
+  ) {
+    return {
+      label: formatRelativeTitle(item.nextRenewal, now),
+      tone: "accent",
+    };
   }
   if (item.status === "paused") {
     return { label: copy.groupPaused, tone: "neutral" };
@@ -116,14 +124,12 @@ function flatten(groups: readonly LedgerGroup[]): ListItem[] {
     group.kind === "list"
       ? { kind: "gap", key: `gap-${group.key}` }
       : { kind: "heading", key: `heading-${group.key}`, group },
-    ...group.items.map(
-      (item): ListItem => ({
-        kind: "row",
-        key: item.subscription.id,
-        item,
-        muted: group.kind === "status",
-      }),
-    ),
+    ...group.items.map((item): ListItem => ({
+      kind: "row",
+      key: item.subscription.id,
+      item,
+      muted: group.kind === "status",
+    })),
   ]);
 }
 
@@ -165,7 +171,9 @@ function SubscriptionRow({
   );
 }
 
-function categoryLabel(category: keyof typeof subscriptionsCopy.categories): string {
+function categoryLabel(
+  category: keyof typeof subscriptionsCopy.categories,
+): string {
   return subscriptionsCopy.categories[category];
 }
 
@@ -246,6 +254,32 @@ export function SubscriptionsScreen() {
     );
   };
 
+  const toolbar = (
+    <Stack.Toolbar placement="right">
+      {hasList ? (
+        <Stack.Toolbar.Menu
+          icon={icons.sort}
+          accessibilityLabel={copy.sortLabel}
+        >
+          {listSorts.map((value) => (
+            <Stack.Toolbar.MenuAction
+              key={value}
+              isOn={sort === value}
+              onPress={() => changeSort(value)}
+            >
+              {copy.sorts[value]}
+            </Stack.Toolbar.MenuAction>
+          ))}
+        </Stack.Toolbar.Menu>
+      ) : null}
+      <Stack.Toolbar.Button
+        icon={icons.add}
+        onPress={openAdd}
+        accessibilityLabel={copy.add}
+      />
+    </Stack.Toolbar>
+  );
+
   const header = (
     <>
       {hasList ? (
@@ -259,26 +293,7 @@ export function SubscriptionsScreen() {
           onCancelButtonPress={() => setQuery("")}
         />
       ) : null}
-      <Stack.Toolbar placement="right">
-        {hasList ? (
-          <Stack.Toolbar.Menu icon={icons.sort} accessibilityLabel={copy.sortLabel}>
-            {listSorts.map((value) => (
-              <Stack.Toolbar.MenuAction
-                key={value}
-                isOn={sort === value}
-                onPress={() => changeSort(value)}
-              >
-                {copy.sorts[value]}
-              </Stack.Toolbar.MenuAction>
-            ))}
-          </Stack.Toolbar.Menu>
-        ) : null}
-        <Stack.Toolbar.Button
-          icon={icons.add}
-          onPress={openAdd}
-          accessibilityLabel={copy.add}
-        />
-      </Stack.Toolbar>
+      {toolbar}
       {status === "loading" ? (
         <>
           <Gap size="s24" />
@@ -293,16 +308,7 @@ export function SubscriptionsScreen() {
             link={{ title: copy.retry, onPress: pull.onRefresh }}
           />
         </>
-      ) : subscriptions.length === 0 ? (
-        <>
-          <Gap size="s32" />
-          <EmptyState
-            title={copy.emptyTitle}
-            body={copy.emptyBody}
-            action={{ title: copy.emptyAction, onPress: openAdd }}
-          />
-        </>
-      ) : (
+      ) : subscriptions.length === 0 ? null : (
         <>
           <T style="caption" color="ink3">
             {copy.activeCaption
@@ -310,12 +316,19 @@ export function SubscriptionsScreen() {
               .replace("{amount}", formatMoney(monthlyMinor, currency))}
           </T>
           <Gap size="s16" />
-          <Segmented options={filterOptions} value={filter} onChange={setFilter} />
+          <Segmented
+            options={filterOptions}
+            value={filter}
+            onChange={setFilter}
+          />
           {groups.length === 0 && terms.length > 0 ? (
             <>
               <Gap size="s32" />
               <EmptyState
-                title={copy.searchEmpty.replace("{query}", deferredQuery.trim())}
+                title={copy.searchEmpty.replace(
+                  "{query}",
+                  deferredQuery.trim(),
+                )}
                 body={copy.searchEmptyBody}
                 link={{ title: copy.clearSearch, onPress: clearSearch }}
               />
@@ -337,6 +350,22 @@ export function SubscriptionsScreen() {
       {alert}
     </>
   );
+
+  if (status === "ready" && subscriptions.length === 0) {
+    return (
+      <Screen scroll fill header automaticInsets withTabBar refresh={pull}>
+        {toolbar}
+        <Invite
+          icon={copy.invite.icon}
+          title={copy.invite.title}
+          body={copy.invite.body}
+          benefits={copy.invite.benefits}
+          action={{ title: copy.invite.action, onPress: openAdd }}
+        />
+        {alert}
+      </Screen>
+    );
+  }
 
   return (
     <ScreenList

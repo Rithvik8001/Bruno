@@ -20,9 +20,11 @@ export function isValidServiceKey(value: unknown): value is string {
 
 export type LogoTheme = "light" | "dark";
 
+export type LogoFallback = "404" | "monogram";
+
 export function logoUrl(
   domain: string | null,
-  options: { theme: LogoTheme; px: number },
+  options: { theme: LogoTheme; px: number; fallback?: LogoFallback },
 ): string | null {
   const token = process.env.EXPO_PUBLIC_LOGO_DEV_KEY;
   if (domain === null || token === undefined || token.length === 0) {
@@ -33,7 +35,7 @@ export function logoUrl(
     size: String(options.px),
     format: "png",
     theme: options.theme,
-    fallback: "404",
+    fallback: options.fallback ?? "404",
   });
   return `${imageBase}/${encodeURIComponent(domain)}?${params.toString()}`;
 }

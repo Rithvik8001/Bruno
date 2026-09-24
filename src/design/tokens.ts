@@ -236,6 +236,7 @@ export const layout = {
   stat: { rowHeight: 52 },
   onboarding: { markTop: 24, mark: 72 },
   tabBar: { height: 62, bottom: 26 },
+  invite: { circle: 64, symbol: 28, top: 32, bodyGap: 12, benefitsTop: 32, benefitGap: 20, iconGap: 16, bottom: 24 },
   emptyState: { gap: 8, actionGap: 20, maxWidth: 300 },
   money: { captionGap: 8, minimumScale: 0.7 },
   disclosure: { height: 44, gap: 6 },

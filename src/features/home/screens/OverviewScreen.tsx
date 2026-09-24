@@ -7,6 +7,7 @@ import {
   EmptyState,
   Entering,
   Gap,
+  Invite,
   Loading,
   LogoRow,
   PillLink,
@@ -88,7 +89,11 @@ export function OverviewScreen() {
     stats.push({ key: "trials", label: copy.trials, value: String(trials) });
   }
   if (counts.paused > 0) {
-    stats.push({ key: "paused", label: copy.paused, value: String(counts.paused) });
+    stats.push({
+      key: "paused",
+      label: copy.paused,
+      value: String(counts.paused),
+    });
   }
   if (counts.cancelled > 0) {
     stats.push({
@@ -104,7 +109,12 @@ export function OverviewScreen() {
   });
 
   return (
-    <Screen scroll withTabBar refresh={pull}>
+    <Screen
+      scroll
+      fill={status === "ready" && subscriptions.length === 0}
+      withTabBar
+      refresh={pull}
+    >
       <T style="title" accessibilityRole="header">
         {homeCopy.tabs.overview}
       </T>
@@ -123,18 +133,20 @@ export function OverviewScreen() {
           <EmptyState
             title={copy.errorTitle}
             body={failureMessage(failure ?? "unknown")}
-            link={{ title: subscriptionsCopy.list.retry, onPress: pull.onRefresh }}
+            link={{
+              title: subscriptionsCopy.list.retry,
+              onPress: pull.onRefresh,
+            }}
           />
         </>
       ) : subscriptions.length === 0 ? (
-        <>
-          <Gap size="s32" />
-          <EmptyState
-            title={copy.emptyTitle}
-            body={copy.emptyBody}
-            action={{ title: copy.emptyAction, onPress: openAdd }}
-          />
-        </>
+        <Invite
+          icon={copy.invite.icon}
+          title={copy.invite.title}
+          body={copy.invite.body}
+          benefits={copy.invite.benefits}
+          action={{ title: copy.invite.action, onPress: openAdd }}
+        />
       ) : (
         <>
           <Entering index={0}>
@@ -168,17 +180,17 @@ export function OverviewScreen() {
             ) : (
               upNext.map((item) => (
                 <Appear key={item.subscription.id}>
-                <LogoRow
-                  title={item.subscription.name}
-                  subtitle={`${formatRelativeTitle(item.nextRenewal, now)} · ${formatCycleAdverb(item.subscription.cycle)}`}
-                  value={formatMoney(
-                    item.subscription.amountMinor,
-                    item.subscription.currency,
-                  )}
-                  logo={subscriptionLogo(item.subscription, themeName, "row")}
-                  highlight={item.subscription.id === recentId}
-                  onPress={() => openDetail(item.subscription.id)}
-                />
+                  <LogoRow
+                    title={item.subscription.name}
+                    subtitle={`${formatRelativeTitle(item.nextRenewal, now)} · ${formatCycleAdverb(item.subscription.cycle)}`}
+                    value={formatMoney(
+                      item.subscription.amountMinor,
+                      item.subscription.currency,
+                    )}
+                    logo={subscriptionLogo(item.subscription, themeName, "row")}
+                    highlight={item.subscription.id === recentId}
+                    onPress={() => openDetail(item.subscription.id)}
+                  />
                 </Appear>
               ))
             )}
