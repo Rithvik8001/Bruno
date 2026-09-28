@@ -1,6 +1,7 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import type { HTMLAttributes, ReactNode } from "react";
 import { Icon, type IconName } from "@/components/icons/icon";
+import type { GroupArtId } from "@/lib/design-system/icons3d";
 import {
   balanceTint,
   billStatuses,
@@ -10,6 +11,7 @@ import {
 import type { Tint } from "@/lib/design-system/tokens";
 import { cents, formatCents, type Cents } from "@/lib/money";
 import { cn } from "@/lib/utils/cn";
+import { Icon3d } from "./icon-3d";
 
 export const chipVariants = cva(
   "inline-flex shrink-0 items-center whitespace-nowrap bg-tint-bg font-semibold text-tint",
@@ -33,16 +35,21 @@ export interface ChipProps
     VariantProps<typeof chipVariants> {
   tint: Tint;
   icon?: IconName;
+  art?: GroupArtId;
   dot?: boolean;
   children: ReactNode;
 }
 
-export function Chip({ tint, icon, dot, size, className, children, ...rest }: ChipProps) {
+export function Chip({ tint, icon, art, dot, size, className, children, ...rest }: ChipProps) {
   const s = size ?? "md";
   return (
     <span data-tint={tint} className={cn(chipVariants({ size: s }), className)} {...rest}>
-      {icon && <Icon name={icon} size={iconSize[s]} strokeWidth={s === "lg" ? 1.8 : 2.2} />}
-      {dot && <span aria-hidden className="size-1.5 rounded-full bg-current" />}
+      {art ? (
+        <Icon3d icon={art} size={iconSize[s] + 2} />
+      ) : (
+        icon && <Icon name={icon} size={iconSize[s]} strokeWidth={s === "lg" ? 1.8 : 2.2} />
+      )}
+      {dot && !art && <span aria-hidden className="size-1.5 rounded-full bg-current" />}
       {children}
     </span>
   );

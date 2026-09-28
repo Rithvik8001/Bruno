@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AmountChip, StatusChip, Tag } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
+import { groupArtFor } from "@/lib/design-system/icons3d";
 import { IconButton } from "@/components/ui/icon-button";
 import { List, ListRow } from "@/components/ui/list-row";
 import { Select } from "@/components/ui/select";
@@ -27,14 +28,14 @@ const groupOptions = groups.map((g) => ({ value: g.id, label: g.name }));
 export function ComponentsSection() {
   return (
     <DocSection
-      index={5}
+      index={6}
       title="Components"
       description="Live where it matters. Surfaces are flat grey or white; hairlines separate rows; shadow only on things that float."
       contentClassName="grid gap-11"
     >
       <Demo
         title="Status chip and tag"
-        description="Icon + label on a tint. 32px in rows, 28px inline. Bill states map to fixed hues so the same word always looks the same. Tags for groups and people use the group's hue."
+        description="Icon + label on a tint. 32px in rows, 28px inline. Bill states map to fixed hues so the same word always looks the same. Group tags use the group's hue, with its 3D art in place of the dot."
       >
         <div className="flex flex-wrap items-center gap-2">
           {rowStatuses.map((s) => (
@@ -43,7 +44,7 @@ export function ComponentsSection() {
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-2">
           {groups.map((g) => (
-            <Tag key={g.id} tint={g.tint}>
+            <Tag key={g.id} tint={g.tint} art={groupArtFor(g.name)}>
               {g.name}
             </Tag>
           ))}
@@ -128,7 +129,7 @@ export function ComponentsSection() {
         </Demo>
         <Demo
           title="Avatar and stack"
-          description="Initials on the person's tint. 24 / 32 / 40. Stacks overlap by a third with a canvas ring."
+          description="A buddy on the person's tint. 24 / 32 / 40. Stacks overlap by a third with a canvas ring."
         >
           <div className="flex flex-wrap items-center gap-6">
             <div className="flex items-center gap-2">
@@ -194,9 +195,9 @@ export function ComponentsSection() {
       </DemoGrid>
 
       <DemoGrid>
-        <Demo title="Empty state" description="Tinted icon, one sentence, one action. Centred in the space the content will take.">
+        <Demo title="Empty state" description="A 3D moment on a tint, one sentence, one action. Centred in the space the content will take.">
           <EmptyState
-            icon="receipt"
+            icon={{ moment: "receipt" }}
             message="Nothing owed, nothing owing. Enjoy it."
             action={
               <Button variant="elevated" size="md" className="text-small">

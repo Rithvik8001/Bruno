@@ -126,6 +126,22 @@ export const iconRegistry = {
       </>
     ),
   },
+  home: {
+    node: (
+      <>
+        <path d="M4 11l8-7 8 7v9H4z" />
+        <path d="M10 20v-6h4v6" />
+      </>
+    ),
+  },
+  card: {
+    node: (
+      <>
+        <rect x="3" y="5.5" width="18" height="13" rx="3" />
+        <path d="M3 10h18M7 15h3" />
+      </>
+    ),
+  },
   mail: {
     node: (
       <>

@@ -19,6 +19,7 @@ model User {
   updatedAt       DateTime  @default(now()) @updatedAt
   sessions        Session[]
   accounts        Account[]
+  person          Person?
 
   @@map("user")
 }
@@ -77,4 +78,259 @@ model RateLimit {
   lastRequest BigInt
 
   @@map("rateLimit")
+}
+
+enum GroupRole {
+  ADMIN
+  MEMBER
+}
+
+enum BillStatus {
+  DRAFT
+  CLAIMING
+  FINALIZED
+}
+
+enum SplitMethod {
+  ITEMS
+  EVEN
+  SHARES
+  PERCENT
+  AMOUNT
+}
+
+enum TipKind {
+  NONE
+  PERCENT
+  AMOUNT
+}
+
+enum PaymentMethod {
+  VENMO
+  CASH
+  PAYPAL
+  BANK
+  OTHER
+}
+
+enum SettlementStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+enum ActivityType {
+  BILL_CREATED
+  BILL_UPDATED
+  BILL_FINALIZED
+  BILL_DELETED
+  ITEM_CLAIMED
+  ITEM_UNCLAIMED
+  MEMBER_JOINED
+  MEMBER_LEFT
+  SETTLEMENT_RECORDED
+  SETTLEMENT_CONFIRMED
+  SETTLEMENT_CANCELLED
+}
+
+model Person {
+  id           String   @id @default(cuid())
+  userId       String?  @unique
+  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  displayName  String
+  tint         String
+  email        String?
+  mergedIntoId String?
+  mergedInto   Person?  @relation("PersonMerge", fields: [mergedIntoId], references: [id], onDelete: Restrict)
+  mergedFrom   Person[] @relation("PersonMerge")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
+
+  guestTokens        GuestToken[]
+  groupsCreated      Group[]           @relation("GroupCreator")
+  memberships        GroupMember[]
+  billsPaid          Bill[]            @relation("BillPayer")
+  billsCreated       Bill[]            @relation("BillCreator")
+  billParticipations BillParticipant[]
+  claims             Claim[]
+  settlementsSent    Settlement[]      @relation("SettlementFrom")
+  settlementsIn      Settlement[]      @relation("SettlementTo")
+  settlementsLogged  Settlement[]      @relation("SettlementRecorder")
+  activity           ActivityEvent[]
+
+  @@index([mergedIntoId])
+  @@map("person")
+}
+
+model GuestToken {
+  id         String   @id @default(cuid())
+  tokenHash  String   @unique
+  personId   String
+  person     Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+
+  @@index([personId])
+  @@map("guest_token")
+}
+
+model Group {
+  id          String    @id @default(cuid())
+  name        String
+  tint        String
+  currency    String    @db.Char(3)
+  slug        String    @unique
+  createdById String
+  createdBy   Person    @relation("GroupCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now()) @updatedAt
+  deletedAt   DateTime?
+
+  members     GroupMember[]
+  bills       Bill[]
+  settlements Settlement[]
+  activity    ActivityEvent[]
+
+  @@index([createdById])
+  @@map("group")
+}
+
+model GroupMember {
+  id       String    @id @default(cuid())
+  groupId  String
+  group    Group     @relation(fields: [groupId], references: [id], onDelete: Restrict)
+  personId String
+  person   Person    @relation(fields: [personId], references: [id], onDelete: Restrict)
+  role     GroupRole @default(MEMBER)
+  joinedAt DateTime  @default(now())
+  leftAt   DateTime?
+
+  @@unique([groupId, personId])
+  @@index([personId])
+  @@map("group_member")
+}
+
+model Bill {
+  id            String      @id @default(cuid())
+  groupId       String?
+  group         Group?      @relation(fields: [groupId], references: [id], onDelete: Restrict)
+  title         String
+  occurredAt    DateTime
+  currency      String      @db.Char(3)
+  payerId       String
+  payer         Person      @relation("BillPayer", fields: [payerId], references: [id], onDelete: Restrict)
+  createdById   String
+  createdBy     Person      @relation("BillCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  status        BillStatus  @default(DRAFT)
+  splitMethod   SplitMethod @default(ITEMS)
+  taxCents      Int         @default(0)
+  tipKind       TipKind     @default(NONE)
+  tipValue      Int         @default(0)
+  discountCents Int         @default(0)
+  totalCents    Int         @default(0)
+  slug          String      @unique
+  finalizedAt   DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @default(now()) @updatedAt
+  deletedAt     DateTime?
+
+  participants BillParticipant[]
+  items        LineItem[]
+  activity     ActivityEvent[]
+
+  @@index([groupId, occurredAt])
+  @@index([payerId])
+  @@index([createdById])
+  @@map("bill")
+}
+
+model BillParticipant {
+  id          String @id @default(cuid())
+  billId      String
+  bill        Bill   @relation(fields: [billId], references: [id], onDelete: Cascade)
+  personId    String
+  person      Person @relation(fields: [personId], references: [id], onDelete: Restrict)
+  shares      Int    @default(1)
+  percentBps  Int?
+  amountCents Int?
+
+  @@unique([billId, personId])
+  @@index([personId])
+  @@map("bill_participant")
+}
+
+model LineItem {
+  id         String   @id @default(cuid())
+  billId     String
+  bill       Bill     @relation(fields: [billId], references: [id], onDelete: Cascade)
+  name       String
+  quantity   Int      @default(1)
+  priceCents Int
+  position   Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  claims Claim[]
+
+  @@index([billId, position])
+  @@map("line_item")
+}
+
+model Claim {
+  id         String   @id @default(cuid())
+  lineItemId String
+  lineItem   LineItem @relation(fields: [lineItemId], references: [id], onDelete: Cascade)
+  personId   String
+  person     Person   @relation(fields: [personId], references: [id], onDelete: Restrict)
+  createdAt  DateTime @default(now())
+
+  @@unique([lineItemId, personId])
+  @@index([personId])
+  @@map("claim")
+}
+
+model Settlement {
+  id            String           @id @default(cuid())
+  groupId       String?
+  group         Group?           @relation(fields: [groupId], references: [id], onDelete: Restrict)
+  fromId        String
+  from          Person           @relation("SettlementFrom", fields: [fromId], references: [id], onDelete: Restrict)
+  toId          String
+  to            Person           @relation("SettlementTo", fields: [toId], references: [id], onDelete: Restrict)
+  currency      String           @db.Char(3)
+  amountCents   Int
+  method        PaymentMethod
+  note          String?
+  recordedById  String
+  recordedBy    Person           @relation("SettlementRecorder", fields: [recordedById], references: [id], onDelete: Restrict)
+  status        SettlementStatus
+  autoConfirmAt DateTime?
+  confirmedAt   DateTime?
+  undoUntil     DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @default(now()) @updatedAt
+
+  @@index([groupId])
+  @@index([fromId])
+  @@index([toId])
+  @@index([recordedById])
+  @@map("settlement")
+}
+
+model ActivityEvent {
+  id        String       @id @default(cuid())
+  groupId   String?
+  group     Group?       @relation(fields: [groupId], references: [id], onDelete: Restrict)
+  billId    String?
+  bill      Bill?        @relation(fields: [billId], references: [id], onDelete: Restrict)
+  actorId   String?
+  actor     Person?      @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  type      ActivityType
+  payload   Json
+  createdAt DateTime     @default(now())
+
+  @@index([groupId, createdAt])
+  @@index([billId, createdAt])
+  @@index([actorId])
+  @@map("activity_event")
 }

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { BrunoMark } from "@/components/brand/bruno-mark";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { StatusChip } from "@/components/ui/chip";
+import { BuddiesSection } from "./_sections/buddies";
 import { ColourSection } from "./_sections/colour";
 import { ComponentsSection } from "./_sections/components";
 import { FoundationsSection } from "./_sections/foundations";
@@ -40,6 +41,7 @@ export default function DesignSystemPage() {
       <ColourSection />
       <TypeSection />
       <FoundationsSection />
+      <BuddiesSection />
       <ComponentsSection />
       <MicroSection />
       <TokensSection />

@@ -9,7 +9,7 @@ export function FoundationsSection() {
     <DocSection
       index={4}
       title="Space, shape, motion, icons"
-      description="4px grid. Radii 10 and 20. One soft shadow for things that float. Hugeicons stroke-rounded at 1.8px."
+      description="4px grid. Radii 10 and 20. One soft shadow for things that float. Hugeicons rounded at 1.8px, duotone: closed shapes get a 16% fill of the icon colour. 3D objects for moments (see 05)."
       contentClassName="grid gap-7"
     >
       <div>

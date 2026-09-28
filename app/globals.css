@@ -39,6 +39,10 @@
   --color-indigo: var(--indigo);
   --color-indigo-bg: var(--indigo-bg);
 
+  --color-buddy-face: var(--buddy-face);
+  --color-buddy-ink: var(--buddy-ink);
+  --color-buddy-blush: var(--buddy-blush);
+
   --color-tint: var(--tint, var(--text-2));
   --color-tint-bg: var(--tint-bg, var(--surface-2));
 
@@ -96,6 +100,7 @@
   --animate-twinkle: twinkle 1.8s var(--motion-ease-standard) infinite;
   --animate-check-in: check-in 420ms var(--motion-ease-spring) both;
   --animate-shake: shake 380ms ease-out;
+  --animate-buddy-blink: buddy-blink var(--buddy-blink-duration, 4s) linear var(--buddy-blink-delay, 0s) infinite;
 
   --container-app: 40rem;
   --container-landing: 70rem;
@@ -151,6 +156,16 @@
   }
   100% {
     transform: scale(1);
+  }
+}
+@keyframes buddy-blink {
+  0%,
+  93%,
+  100% {
+    transform: scaleY(1);
+  }
+  96.5% {
+    transform: scaleY(0.1);
   }
 }
 @keyframes shake {
@@ -220,6 +235,13 @@
   :focus-visible {
     outline: 2px solid var(--brand);
     outline-offset: 2px;
+  }
+}
+
+@layer base {
+  svg[data-duotone] :is(rect, circle, ellipse, path[d$="z"], path[d$="Z"]):not([fill]) {
+    fill: currentColor;
+    fill-opacity: 0.16;
   }
 }
 

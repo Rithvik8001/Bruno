@@ -32,6 +32,7 @@ export function Icon({
       {...(def.filled
         ? { fill: "currentColor", stroke: "none" }
         : {
+            "data-duotone": "",
             fill: "none",
             stroke: "currentColor",
             strokeWidth,

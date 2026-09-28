@@ -55,10 +55,17 @@ export interface BrandScale {
   readonly "on-brand": Hex;
 }
 
+export interface BuddyColours {
+  readonly face: Hex;
+  readonly ink: Hex;
+  readonly blush: Hex;
+}
+
 export interface ThemePalette {
   readonly neutral: Readonly<Record<NeutralKey, Hex>>;
   readonly brand: BrandScale;
   readonly tints: Readonly<Record<PaletteTint, TintPair>>;
+  readonly buddy: BuddyColours;
   readonly shadow: string;
   readonly shadowThumb: string;
 }
@@ -92,6 +99,7 @@ export const palettes = {
       cyan: { bg: "#E2F5F8", fg: "#067087" },
       indigo: { bg: "#E8ECFF", fg: "#3B46C4" },
     },
+    buddy: { face: "#FFF6EC", ink: "#221F2E", blush: "#FF7E9D" },
     shadow: "0 1px 2px rgb(26 25 23 / .04), 0 8px 24px rgb(26 25 23 / .08)",
     shadowThumb: "0 1px 3px rgb(0 0 0 / .1)",
   },
@@ -123,6 +131,7 @@ export const palettes = {
       cyan: { bg: "#0F3038", fg: "#3FD3EE" },
       indigo: { bg: "#1B2049", fg: "#8A93FF" },
     },
+    buddy: { face: "#F6EBDD", ink: "#221F2E", blush: "#FF7E9D" },
     shadow: "0 1px 2px rgb(0 0 0 / .4), 0 8px 24px rgb(0 0 0 / .5)",
     shadowThumb: "0 1px 3px rgb(0 0 0 / .4)",
   },

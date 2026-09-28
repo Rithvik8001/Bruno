@@ -6,7 +6,7 @@ import { productPatterns, stack } from "../_data";
 export function MicroSection() {
   return (
     <DocSection
-      index={6}
+      index={7}
       title="Micro-interactions"
       description="The moments that make Bruno feel alive. Claiming and rolling digits are live in 05. Everything here respects reduced motion — it falls back to instant state changes."
       contentClassName="grid gap-11"

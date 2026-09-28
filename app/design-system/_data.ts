@@ -1,5 +1,8 @@
 import type { ScanLine } from "@/components/patterns/receipt-scan";
-import type { StackPerson } from "@/components/ui/avatar";
+import type { AvatarSize, StackPerson } from "@/components/ui/avatar";
+import type { BuddyShape } from "@/lib/design-system/buddies";
+import { GROUP_ART_IDS, type GroupArtId, type MomentIconId } from "@/lib/design-system/icons3d";
+import type { IconName } from "@/components/icons/icon";
 import type { BillStatus } from "@/lib/design-system/semantics";
 import type { PaletteTint, Tint } from "@/lib/design-system/tokens";
 import { cents, type Cents } from "@/lib/money";
@@ -139,3 +142,123 @@ export const productPatterns: readonly ProductPattern[] = [
   { title: "Explain a balance", body: "Disclosure grows open (grid-rows 0fr → 1fr) to show the maths behind a number.", where: "Receipt detail", tint: "violet" },
   { title: "Copy confirm", body: "Copy buttons swap to a green “Copied” for 2s. No toast needed.", where: "Group detail", tint: "cyan" },
 ];
+
+export interface BuddySpecimen {
+  readonly shape: BuddyShape;
+  readonly name: string;
+  readonly tint: PaletteTint;
+}
+
+export const buddySpecimens: readonly BuddySpecimen[] = [
+  { shape: "mochi", name: "Rithvik Kumar", tint: "violet" },
+  { shape: "miso", name: "Sam Okafor", tint: "blue" },
+  { shape: "bun", name: "Priya Raman", tint: "cyan" },
+  { shape: "bolt", name: "Ana Nunes", tint: "green" },
+  { shape: "bruin", name: "Jo Mills", tint: "amber" },
+  { shape: "sprout", name: "Leo Vance", tint: "orange" },
+  { shape: "swoop", name: "Tess Cole", tint: "pink" },
+  { shape: "pom", name: "Mia Brooks", tint: "indigo" },
+];
+
+export const buddySizes: readonly AvatarSize[] = ["sm", "md", "xl", "2xl", "3xl"];
+
+export const buddyStack: readonly StackPerson[] = [
+  { id: "so", name: "Sam Okafor", tint: "pink" },
+  { id: "pr", name: "Priya Raman", tint: "cyan" },
+  { id: "an", name: "Ana Nunes", tint: "green" },
+  { id: "jm", name: "Jo Mills", tint: "amber" },
+];
+
+export interface BuddyRule {
+  readonly title: string;
+  readonly body: string;
+}
+
+export const buddyRules: readonly BuddyRule[] = [
+  {
+    title: "One face",
+    body: "Cream face, two capsule eyes, soft blush, no mouth. The cuteness is in proportion and tilt, not expression.",
+  },
+  {
+    title: "Shape is yours",
+    body: "Picked in onboarding. Until someone picks, the shape comes from a hash of their name, so it never changes between screens.",
+  },
+  {
+    title: "Colour is theirs",
+    body: "Silhouette in the person's saturated tint on a light wash of the same hue. Works on both themes.",
+  },
+  {
+    title: "Alive, quietly",
+    body: "Blinks every few seconds, out of sync with its neighbours. Smiles when you hover. Still under reduced motion only if the OS asks.",
+  },
+  {
+    title: "Accessible",
+    body: "The person's name is the accessible label; initials remain as the tooltip fallback.",
+  },
+  {
+    title: "Tiny sizes",
+    body: "Below 22px the blush drops; eyes and silhouette carry recognition down to 16px.",
+  },
+];
+
+export interface GroupArtSpecimen {
+  readonly art: GroupArtId;
+  readonly tint: PaletteTint;
+}
+
+const artTintCycle: readonly PaletteTint[] = ["indigo", "blue", "cyan", "green", "orange", "amber", "red", "pink", "violet"];
+
+export const groupArtSpecimens: readonly GroupArtSpecimen[] = GROUP_ART_IDS.map((art, i) => ({
+  art,
+  tint: artTintCycle[i % artTintCycle.length] ?? "indigo",
+}));
+
+export interface FlatIconSpecimen {
+  readonly icon: IconName;
+  readonly label: string;
+}
+
+export const flatIconSpecimens: readonly FlatIconSpecimen[] = [
+  { icon: "home", label: "Home" },
+  { icon: "receipt", label: "Receipt" },
+  { icon: "card", label: "Card" },
+  { icon: "check-circle", label: "Status" },
+];
+
+export interface MomentSpecimen {
+  readonly icon: MomentIconId;
+  readonly tint: PaletteTint;
+}
+
+export const momentSpecimens: readonly MomentSpecimen[] = [
+  { icon: "moneybag", tint: "green" },
+  { icon: "moneywings", tint: "green" },
+  { icon: "receipt", tint: "violet" },
+  { icon: "check", tint: "blue" },
+  { icon: "bell", tint: "amber" },
+  { icon: "link", tint: "cyan" },
+  { icon: "people", tint: "indigo" },
+  { icon: "hourglass", tint: "cyan" },
+  { icon: "envelope", tint: "blue" },
+  { icon: "key", tint: "amber" },
+  { icon: "lock", tint: "violet" },
+  { icon: "gem", tint: "violet" },
+  { icon: "card", tint: "blue" },
+  { icon: "phone", tint: "cyan" },
+  { icon: "memo", tint: "cyan" },
+  { icon: "warning", tint: "red" },
+  { icon: "sparkles", tint: "green" },
+  { icon: "trophy", tint: "amber" },
+  { icon: "party", tint: "pink" },
+  { icon: "camera", tint: "violet" },
+];
+
+export const groupArtCopy = {
+  title: "Group art",
+  body: "Thirty 3D objects. Picked automatically from the group's name (trip → luggage, flat → house, football → ball) until someone chooses one in New group or by tapping the group's icon. Tile is the group's tint at radius 14–20, icon at 68%. In chips the icon replaces the dot. Unknown names get a stable fallback. Fluent Emoji 3D, MIT.",
+} as const;
+
+export const iconTiersCopy = {
+  title: "Two icon tiers",
+  body: "Flat duotone for anything you tap (nav, buttons, inputs) — crisp at 16–24px. 3D objects for moments: activity events, empty states, success, errors, section headers. Never 3D below 20px.",
+} as const;

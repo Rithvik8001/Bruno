@@ -27,6 +27,7 @@ function paletteDecls(p: ThemePalette): Declarations {
     out[`--${t}`] = p.tints[t].fg;
     out[`--${t}-bg`] = p.tints[t].bg;
   }
+  for (const [k, v] of Object.entries(p.buddy)) out[`--buddy-${k}`] = v;
   out["--elevation"] = p.shadow;
   out["--elevation-thumb"] = p.shadowThumb;
   return out;

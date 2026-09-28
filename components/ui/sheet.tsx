@@ -2,13 +2,15 @@
 
 import { useEffect, useId, useRef, type ReactNode } from "react";
 import { Icon, type IconName } from "@/components/icons/icon";
+import type { MomentIconId } from "@/lib/design-system/icons3d";
 import type { Tint } from "@/lib/design-system/tokens";
 import { cn } from "@/lib/utils/cn";
+import { Icon3d } from "./icon-3d";
 
 export interface SheetContentProps {
   title: ReactNode;
   description?: ReactNode;
-  icon?: IconName;
+  icon?: IconName | { readonly moment: MomentIconId };
   tint?: Tint;
   actions?: ReactNode;
   titleId?: string;
@@ -32,7 +34,7 @@ export function SheetContent({
           data-tint={tint}
           className="mb-3.5 grid size-10 place-items-center rounded-[12px] bg-tint-bg text-tint"
         >
-          <Icon name={icon} size={22} />
+          {typeof icon === "string" ? <Icon name={icon} size={22} /> : <Icon3d icon={icon.moment} size={28} />}
         </span>
       )}
       <h2 id={titleId} className="m-0 text-title">

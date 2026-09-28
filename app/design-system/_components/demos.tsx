@@ -153,7 +153,7 @@ export function SheetDemo() {
   const [open, setOpen] = useState(false);
   const content = {
     title: "Settle with Sam?",
-    icon: "check-circle",
+    icon: { moment: "moneywings" },
     tint: "green",
     description: (
       <>

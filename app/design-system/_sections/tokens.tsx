@@ -32,7 +32,7 @@ const pre =
 export function TokensSection() {
   return (
     <DocSection
-      index={7}
+      index={8}
       title="Tokens"
       description="Typed in lib/design-system/tokens.ts, emitted as CSS variables, mapped to Tailwind utilities in globals.css. This page runs on the same variables."
       contentClassName="grid grid-cols-[repeat(auto-fit,minmax(min(280px,100%),1fr))] gap-4"
