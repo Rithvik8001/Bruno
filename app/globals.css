@@ -1,26 +1,185 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-*: initial;
+  --color-white: #fff;
+
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-text-2: var(--text-2);
+  --color-text: var(--text);
+
+  --color-brand: var(--brand);
+  --color-brand-tint: var(--brand-tint);
+  --color-brand-hover: var(--brand-hover);
+  --color-on-brand: var(--on-brand);
+
+  --color-violet: var(--violet);
+  --color-violet-bg: var(--violet-bg);
+  --color-blue: var(--blue);
+  --color-blue-bg: var(--blue-bg);
+  --color-orange: var(--orange);
+  --color-orange-bg: var(--orange-bg);
+  --color-red: var(--red);
+  --color-red-bg: var(--red-bg);
+  --color-green: var(--green);
+  --color-green-bg: var(--green-bg);
+  --color-pink: var(--pink);
+  --color-pink-bg: var(--pink-bg);
+  --color-amber: var(--amber);
+  --color-amber-bg: var(--amber-bg);
+  --color-cyan: var(--cyan);
+  --color-cyan-bg: var(--cyan-bg);
+  --color-indigo: var(--indigo);
+  --color-indigo-bg: var(--indigo-bg);
+
+  --color-tint: var(--tint, var(--text-2));
+  --color-tint-bg: var(--tint-bg, var(--surface-2));
+
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --text-*: initial;
+  --text-display: var(--fs-display);
+  --text-display--line-height: var(--lh-display);
+  --text-display--letter-spacing: var(--ls-display);
+  --text-display--font-weight: var(--fw-display);
+  --text-heading: var(--fs-heading);
+  --text-heading--line-height: var(--lh-heading);
+  --text-heading--letter-spacing: var(--ls-heading);
+  --text-heading--font-weight: var(--fw-heading);
+  --text-title: var(--fs-title);
+  --text-title--line-height: var(--lh-title);
+  --text-title--letter-spacing: var(--ls-title);
+  --text-title--font-weight: var(--fw-title);
+  --text-lead: var(--fs-lead);
+  --text-lead--line-height: var(--lh-lead);
+  --text-body: var(--fs-body);
+  --text-body--line-height: var(--lh-body);
+  --text-small: var(--fs-small);
+  --text-small--line-height: var(--lh-small);
+  --text-footnote: var(--fs-footnote);
+  --text-footnote--line-height: var(--lh-footnote);
+  --text-caption: var(--fs-caption);
+  --text-caption--line-height: var(--lh-caption);
+  --text-caption--font-weight: var(--fw-caption);
+
+  --spacing: 0.25rem;
+
+  --radius-*: initial;
+  --radius-xs: var(--r-xs);
+  --radius-sm: var(--r-sm);
+  --radius-control: var(--r-control);
+  --radius-tile: var(--r-tile);
+  --radius-card: var(--r-card);
+
+  --shadow-*: initial;
+  --shadow-float: var(--elevation);
+  --shadow-thumb: var(--elevation-thumb);
+
+  --ease-standard: var(--motion-ease-standard);
+  --ease-spring: var(--motion-ease-spring);
+  --default-transition-duration: var(--motion-fast);
+  --default-transition-timing-function: var(--motion-ease-standard);
+
+  --animate-pulse-soft: pulse-soft 1.6s var(--motion-ease-standard) infinite;
+  --animate-rise: rise var(--motion-slow) var(--motion-ease-standard) both;
+  --animate-pop-in: pop-in var(--motion-base) var(--motion-ease-spring) both;
+  --animate-print-in: print-in var(--motion-base) var(--motion-ease-standard) both;
+
+  --container-app: 40rem;
+  --container-landing: 70rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+@keyframes print-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  html {
+    color-scheme: light;
+  }
+  html[data-theme="dark"] {
+    color-scheme: dark;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    font-feature-settings: "cv11", "ss01", "tnum";
+    -webkit-font-smoothing: antialiased;
+    transition:
+      background-color var(--motion-slow) var(--motion-ease-standard),
+      color var(--motion-slow) var(--motion-ease-standard);
+  }
+  button,
+  input,
+  select,
+  textarea {
+    font-feature-settings: inherit;
+  }
+  input::placeholder {
+    color: var(--muted);
+  }
+  ::selection {
+    background: var(--brand-tint);
+    color: var(--brand);
+  }
+  [data-theme="dark"] ::selection {
+    background: var(--brand);
+    color: var(--on-brand);
+  }
+  a {
+    color: var(--brand);
+    text-underline-offset: 3px;
+  }
+  a:hover {
+    color: var(--brand-hover);
+  }
+  :focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }
