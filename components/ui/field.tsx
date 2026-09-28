@@ -15,14 +15,18 @@ export interface FieldRenderProps {
 export interface FieldProps {
   label: ReactNode;
   feedback?: FieldFeedback;
+  hint?: ReactNode;
   className?: string;
   children: (control: FieldRenderProps) => ReactNode;
 }
 
-export function Field({ label, feedback, className, children }: FieldProps) {
+export function Field({ label, feedback, hint, className, children }: FieldProps) {
   const id = useId();
   const feedbackId = `${id}-feedback`;
+  const hintId = `${id}-hint`;
   const isError = feedback?.tone === "error";
+  const showHint = hint !== undefined && !feedback;
+  const describedBy = feedback ? feedbackId : showHint ? hintId : undefined;
 
   return (
     <div className={cn("grid gap-1.5", className)}>
@@ -32,7 +36,7 @@ export function Field({ label, feedback, className, children }: FieldProps) {
       {children({
         id,
         "aria-invalid": isError || undefined,
-        "aria-describedby": feedback ? feedbackId : undefined,
+        "aria-describedby": describedBy,
       })}
       {feedback && (
         <span
@@ -41,8 +45,13 @@ export function Field({ label, feedback, className, children }: FieldProps) {
           data-tint={isError ? "red" : "green"}
           className="flex items-center gap-1.5 text-footnote font-medium text-tint"
         >
-          <Icon name={isError ? "alert" : "check"} size={14} strokeWidth={2.2} />
+          <Icon name={isError ? "alert" : "check"} size={14} strokeWidth={2.2} className="shrink-0" />
           {feedback.message}
+        </span>
+      )}
+      {showHint && (
+        <span id={hintId} className="text-footnote text-muted">
+          {hint}
         </span>
       )}
     </div>
