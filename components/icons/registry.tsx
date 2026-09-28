@@ -134,6 +134,7 @@ export const iconRegistry = {
       </>
     ),
   },
+  activity: { node: <path d="M3 12h3.5l3-7 4 14 3-7H21" /> },
   card: {
     node: (
       <>

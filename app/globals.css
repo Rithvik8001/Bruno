@@ -102,6 +102,8 @@
   --animate-shake: shake 380ms ease-out;
   --animate-buddy-blink: buddy-blink var(--buddy-blink-duration, 4s) linear var(--buddy-blink-delay, 0s) infinite;
 
+  --breakpoint-nav: 47.5rem;
+
   --container-app: 40rem;
   --container-landing: 70rem;
 }

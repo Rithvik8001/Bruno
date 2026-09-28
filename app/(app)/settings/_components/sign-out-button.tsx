@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth/client";
 import { routes } from "@/lib/auth/rules";
+import { settingsCopy } from "../_data";
 
 export function SignOutButton() {
   const router = useRouter();
@@ -19,7 +20,7 @@ export function SignOutButton() {
 
   return (
     <Button variant="secondary" loading={loading} onClick={signOut}>
-      Sign out
+      {settingsCopy.signOut}
     </Button>
   );
 }

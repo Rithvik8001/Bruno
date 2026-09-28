@@ -78,9 +78,10 @@ export function Tag({ tint, ...rest }: TagProps) {
 export interface AmountChipProps extends Omit<HTMLAttributes<HTMLSpanElement>, "children"> {
   amount: Cents;
   direction?: BalanceDirection;
+  settledLabel?: string;
 }
 
-export function AmountChip({ amount, direction, className, ...rest }: AmountChipProps) {
+export function AmountChip({ amount, direction, settledLabel, className, ...rest }: AmountChipProps) {
   const dir: BalanceDirection =
     direction ?? (amount > 0 ? "owed" : amount < 0 ? "owes" : "settled");
   const signed =
@@ -94,7 +95,7 @@ export function AmountChip({ amount, direction, className, ...rest }: AmountChip
       )}
       {...rest}
     >
-      {formatCents(signed, dir === "settled" ? "never" : "always")}
+      {dir === "settled" && settledLabel ? settledLabel : formatCents(signed, dir === "settled" ? "never" : "always")}
     </span>
   );
 }

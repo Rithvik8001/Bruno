@@ -6,6 +6,7 @@ import { nextCookies } from "better-auth/next-js";
 import { emailOTP } from "better-auth/plugins/email-otp";
 import { username } from "better-auth/plugins/username";
 import { db } from "@/lib/db";
+import { ensurePersonForUser } from "@/lib/people/person";
 import { serverEnv } from "@/lib/env";
 import { runInBackground } from "./background";
 import { sendExistingAccountNotice, sendPasswordResetCode, sendVerificationCode } from "./emails";
@@ -85,6 +86,11 @@ export const auth = betterAuth({
           if (typeof existing === "string" && isValidUsername(existing)) return;
           const generated = await generateUniqueUsername(user.email.split("@")[0] ?? user.name);
           return { data: { ...user, username: generated, displayUsername: generated } };
+        },
+        after: async (user) => {
+          runInBackground("person", async () => {
+            await ensurePersonForUser(user);
+          });
         },
       },
     },

@@ -11,6 +11,7 @@ export const billStatuses = {
   queued: { label: "Queued", tint: "violet", icon: "clock" },
   scheduled: { label: "Scheduled", tint: "blue", icon: "calendar" },
   claiming: { label: "Claiming", tint: "orange", icon: "timer" },
+  ready: { label: "Ready", tint: "blue", icon: "check-circle" },
   overdue: { label: "Overdue", tint: "red", icon: "flame" },
   settled: { label: "Settled", tint: "green", icon: "check-circle" },
   waiting: { label: "Waiting", tint: "pink", icon: "clock" },

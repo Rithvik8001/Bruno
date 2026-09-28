@@ -139,6 +139,7 @@ model Person {
   user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   displayName  String
   tint         String
+  buddy        String?
   email        String?
   mergedIntoId String?
   mergedInto   Person?  @relation("PersonMerge", fields: [mergedIntoId], references: [id], onDelete: Restrict)
@@ -178,6 +179,7 @@ model Group {
   id          String    @id @default(cuid())
   name        String
   tint        String
+  art         String?
   currency    String    @db.Char(3)
   slug        String    @unique
   createdById String
