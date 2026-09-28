@@ -79,6 +79,30 @@ export const iconRegistry = {
     ),
   },
   wallet: { node: <path d="M3 7h18v12H3zM3 7l3-3h12l3 3M16 13h2" /> },
+  upload: {
+    node: (
+      <>
+        <path d="M12 15V4M7 9l5-5 5 5" />
+        <path d="M4 15v3a2 2 0 002 2h12a2 2 0 002-2v-3" />
+      </>
+    ),
+  },
+  copy: {
+    node: (
+      <>
+        <rect x="8" y="3" width="13" height="13" rx="2.5" />
+        <path d="M16 16v2.5A2.5 2.5 0 0113.5 21h-8A2.5 2.5 0 013 18.5v-8A2.5 2.5 0 015.5 8H8" />
+      </>
+    ),
+  },
+  contrast: {
+    node: (
+      <>
+        <circle cx="12" cy="12" r="8" />
+        <path d="M12 4v16a8 8 0 000-16z" fill="currentColor" stroke="none" />
+      </>
+    ),
+  },
   more: {
     filled: true,
     node: (
