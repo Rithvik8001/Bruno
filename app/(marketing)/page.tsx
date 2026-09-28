@@ -28,11 +28,34 @@ export default function LandingPage() {
         <main>
           <Hero />
           <div id={SECTION_IDS.how} className="scroll-mt-16">
-            <Story id="upload" content={stories.upload} visual={<ScanVisual />} />
-            <Story id="claim" content={stories.claim} visual={<ClaimVisual />} flip />
-            <Story id="balance" content={stories.balance} visual={<BalanceVisual />} />
-            <Story id="notices" content={stories.notices} visual={<NoticesVisual />} flip />
-            <Story id="settle" content={stories.settle} visual={<SettleVisual />} flip />
+            <Story
+              id="upload"
+              content={stories.upload}
+              visual={<ScanVisual />}
+            />
+            <Story
+              id="claim"
+              content={stories.claim}
+              visual={<ClaimVisual />}
+              flip
+            />
+            <Story
+              id="balance"
+              content={stories.balance}
+              visual={<BalanceVisual />}
+            />
+            <Story
+              id="notices"
+              content={stories.notices}
+              visual={<NoticesVisual />}
+              flip
+            />
+            <Story
+              id="settle"
+              content={stories.settle}
+              visual={<SettleVisual />}
+              flip
+            />
           </div>
           <Groups />
           <Pricing />
