@@ -1,41 +1,42 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { routes } from "@/lib/auth/rules";
 import { AuthHeader } from "../../_components/auth-header";
 import { GoogleButton } from "../../_components/google-button";
 import { VerifyStep } from "../../_components/verify-step";
 import { authCopy } from "../../_data";
-import { signUpCopy } from "../_data";
-import { emptySignUpValues, type SignUpValues } from "../_lib/validation";
-import { DoneStep } from "./done-step";
-import { SignUpForm } from "./sign-up-form";
+import { signInCopy } from "../_data";
+import { emptySignInValues, type SignInValues } from "../_lib/validation";
+import { SignInForm } from "./sign-in-form";
 
-type Step =
-  | { readonly step: "form" }
-  | { readonly step: "verify"; readonly email: string; readonly name: string }
-  | { readonly step: "done"; readonly name: string };
-
-function firstName(name: string): string {
-  return name.trim().split(/\s+/)[0] || "there";
+export interface SignInFlowProps {
+  next: string;
 }
+
+type Step = { readonly step: "form" } | { readonly step: "verify"; readonly email: string };
 
 function headerFor(state: Step) {
   switch (state.step) {
     case "form":
-      return signUpCopy.form;
+      return signInCopy.form;
     case "verify":
       return { title: authCopy.verify.title, subtitle: authCopy.verify.subtitle(state.email) };
-    case "done":
-      return { title: signUpCopy.done.title(firstName(state.name)), subtitle: signUpCopy.done.subtitle };
   }
 }
 
-export function SignUpFlow() {
+export function SignInFlow({ next }: SignInFlowProps) {
+  const router = useRouter();
   const [state, setState] = useState<Step>({ step: "form" });
-  const [values, setValues] = useState<SignUpValues>(emptySignUpValues);
+  const [values, setValues] = useState<SignInValues>(emptySignInValues);
   const header = headerFor(state);
+
+  const finish = () => {
+    router.replace(next);
+    router.refresh();
+  };
 
   return (
     <>
@@ -43,16 +44,17 @@ export function SignUpFlow() {
 
       {state.step === "form" && (
         <div className="grid gap-5">
-          <GoogleButton callbackURL={routes.app} errorCallbackURL={routes.signUp} />
+          <GoogleButton callbackURL={next} errorCallbackURL={routes.signIn} />
           <div className="flex items-center gap-3 text-footnote text-muted">
             <span aria-hidden className="h-px flex-1 bg-line" />
             {authCopy.divider}
             <span aria-hidden className="h-px flex-1 bg-line" />
           </div>
-          <SignUpForm
+          <SignInForm
+            next={next}
             values={values}
             onValuesChange={setValues}
-            onSignedUp={({ email, name }) => setState({ step: "verify", email, name })}
+            onNeedsVerification={(email) => setState({ step: "verify", email })}
           />
         </div>
       )}
@@ -61,18 +63,20 @@ export function SignUpFlow() {
         <VerifyStep
           key={state.email}
           email={state.email}
-          onVerified={() => setState({ step: "done", name: state.name })}
-          onBack={() => setState({ step: "form" })}
+          onVerified={finish}
+          onBack={() => {
+            setValues((current) => ({ ...current, password: "" }));
+            setState({ step: "form" });
+          }}
+          backLabel={signInCopy.verifyBack}
         />
       )}
 
-      {state.step === "done" && <DoneStep />}
-
       {state.step === "form" && (
         <p className="m-0 text-center text-small text-text-2">
-          {signUpCopy.switchPrompt}{" "}
-          <Link href={routes.signIn} className="font-semibold">
-            {signUpCopy.switchCta}
+          {signInCopy.switchPrompt}{" "}
+          <Link href={routes.signUp} className="font-semibold">
+            {signInCopy.switchCta}
           </Link>
         </p>
       )}

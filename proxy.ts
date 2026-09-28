@@ -1,23 +1,15 @@
 import { getSessionCookie } from "better-auth/cookies";
 import { NextResponse, type NextRequest } from "next/server";
-import { routes } from "@/lib/auth/rules";
-
-const guestOnly: readonly string[] = [routes.signUp, routes.signIn];
-const signedInOnly: readonly string[] = [routes.app];
+import { isSignedInRoute, signInPath } from "@/lib/auth/redirect";
 
 export function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  const hasSession = getSessionCookie(request) !== null;
-
-  if (hasSession && guestOnly.includes(pathname)) {
-    return NextResponse.redirect(new URL(routes.app, request.url));
-  }
-  if (!hasSession && signedInOnly.includes(pathname)) {
-    return NextResponse.redirect(new URL(routes.signUp, request.url));
+  const { pathname, search } = request.nextUrl;
+  if (getSessionCookie(request) === null && isSignedInRoute(pathname)) {
+    return NextResponse.redirect(new URL(signInPath(`${pathname}${search}`), request.url));
   }
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/sign-up", "/sign-in", "/home"],
+  matcher: ["/home/:path*"],
 };

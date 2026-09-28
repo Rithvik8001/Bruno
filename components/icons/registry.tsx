@@ -126,6 +126,38 @@ export const iconRegistry = {
       </>
     ),
   },
+  mail: {
+    node: (
+      <>
+        <rect x="3" y="5" width="18" height="14" rx="3" />
+        <path d="M3 8l9 6 9-6" />
+      </>
+    ),
+  },
+  lock: {
+    node: (
+      <>
+        <rect x="4.5" y="10.5" width="15" height="10" rx="3" />
+        <path d="M8 10.5V7.5a4 4 0 018 0v3M12 14.5v2" />
+      </>
+    ),
+  },
+  keypad: {
+    node: (
+      <>
+        <rect x="2.5" y="7" width="19" height="10" rx="3" />
+        <path d="M7 12h.01M12 12h.01M17 12h.01" strokeWidth={3} />
+      </>
+    ),
+  },
+  device: {
+    node: (
+      <>
+        <rect x="6" y="2.5" width="12" height="19" rx="3" />
+        <path d="M11 18.5h2" />
+      </>
+    ),
+  },
   sparkle: {
     filled: true,
     node: <path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z" />,

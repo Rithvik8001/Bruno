@@ -8,14 +8,15 @@ import { useToast } from "@/components/ui/toast";
 import { authClient } from "@/lib/auth/client";
 import { authErrorMessage } from "@/lib/auth/errors";
 import { authRules } from "@/lib/auth/rules";
+import { useCooldown } from "@/lib/hooks/use-cooldown";
 import { cn } from "@/lib/utils/cn";
-import { signUpCopy } from "../_data";
-import { useCooldown } from "../_lib/use-cooldown";
+import { authCopy } from "../_data";
 
 export interface VerifyStepProps {
   email: string;
   onVerified: () => void;
   onBack: () => void;
+  backLabel?: string;
 }
 
 type VerifyState =
@@ -23,13 +24,13 @@ type VerifyState =
   | { readonly status: "verifying" }
   | { readonly status: "failed"; readonly message: string };
 
-export function VerifyStep({ email, onVerified, onBack }: VerifyStepProps) {
+export function VerifyStep({ email, onVerified, onBack, backLabel = authCopy.code.back }: VerifyStepProps) {
   const [code, setCode] = useState("");
   const [state, setState] = useState<VerifyState>({ status: "entering" });
   const [resending, setResending] = useState(false);
   const cooldown = useCooldown(authRules.otp.resendCooldownSeconds);
   const { toast } = useToast();
-  const copy = signUpCopy.code;
+  const copy = authCopy.code;
 
   const verify = async (otp: string) => {
     setState({ status: "verifying" });
@@ -70,6 +71,7 @@ export function VerifyStep({ email, onVerified, onBack }: VerifyStepProps) {
         onComplete={verify}
         length={authRules.otp.length}
         invalid={state.status === "failed"}
+        label={copy.label}
         disabled={state.status === "verifying"}
         autoFocus
       />
@@ -109,7 +111,7 @@ export function VerifyStep({ email, onVerified, onBack }: VerifyStepProps) {
           onClick={onBack}
           className="cursor-pointer bg-transparent p-0 text-footnote text-muted transition-colors hover:text-text"
         >
-          {copy.back}
+          {backLabel}
         </button>
       </div>
     </div>

@@ -8,7 +8,7 @@ import { username } from "better-auth/plugins/username";
 import { db } from "@/lib/db";
 import { serverEnv } from "@/lib/env";
 import { runInBackground } from "./background";
-import { sendExistingAccountNotice, sendVerificationCode } from "./emails";
+import { sendExistingAccountNotice, sendPasswordResetCode, sendVerificationCode } from "./emails";
 import { authRules } from "./rules";
 import { isValidUsername, slugifyUsername, usernameCandidates } from "./username";
 
@@ -45,7 +45,7 @@ export const auth = betterAuth({
     requireEmailVerification: true,
     minPasswordLength: authRules.password.min,
     maxPasswordLength: authRules.password.max,
-    revokeSessionsOnPasswordReset: true,
+    revokeSessionsOnPasswordReset: false,
     onExistingUserSignUp: async ({ user }) => {
       runInBackground("existing-account notice", () => sendExistingAccountNotice(user.email));
     },
@@ -68,6 +68,10 @@ export const auth = betterAuth({
       "/sign-up/email": { window: 60, max: 5 },
       "/sign-in/email": { window: 60, max: 5 },
       "/is-username-available": { window: 60, max: 30 },
+      "/email-otp/send-verification-otp": { window: 60, max: 3 },
+      "/email-otp/request-password-reset": { window: 60, max: 3 },
+      "/email-otp/check-verification-otp": { window: 60, max: 10 },
+      "/email-otp/reset-password": { window: 60, max: 5 },
     },
   },
   advanced: {
@@ -98,8 +102,16 @@ export const auth = betterAuth({
       allowedAttempts: authRules.otp.allowedAttempts,
       storeOTP: "hashed",
       sendVerificationOTP: async ({ email, otp, type }) => {
-        if (type !== "email-verification") return;
-        runInBackground("verification code", () => sendVerificationCode(email, otp));
+        switch (type) {
+          case "email-verification":
+            runInBackground("verification code", () => sendVerificationCode(email, otp));
+            return;
+          case "forget-password":
+            runInBackground("password reset code", () => sendPasswordResetCode(email, otp));
+            return;
+          default:
+            return;
+        }
       },
     }),
     nextCookies(),

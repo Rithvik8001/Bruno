@@ -9,8 +9,18 @@ export const routes = {
   home: "/",
   signUp: "/sign-up",
   signIn: "/sign-in",
+  resetPassword: "/reset-password",
   app: "/home",
   authApi: "/api/auth",
 } as const;
+
+export const authParams = {
+  next: "next",
+  email: "email",
+} as const;
+
+export const guestOnlyRoutes: readonly string[] = [routes.signUp, routes.signIn, routes.resetPassword];
+
+export const signedInRoutePrefixes: readonly string[] = [routes.app];
 
 export const otpExpiresInMinutes = authRules.otp.expiresInSeconds / 60;

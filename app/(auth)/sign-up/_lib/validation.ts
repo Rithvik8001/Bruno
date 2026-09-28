@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { authRules } from "@/lib/auth/rules";
 import { normalizeUsername } from "@/lib/auth/username";
+import { emailSchema } from "../../_lib/fields";
 
 const { password, username, name } = authRules;
 
@@ -23,11 +24,7 @@ export const signUpFieldSchemas = {
         .max(username.max, `${username.max} characters at most.`)
         .regex(username.pattern, "Use letters, numbers, dots or underscores."),
     ),
-  email: z
-    .string()
-    .trim()
-    .min(1, "We need an email to send your code.")
-    .pipe(z.email("That doesn't look like an email.")),
+  email: emailSchema("We need an email to send your code."),
   password: z
     .string()
     .min(1, "Pick a password.")

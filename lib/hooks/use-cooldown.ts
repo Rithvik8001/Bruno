@@ -2,7 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-export function useCooldown(seconds: number, startActive = true) {
+export interface Cooldown {
+  readonly remaining: number;
+  readonly active: boolean;
+  readonly restart: (seconds?: number) => void;
+}
+
+export function useCooldown(seconds: number, startActive = true): Cooldown {
   const [remaining, setRemaining] = useState(startActive ? seconds : 0);
 
   useEffect(() => {
@@ -11,7 +17,7 @@ export function useCooldown(seconds: number, startActive = true) {
     return () => clearTimeout(id);
   }, [remaining]);
 
-  const restart = useCallback(() => setRemaining(seconds), [seconds]);
+  const restart = useCallback((next?: number) => setRemaining(next ?? seconds), [seconds]);
 
   return { remaining, active: remaining > 0, restart };
 }

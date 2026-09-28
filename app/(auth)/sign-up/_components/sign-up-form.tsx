@@ -7,7 +7,10 @@ import { InlineAlert } from "@/components/ui/inline-alert";
 import { TextField } from "@/components/ui/text-field";
 import { authClient } from "@/lib/auth/client";
 import { authErrorMessage, type AuthClientError } from "@/lib/auth/errors";
+import { PasswordField } from "../../_components/password-field";
+import { authCopy } from "../../_data";
 import { signUpCopy } from "../_data";
+import { passwordStrength } from "../_lib/password-strength";
 import { useUsernameAvailability } from "../_lib/use-username-availability";
 import {
   validateField,
@@ -17,7 +20,7 @@ import {
   type SignUpInput,
   type SignUpValues,
 } from "../_lib/validation";
-import { PasswordField } from "./password-field";
+import { PasswordStrengthChip } from "./password-strength-chip";
 import { UsernameField } from "./username-field";
 
 export interface SignUpFormProps {
@@ -120,12 +123,12 @@ export function SignUpForm({ values, onValuesChange, onSignedUp }: SignUpFormPro
         availability={availability}
       />
       <TextField
-        label={fields.email.label}
+        label={authCopy.email.label}
         name="email"
         type="email"
         inputMode="email"
         autoComplete="email"
-        placeholder={fields.email.placeholder}
+        placeholder={authCopy.email.placeholder}
         value={values.email}
         onChange={(e) => update("email")(e.target.value)}
         onBlur={blur("email")}
@@ -138,6 +141,9 @@ export function SignUpForm({ values, onValuesChange, onSignedUp }: SignUpFormPro
         onValueChange={update("password")}
         onBlur={blur("password")}
         feedback={feedback("password")}
+        placeholder={fields.password.placeholder}
+        hint={values.password ? undefined : fields.password.hint}
+        labelAccessory={<PasswordStrengthChip strength={passwordStrength(values.password)} />}
       />
       {formError && <InlineAlert>{formError}</InlineAlert>}
       <Button type="submit" size="lg" fullWidth loading={loading} className="mt-1 font-semibold">
