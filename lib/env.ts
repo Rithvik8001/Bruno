@@ -21,7 +21,6 @@ const serverEnvSchema = z.object({
   GOOGLE_CLIENT_SECRET: optionalString,
   RESEND_API_KEY: optionalString,
   EMAIL_FROM: z.string().min(1).default("Bruno <onboarding@resend.dev>"),
-  SUPABASE_URL: optionalString.pipe(z.url().optional()),
   SUPABASE_SECRET_KEY: optionalString,
 });
 

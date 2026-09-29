@@ -5,12 +5,10 @@ import { publicEnv } from "@/lib/env.client";
 import { billTopic, type BillEvent, type ClaimSignal } from "./topics";
 
 export async function broadcastBill(code: string, event: BillEvent, signal?: ClaimSignal): Promise<void> {
-  const { SUPABASE_URL, SUPABASE_SECRET_KEY } = serverEnv();
   const shared = publicEnv();
-  const url = SUPABASE_URL ?? shared?.supabaseUrl;
-  const key = SUPABASE_SECRET_KEY ?? shared?.supabasePublishableKey;
-  if (!url || !key) return;
-  const client = createClient(url, key, {
+  if (!shared) return;
+  const key = serverEnv().SUPABASE_SECRET_KEY ?? shared.supabasePublishableKey;
+  const client = createClient(shared.supabaseUrl, key, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
   const channel = client.channel(billTopic(code));
