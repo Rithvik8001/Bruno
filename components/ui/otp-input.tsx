@@ -1,6 +1,10 @@
 "use client";
 
-import { useRef, type ClipboardEvent, type KeyboardEvent } from "react";
+import { motion, useAnimate } from "motion/react";
+import { useEffect, useRef, type ClipboardEvent, type KeyboardEvent } from "react";
+import { buzz, HAPTICS } from "@/lib/motion/haptics";
+import { SHAKE } from "@/lib/motion/keyframes";
+import { SPRING } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils/cn";
 
 export interface OtpInputProps {
@@ -9,6 +13,7 @@ export interface OtpInputProps {
   onComplete?: (value: string) => void;
   length?: number;
   invalid?: boolean;
+  shake?: number;
   disabled?: boolean;
   autoFocus?: boolean;
   label?: string;
@@ -23,6 +28,7 @@ export function OtpInput({
   onComplete,
   length = 6,
   invalid = false,
+  shake = 0,
   disabled = false,
   autoFocus = false,
   label = "Verification code",
@@ -30,6 +36,13 @@ export function OtpInput({
 }: OtpInputProps) {
   const refs = useRef<(HTMLInputElement | null)[]>([]);
   const slots = Array.from({ length }, (_, i) => value[i] ?? "");
+  const [scope, animate] = useAnimate<HTMLDivElement>();
+
+  useEffect(() => {
+    if (shake === 0) return;
+    buzz(HAPTICS.error);
+    void animate(scope.current, SHAKE.keyframes, SHAKE.transition);
+  }, [shake, animate, scope]);
 
   const focusAt = (index: number) => {
     const el = refs.current[Math.max(0, Math.min(length - 1, index))];
@@ -82,10 +95,13 @@ export function OtpInput({
   };
 
   return (
-    <div role="group" aria-label={label} className={cn("flex justify-center gap-2.5", className)}>
+    <div ref={scope} role="group" aria-label={label} className={cn("flex justify-center gap-2.5", className)}>
       {slots.map((digit, i) => (
-        <input
+        <motion.input
           key={i}
+          data-tint="violet"
+          animate={{ y: digit ? -2 : 0 }}
+          transition={SPRING}
           ref={(el) => {
             refs.current[i] = el;
           }}
@@ -105,7 +121,7 @@ export function OtpInput({
             "transition-[background-color,border-color,box-shadow] duration-150 ease-standard",
             "focus:border-brand focus:bg-bg focus:shadow-[0_0_0_3px_var(--brand-tint)]",
             "disabled:cursor-not-allowed disabled:text-muted",
-            invalid ? "border-red bg-bg" : digit ? "border-border bg-bg" : "border-transparent bg-surface",
+            invalid ? "border-red bg-bg text-red" : digit ? "border-transparent bg-tint-bg text-tint" : "border-transparent bg-surface",
           )}
         />
       ))}

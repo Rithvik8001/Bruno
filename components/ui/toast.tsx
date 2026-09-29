@@ -1,56 +1,40 @@
 "use client";
 
-import {
-  createContext,
-  use,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-} from "react";
-import { Icon, type IconName } from "@/components/icons/icon";
-import type { Tint } from "@/lib/design-system/tokens";
+import { AnimatePresence, motion } from "motion/react";
+import { createContext, use, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { EASE, SPRING } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils/cn";
+
+const DEFAULT_MS = 2800;
+const WITH_ACTION_MS = 6000;
+const MAX_VISIBLE = 2;
+
+export interface ToastAction {
+  label: string;
+  onAction: () => void;
+}
 
 export interface ToastOptions {
   message: string;
-  icon?: IconName;
-  tint?: Tint;
-  action?: { label: string; onAction: () => void };
+  action?: ToastAction;
   duration?: number;
 }
 
 export interface ToastViewProps extends Omit<ToastOptions, "duration"> {
-  visible?: boolean;
   onDismiss?: () => void;
   className?: string;
 }
 
-export function ToastView({
-  message,
-  icon = "check",
-  tint = "green",
-  action,
-  visible = true,
-  onDismiss,
-  className,
-}: ToastViewProps) {
+export function ToastView({ message, action, onDismiss, className }: ToastViewProps) {
   return (
     <div
       className={cn(
-        "inline-flex h-13 items-center gap-3 rounded-tile bg-bg pr-2 pl-3 text-small font-medium shadow-float",
-        "transition-[opacity,transform] duration-220 ease-standard",
-        visible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-1.5 opacity-0",
+        "flex min-h-11 max-w-105 items-center gap-3.5 rounded-[14px] bg-text py-2.5 pr-2.5 pl-4 text-small font-medium text-bg shadow-[0_8px_28px_rgba(0,0,0,.18)]",
         !action && "pr-4",
         className,
       )}
     >
-      <span data-tint={tint} className="grid size-7 place-items-center rounded-sm bg-tint-bg text-tint">
-        <Icon name={icon} size={16} strokeWidth={2.4} />
-      </span>
-      <span>{message}</span>
+      <span className="min-w-0 flex-1 pr-1.5">{message}</span>
       {action && (
         <button
           type="button"
@@ -58,7 +42,7 @@ export function ToastView({
             action.onAction();
             onDismiss?.();
           }}
-          className="h-9 cursor-pointer rounded-sm px-3 text-small font-semibold text-brand hover:bg-brand-tint"
+          className="h-7.5 cursor-pointer rounded-sm border-0 bg-transparent px-2.5 text-footnote font-semibold text-brand-tint"
         >
           {action.label}
         </button>
@@ -85,37 +69,48 @@ interface ActiveToast extends ToastOptions {
 }
 
 export function ToastProvider({ children }: { children: ReactNode }) {
-  const [current, setCurrent] = useState<ActiveToast | null>(null);
-  const [visible, setVisible] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const [toasts, setToasts] = useState<readonly ActiveToast[]>([]);
+  const timers = useRef(new Map<number, ReturnType<typeof setTimeout>>());
   const seq = useRef(0);
 
+  const remove = useCallback((id: number) => {
+    clearTimeout(timers.current.get(id));
+    timers.current.delete(id);
+    setToasts((list) => list.filter((t) => t.id !== id));
+  }, []);
+
   const dismiss = useCallback(() => {
-    clearTimeout(timer.current);
-    setVisible(false);
+    timers.current.forEach(clearTimeout);
+    timers.current.clear();
+    setToasts([]);
   }, []);
 
   const toast = useCallback(
     (options: ToastOptions) => {
-      clearTimeout(timer.current);
       seq.current += 1;
-      setCurrent({ ...options, id: seq.current });
-      setVisible(true);
-      timer.current = setTimeout(dismiss, options.duration ?? 4000);
+      const id = seq.current;
+      setToasts((list) => [...list, { ...options, id }].slice(-MAX_VISIBLE));
+      timers.current.set(
+        id,
+        setTimeout(() => remove(id), options.duration ?? (options.action ? WITH_ACTION_MS : DEFAULT_MS)),
+      );
     },
-    [dismiss],
+    [remove],
   );
 
   useEffect(() => {
-    if (!visible) return;
+    if (toasts.length === 0) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") dismiss();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [visible, dismiss]);
+  }, [toasts.length, dismiss]);
 
-  useEffect(() => () => clearTimeout(timer.current), []);
+  useEffect(() => {
+    const map = timers.current;
+    return () => map.forEach(clearTimeout);
+  }, []);
 
   const value = useMemo(() => ({ toast, dismiss }), [toast, dismiss]);
 
@@ -124,17 +119,23 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       <div
         aria-live="polite"
-        className="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center px-5"
+        className="pointer-events-none fixed inset-x-0 bottom-[calc(112px+env(safe-area-inset-bottom))] z-[1000] grid justify-items-center gap-2 px-4 nav:bottom-8"
       >
-        {current && (
-          <ToastView
-            key={current.id}
-            {...current}
-            visible={visible}
-            onDismiss={dismiss}
-            className="pointer-events-auto"
-          />
-        )}
+        <AnimatePresence mode="popLayout">
+          {toasts.map((t) => (
+            <motion.div
+              key={t.id}
+              layout
+              initial={{ opacity: 0, y: 14, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 6, scale: 0.98, transition: { duration: 0.2, ease: EASE } }}
+              transition={SPRING}
+              className="pointer-events-auto"
+            >
+              <ToastView message={t.message} action={t.action} onDismiss={() => remove(t.id)} />
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
     </ToastContext>
   );

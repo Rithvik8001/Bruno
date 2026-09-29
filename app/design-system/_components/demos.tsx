@@ -1,13 +1,19 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { motion, useAnimate, useReducedMotion } from "motion/react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { DotBurst } from "@/components/motion/bursts";
+import { CheckIn } from "@/components/motion/check-in";
+import { hoverLift } from "@/components/motion/press";
 import { FlaggedLine } from "@/components/patterns/flagged-line";
 import { ReceiptScan } from "@/components/patterns/receipt-scan";
 import { TearOffStub } from "@/components/patterns/tear-off-stub";
+import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { StatusChip } from "@/components/ui/chip";
 import { CommandMenu, type CommandItem } from "@/components/ui/command-menu";
 import { MoneyInput } from "@/components/ui/money-input";
+import { OtpInput } from "@/components/ui/otp-input";
 import { Receipt, ReceiptHeader, ReceiptLine, ReceiptRow, ReceiptSummary } from "@/components/ui/receipt";
 import { RollingNumber } from "@/components/ui/rolling-number";
 import { SegmentedControl, Tabs, type SegmentOption } from "@/components/ui/segmented-control";
@@ -17,9 +23,11 @@ import { ToastView, useToast } from "@/components/ui/toast";
 import { Icon } from "@/components/icons/icon";
 import { formatMoney } from "@/lib/currency";
 import { useTimeline } from "@/lib/hooks/use-timeline";
+import { buzz, HAPTICS } from "@/lib/motion/haptics";
+import { SQUISH } from "@/lib/motion/keyframes";
 import { cents, formatCents, sumCents, type Cents } from "@/lib/money";
 import { cn } from "@/lib/utils/cn";
-import { receiptItems, scanLines } from "../_data";
+import { buddyPickName, buddyPicks, codeDemo, receiptItems, scanLines, type BuddyPick } from "../_data";
 
 export function LoadingButtonDemo() {
   const [loading, setLoading] = useState(false);
@@ -109,7 +117,7 @@ export function ClaimReceiptDemo() {
         caption={`of ${formatCents(receiptTotal)} before tip`}
         value={
           <span className="flex text-heading text-brand">
-            $<RollingNumber value={formatCents(share)} />
+            $<RollingNumber value={formatCents(share)} speed="live" />
           </span>
         }
       />
@@ -140,7 +148,7 @@ export function ToastDemo() {
         onClick={() =>
           toast({
             message: "Settled with Sam",
-            action: { label: "Undo", onAction: () => toast({ message: "Restored", icon: "check", tint: "brand" }) },
+            action: { label: "Undo", onAction: () => toast({ message: "Restored" }) },
           })
         }
       >
@@ -194,7 +202,7 @@ export function SheetDemo() {
 export function CommandMenuDemo() {
   const { toast } = useToast();
   const items = useMemo<readonly CommandItem[]>(() => {
-    const run = (label: string) => () => toast({ message: label, icon: "sparkle", tint: "brand" });
+    const run = (label: string) => () => toast({ message: label });
     return [
       { id: "add", label: "Add a bill", group: "Actions", icon: "plus", tint: "violet", shortcut: "A", onSelect: run("Add a bill") },
       { id: "settle", label: "Settle up", group: "Actions", icon: "check", tint: "green", shortcut: "S", onSelect: run("Settle up") },
@@ -238,24 +246,41 @@ export function FlaggedLineDemo() {
   );
 }
 
+const CONFIRM_MS = 700;
+
+type TearState = "open" | "confirming" | "settled";
+
 export function TearOffDemo() {
-  const [settled, setSettled] = useState(false);
+  const [state, setState] = useState<TearState>("open");
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(timer.current), []);
+
+  const confirm = () => {
+    setState("confirming");
+    timer.current = setTimeout(() => setState("settled"), CONFIRM_MS);
+  };
+
   return (
     <TearOffStub
       className="max-w-75"
-      torn={settled}
+      torn={state === "settled"}
+      celebrate
       tearOff={
-        <Button fullWidth size="md" className="h-11" onClick={() => setSettled(true)}>
+        <Button fullWidth size="md" className="h-11" loading={state === "confirming"} onClick={confirm}>
           Mark as paid
         </Button>
       }
       done={
         <div className="flex items-center gap-2.5">
-          <span data-tint="green" className="grid size-8 place-items-center rounded-control bg-tint-bg text-tint">
+          <CheckIn
+            data-tint="green"
+            transition={{ delay: 0.5 }}
+            className="grid size-8 place-items-center rounded-control bg-tint-bg text-tint"
+          >
             <Icon name="check" size={18} strokeWidth={2.4} />
-          </span>
+          </CheckIn>
           <span className="flex-1 font-semibold">Settled with Sam</span>
-          <Button variant="secondary" size="sm" className="font-semibold" onClick={() => setSettled(false)}>
+          <Button variant="secondary" size="sm" className="font-semibold" onClick={() => setState("open")}>
             Undo
           </Button>
         </div>
@@ -266,5 +291,99 @@ export function TearOffDemo() {
         <span className="text-title">{formatMoney(cents(5240), "USD")}</span>
       </div>
     </TearOffStub>
+  );
+}
+
+export function BuddySelectDemo() {
+  const [pick, setPick] = useState<BuddyPick>(buddyPicks[0]);
+  const [burst, setBurst] = useState(0);
+  const [scope, animate] = useAnimate<HTMLSpanElement>();
+  const reduce = useReducedMotion();
+
+  const choose = (next: BuddyPick) => {
+    setPick(next);
+    buzz(HAPTICS.select);
+    if (reduce) return;
+    setBurst((n) => n + 1);
+    void animate(scope.current, SQUISH.keyframes, SQUISH.transition);
+  };
+
+  return (
+    <div className="flex flex-wrap items-center gap-8">
+      <span data-tint={pick.tint} className="relative inline-grid">
+        <motion.span ref={scope} className="inline-grid">
+          <Avatar name={buddyPickName} tint={pick.tint} size="2xl" />
+        </motion.span>
+        {burst > 0 && <DotBurst key={burst} />}
+      </span>
+      <div role="radiogroup" aria-label="Colour" className="flex flex-wrap gap-2.5">
+        {buddyPicks.map((p) => (
+          <motion.button
+            key={p.tint}
+            type="button"
+            role="radio"
+            aria-checked={p.tint === pick.tint}
+            aria-label={p.label}
+            data-tint={p.tint}
+            onClick={() => choose(p)}
+            {...hoverLift}
+            className="size-8 cursor-pointer rounded-full bg-tint ring-offset-2 ring-offset-bg aria-checked:ring-2 aria-checked:ring-tint"
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const CLEAR_AFTER_MS = 420;
+
+export function CodeShakeDemo() {
+  const [code, setCode] = useState("");
+  const [shake, setShake] = useState(0);
+  const [invalid, setInvalid] = useState(false);
+  const [accepted, setAccepted] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(timer.current), []);
+
+  const check = (value: string) => {
+    if (value === codeDemo.correct) {
+      setAccepted(true);
+      return;
+    }
+    setInvalid(true);
+    setShake((n) => n + 1);
+    timer.current = setTimeout(() => {
+      setCode("");
+      setInvalid(false);
+    }, CLEAR_AFTER_MS);
+  };
+
+  return (
+    <div className="grid justify-items-start gap-3">
+      <OtpInput
+        value={code}
+        onChange={(v) => {
+          setCode(v);
+          setAccepted(false);
+          if (invalid) setInvalid(false);
+        }}
+        onComplete={check}
+        invalid={invalid}
+        shake={shake}
+        className="justify-start"
+      />
+      <span className="flex min-h-5 items-center gap-1.5 text-footnote">
+        {accepted ? (
+          <span data-tint="green" className="flex items-center gap-1.5 font-semibold text-tint">
+            <CheckIn className="inline-flex">
+              <Icon name="check" size={14} strokeWidth={2.4} />
+            </CheckIn>
+            {codeDemo.accepted}
+          </span>
+        ) : (
+          <span className="text-text-2">{codeDemo.hint}</span>
+        )}
+      </span>
+    </div>
   );
 }

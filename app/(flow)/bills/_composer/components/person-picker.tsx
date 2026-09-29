@@ -1,5 +1,7 @@
 "use client";
 
+import { motion } from "motion/react";
+import { pressMotion } from "@/components/motion/press";
 import { Avatar } from "@/components/ui/avatar";
 import type { PersonId } from "@/lib/domain/ids";
 import { useRovingSelection } from "@/lib/hooks/use-roving-selection";
@@ -31,7 +33,7 @@ export function PersonPicker({ members, roster, you, value, onValueChange }: Per
         {members.map((m) => {
           const selected = m.id === value;
           return (
-            <button
+            <motion.button
               key={m.id}
               ref={register(m.id)}
               type="button"
@@ -39,9 +41,10 @@ export function PersonPicker({ members, roster, you, value, onValueChange }: Per
               aria-checked={selected}
               tabIndex={selected ? 0 : -1}
               onClick={() => onValueChange(m.id)}
+              {...pressMotion()}
               className={cn(
                 "inline-flex h-10 cursor-pointer items-center gap-2 rounded-full pr-3.5 pl-1 text-small font-medium",
-                "transition-[background-color,color,box-shadow] duration-150 ease-standard active:scale-95",
+                "transition-[background-color,color,box-shadow] duration-150 ease-standard",
                 selected
                   ? "bg-brand-tint text-brand shadow-[inset_0_0_0_1.5px_var(--brand)]"
                   : "bg-surface text-text-2 hover:bg-surface-2 hover:text-text",
@@ -49,7 +52,7 @@ export function PersonPicker({ members, roster, you, value, onValueChange }: Per
             >
               <Avatar name={m.displayName} tint={m.tint} buddy={m.buddy} size="md" />
               {shortName(m.id, roster, you, copy.you)}
-            </button>
+            </motion.button>
           );
         })}
       </div>

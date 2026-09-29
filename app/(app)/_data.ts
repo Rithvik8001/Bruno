@@ -1,6 +1,4 @@
 import type { IconName } from "@/components/icons/icon";
-import type { MomentIconId } from "@/lib/design-system/icons3d";
-import type { PaletteTint } from "@/lib/design-system/tokens";
 import { routes } from "@/lib/auth/rules";
 
 export interface AppNavItem {
@@ -21,11 +19,5 @@ export const shellCopy = {
   addBill: "Add a bill",
   settings: "Settings",
   mainNav: "Main",
+  unread: "New activity",
 } as const;
-
-export interface ComingSoonContent {
-  readonly title: string;
-  readonly body: string;
-  readonly moment: MomentIconId;
-  readonly tint: PaletteTint;
-}

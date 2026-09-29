@@ -1,6 +1,9 @@
 import { Icon, type IconName } from "@/components/icons/icon";
-import { durations, easings, layout, radii, spacing } from "@/lib/design-system/tokens";
+import { layout, radii, spacing } from "@/lib/design-system/tokens";
+import { EASE, SPRING, SPRING_CURVE, T } from "@/lib/motion/tokens";
 import { DocSection, Eyebrow, Panel, SpecRow } from "../_components/doc";
+
+const ms = (seconds: number) => `${Math.round(seconds * 1000)}ms`;
 
 const sampleIcons: readonly IconName[] = ["plus", "search", "calendar", "clock", "receipt", "users", "check", "close"];
 
@@ -53,10 +56,14 @@ export function FoundationsSection() {
         <Panel>
           <Eyebrow>Motion</Eyebrow>
           <div className="grid gap-0.5 text-small leading-5.5">
-            <SpecRow label="Press, hover" value={`${durations.fast}ms`} />
-            <SpecRow label="Reveal, list" value={`${durations.base}ms`} />
-            <SpecRow label="Sheet, theme" value={`${durations.slow}ms`} />
-            <SpecRow label="Easing" value={easings.standard.replace(/cubic-bezier\(|\)/g, "").replaceAll(",", " ")} />
+            <SpecRow label="Hover, focus" value={ms(T.t1)} />
+            <SpecRow label="Print-in, status" value={ms(T.t2)} />
+            <SpecRow label="Entrance, sheet, theme" value={ms(T.t3)} />
+            <SpecRow label="Pop, check-in" value={ms(T.pop)} />
+            <SpecRow label="Hero number roll" value={ms(T.roll)} />
+            <SpecRow label="Ease" value={EASE.join(" ")} />
+            <SpecRow label="Pop curve" value={SPRING_CURVE.join(" ")} />
+            <SpecRow label="Spring" value={`${SPRING.stiffness} / ${SPRING.damping}`} />
           </div>
         </Panel>
         <Panel>

@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { Icon } from "@/components/icons/icon";
+import { Rise } from "@/components/motion/rise";
 import { Button } from "@/components/ui/button";
 import { MomentTile } from "@/components/ui/icon-3d";
 import { groupsCopy } from "../_data";
@@ -28,7 +29,7 @@ export function GroupsView({ hasGroups, children }: GroupsViewProps) {
       {hasGroups ? (
         children
       ) : (
-        <div className="grid min-h-80 place-items-center rounded-card bg-surface px-6 py-8 text-center">
+        <Rise className="grid min-h-80 place-items-center rounded-card bg-surface px-6 py-8 text-center">
           <div className="grid max-w-[30ch] justify-items-center gap-4">
             <MomentTile icon="people" tint="indigo" size="lg" />
             <div className="grid gap-1.5">
@@ -39,7 +40,7 @@ export function GroupsView({ hasGroups, children }: GroupsViewProps) {
               {copy.empty.cta}
             </Button>
           </div>
-        </div>
+        </Rise>
       )}
       <NewGroupSheet open={open} onOpenChange={setOpen} />
     </div>

@@ -1,4 +1,5 @@
-import Link from "next/link";
+import { PressLink } from "@/components/motion/motion-link";
+import { Stagger, StaggerItem } from "@/components/motion/stagger";
 import { BillRow } from "@/components/patterns/bill-row";
 import { routes } from "@/lib/auth/rules";
 import type { BillSummary } from "@/lib/bills/queries";
@@ -19,14 +20,14 @@ export function OpenBillsSection({ bills, now }: { bills: readonly BillSummary[]
       <SectionHeader
         title={homeCopy.bills.title}
         aside={
-          <Link href={routes.activity} className="text-footnote font-semibold">
+          <PressLink href={routes.activity} className="inline-block text-footnote font-semibold">
             {homeCopy.bills.allActivity}
-          </Link>
+          </PressLink>
         }
       />
-      <ul className="m-0 grid list-none gap-2.5 p-0">
+      <Stagger as="ul" className="m-0 grid list-none gap-2.5 p-0">
         {bills.map((bill) => (
-          <li key={bill.id}>
+          <StaggerItem as="li" key={bill.id}>
             <BillRow
               href={routes.bill(bill.slug)}
               title={bill.title}
@@ -36,9 +37,9 @@ export function OpenBillsSection({ bills, now }: { bills: readonly BillSummary[]
               total={formatMoney(bill.total, bill.currency)}
               when={shortDay(bill.occurredAt, now)}
             />
-          </li>
+          </StaggerItem>
         ))}
-      </ul>
+      </Stagger>
     </section>
   );
 }

@@ -29,7 +29,7 @@ export const authCopy = {
   },
   code: {
     label: "Verification code",
-    checking: "Checking…",
+    checking: "Checking code…",
     resend: "Resend code",
     resendIn: (seconds: number) => `Resend in ${seconds}s`,
     didntGetIt: "Didn't get it?",

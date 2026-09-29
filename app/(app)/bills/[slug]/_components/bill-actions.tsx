@@ -1,10 +1,14 @@
 "use client";
 
-import Link from "next/link";
+import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Icon } from "@/components/icons/icon";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { CheckIn } from "@/components/motion/check-in";
+import { PressLink } from "@/components/motion/motion-link";
+import { pressMotion } from "@/components/motion/press";
+import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { IconButton } from "@/components/ui/icon-button";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { Sheet } from "@/components/ui/sheet";
@@ -41,7 +45,7 @@ export function BillActions({ billId, title, shareText, editHref, splitHref }: B
       await navigator.clipboard.writeText(shareText);
       shared.restart();
     } catch {
-      toast({ message: copy.actions.shareFailed, icon: "alert", tint: "red" });
+      toast({ message: copy.actions.shareFailed });
     }
   };
 
@@ -58,31 +62,38 @@ export function BillActions({ billId, title, shareText, editHref, splitHref }: B
         return;
       }
       close();
-      toast({ message: copy.deleteSheet.done(result.data.title), icon: "check", tint: "green" });
+      toast({ message: copy.deleteSheet.done(result.data.title) });
       router.push(routes.group(result.data.groupId));
     });
 
   return (
     <div className="flex items-center gap-1">
-      <button
+      <motion.button
         type="button"
         onClick={share}
+        {...pressMotion()}
         className={cn(
           "inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-sm bg-transparent pr-3 pl-2.5 text-small font-semibold transition-colors duration-150 ease-standard hover:bg-surface",
           shared.active ? "text-green" : "text-text-2",
         )}
       >
-        <Icon name={shared.active ? "check" : "upload"} size={16} strokeWidth={2} />
+        {shared.active ? (
+          <CheckIn className="inline-grid">
+            <Icon name="check" size={16} strokeWidth={2} />
+          </CheckIn>
+        ) : (
+          <Icon name="upload" size={16} strokeWidth={2} />
+        )}
         {shared.active ? copy.actions.shared : copy.actions.share}
-      </button>
+      </motion.button>
       {editHref && (
-        <Link
+        <PressLink
           href={editHref}
           aria-label={copy.actions.edit}
           className="grid size-9 place-items-center rounded-sm text-text-2 hover:bg-surface hover:text-text"
         >
           <Icon name="pencil" size={16} strokeWidth={2} />
-        </Link>
+        </PressLink>
       )}
       {splitHref && (
         <IconButton icon="more" label={copy.actions.more} className="size-9 rounded-sm" onClick={() => setSheet("menu")} />
@@ -108,9 +119,9 @@ export function BillActions({ billId, title, shareText, editHref, splitHref }: B
             ) : (
               <>
                 {splitHref && (
-                  <Link href={splitHref} className={cn(buttonVariants({ variant: "secondary", size: "lg", fullWidth: true }))}>
+                  <PressLink wide href={splitHref} className={cn(buttonVariants({ variant: "secondary", size: "lg", fullWidth: true }))}>
                     {copy.actions.changeSplit}
-                  </Link>
+                  </PressLink>
                 )}
                 <Button variant="danger" size="lg" fullWidth onClick={() => setSheet("confirm")}>
                   {copy.actions.delete}

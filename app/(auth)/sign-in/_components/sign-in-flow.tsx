@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { StepSwap } from "@/components/motion/rise";
 import { withNext } from "@/lib/auth/redirect";
 import { routes } from "@/lib/auth/rules";
 import { AuthHeader } from "../../_components/auth-header";
@@ -41,46 +42,48 @@ export function SignInFlow({ next }: SignInFlowProps) {
 
   return (
     <>
-      <AuthHeader title={header.title} subtitle={header.subtitle} />
+      <AuthHeader title={header.title} subtitle={header.subtitle} stepKey={state.step} />
 
-      {state.step === "form" && (
-        <div className="grid gap-5">
-          <GoogleButton callbackURL={next} errorCallbackURL={routes.signIn} />
-          <div className="flex items-center gap-3 text-footnote text-muted">
-            <span aria-hidden className="h-px flex-1 bg-line" />
-            {authCopy.divider}
-            <span aria-hidden className="h-px flex-1 bg-line" />
+      <StepSwap stepKey={state.step} className="grid gap-7">
+        {state.step === "form" && (
+          <div className="grid gap-5">
+            <GoogleButton callbackURL={next} errorCallbackURL={routes.signIn} />
+            <div className="flex items-center gap-3 text-footnote text-muted">
+              <span aria-hidden className="h-px flex-1 bg-line" />
+              {authCopy.divider}
+              <span aria-hidden className="h-px flex-1 bg-line" />
+            </div>
+            <SignInForm
+              next={next}
+              values={values}
+              onValuesChange={setValues}
+              onNeedsVerification={(email) => setState({ step: "verify", email })}
+            />
           </div>
-          <SignInForm
-            next={next}
-            values={values}
-            onValuesChange={setValues}
-            onNeedsVerification={(email) => setState({ step: "verify", email })}
+        )}
+
+        {state.step === "verify" && (
+          <VerifyStep
+            key={state.email}
+            email={state.email}
+            onVerified={finish}
+            onBack={() => {
+              setValues((current) => ({ ...current, password: "" }));
+              setState({ step: "form" });
+            }}
+            backLabel={signInCopy.verifyBack}
           />
-        </div>
-      )}
+        )}
 
-      {state.step === "verify" && (
-        <VerifyStep
-          key={state.email}
-          email={state.email}
-          onVerified={finish}
-          onBack={() => {
-            setValues((current) => ({ ...current, password: "" }));
-            setState({ step: "form" });
-          }}
-          backLabel={signInCopy.verifyBack}
-        />
-      )}
-
-      {state.step === "form" && (
-        <p className="m-0 text-center text-small text-text-2">
-          {signInCopy.switchPrompt}{" "}
-          <Link href={withNext(routes.signUp, next)} className="font-semibold">
-            {signInCopy.switchCta}
-          </Link>
-        </p>
-      )}
+        {state.step === "form" && (
+          <p className="m-0 text-center text-small text-text-2">
+            {signInCopy.switchPrompt}{" "}
+            <Link href={withNext(routes.signUp, next)} className="font-semibold">
+              {signInCopy.switchCta}
+            </Link>
+          </p>
+        )}
+      </StepSwap>
     </>
   );
 }

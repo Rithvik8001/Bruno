@@ -1,8 +1,12 @@
 "use client";
 
+import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { Icon } from "@/components/icons/icon";
+import { CheckIn } from "@/components/motion/check-in";
+import { pressMotion } from "@/components/motion/press";
 import { useToast } from "@/components/ui/toast";
+import { buzz, HAPTICS } from "@/lib/motion/haptics";
 import { cn } from "@/lib/utils/cn";
 import { groupDetailCopy } from "../_data";
 
@@ -28,6 +32,7 @@ export function CopyLinkButton({ url, label = groupDetailCopy.inviteLink, varian
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(url);
+      buzz(HAPTICS.select);
       setCopied(true);
     } catch {
       toast({ message: url });
@@ -35,9 +40,10 @@ export function CopyLinkButton({ url, label = groupDetailCopy.inviteLink, varian
   };
 
   return (
-    <button
+    <motion.button
       type="button"
       onClick={copy}
+      {...pressMotion()}
       className={cn(
         "inline-flex cursor-pointer items-center gap-1.5 rounded-control font-semibold transition-colors",
         variant === "surface"
@@ -47,8 +53,14 @@ export function CopyLinkButton({ url, label = groupDetailCopy.inviteLink, varian
         className,
       )}
     >
-      {variant === "surface" && <Icon name={copied ? "check" : "link"} size={18} strokeWidth={2} />}
+      {copied ? (
+        <CheckIn key="copied" className="inline-grid">
+          <Icon name="check" size={variant === "surface" ? 18 : 16} strokeWidth={2} />
+        </CheckIn>
+      ) : (
+        variant === "surface" && <Icon name="link" size={18} strokeWidth={2} />
+      )}
       {copied ? groupDetailCopy.copied : label}
-    </button>
+    </motion.button>
   );
 }

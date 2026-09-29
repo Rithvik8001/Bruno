@@ -1,27 +1,27 @@
 import Link from "next/link";
-import { BrunoMark } from "@/components/brand/bruno-mark";
+import { LiveMark, LogoLink } from "@/components/brand/live-logo";
 import { Icon } from "@/components/icons/icon";
 import { Avatar } from "@/components/ui/avatar";
-import { buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { routes } from "@/lib/auth/rules";
 import type { PersonView } from "@/lib/people/person";
 import { cn } from "@/lib/utils/cn";
 import { shellCopy } from "../_data";
 import { DesktopNav } from "./nav-links";
 
-export function AppHeader({ person }: { person: PersonView }) {
+export function AppHeader({ person, unread }: { person: PersonView; unread: boolean }) {
   return (
     <header className="sticky top-0 z-20 bg-bg">
       <div className="mx-auto flex h-16 max-w-app items-center gap-5 px-5">
-        <Link
+        <LogoLink
           href={routes.app}
           aria-label={shellCopy.homeLabel}
           className="flex items-center gap-2 text-body font-semibold tracking-[-0.01em] text-text no-underline hover:text-text"
         >
-          <BrunoMark size={26} />
+          <LiveMark size={26} />
           {shellCopy.brand}
-        </Link>
-        <DesktopNav />
+        </LogoLink>
+        <DesktopNav unread={unread} />
         <span className="flex-1" />
         <Link
           href={routes.newBill}

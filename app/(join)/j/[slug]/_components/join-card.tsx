@@ -1,4 +1,4 @@
-import { AvatarStack } from "@/components/ui/avatar";
+import { AvatarStack } from "@/components/ui/avatar-stack";
 import { GroupArtTile } from "@/components/ui/icon-3d";
 import type { GroupInvite } from "@/lib/groups/queries";
 import { joinCopy } from "../_data";

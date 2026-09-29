@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { MotionProvider } from "@/components/motion/motion-provider";
 import { ThemeHead } from "@/components/theme/theme-head";
 import { ThemeSync } from "@/components/theme/theme-sync";
 import { ToastProvider } from "@/components/ui/toast";
@@ -23,7 +24,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body className="min-h-dvh">
         <ThemeSync />
-        <ToastProvider>{children}</ToastProvider>
+        <MotionProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </MotionProvider>
       </body>
     </html>
   );

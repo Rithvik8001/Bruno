@@ -1,6 +1,8 @@
 "use client";
 
+import { AnimatePresence, motion } from "motion/react";
 import { Icon } from "@/components/icons/icon";
+import { pressMotion } from "@/components/motion/press";
 import { Button } from "@/components/ui/button";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { Receipt } from "@/components/ui/receipt";
@@ -64,14 +66,12 @@ export function ItemsStep({ draft, onDraft, onRestore, composer, you, error, mod
     onDraft((d) => removeItem(d, key));
     toast({
       message: copy.removed(name.trim()),
-      icon: "close",
-      tint: "neutral",
       action: { label: copy.undo, onAction: () => onRestore(snapshot) },
     });
   };
 
   return (
-    <div className="grid animate-rise gap-6">
+    <div className="grid gap-6">
       <StepHeader
         back={{ label: modeCopy.back, onBack }}
         status={{ label: ready ? copy.status.ready : copy.status.draft, tone: ready ? "ok" : "neutral" }}
@@ -117,23 +117,26 @@ export function ItemsStep({ draft, onDraft, onRestore, composer, you, error, mod
           <span className="px-2.5 text-right">{copy.columns.price}</span>
           <span />
         </div>
-        {draft.items.map((item) => (
-          <ItemRow
-            key={item.key}
-            item={item}
-            currency={currency}
-            onChange={(patch) => onDraft((d) => updateItem(d, item.key, patch))}
-            onRemove={() => remove(item.key, item.name)}
-          />
-        ))}
-        <button
+        <AnimatePresence initial={false}>
+          {draft.items.map((item) => (
+            <ItemRow
+              key={item.key}
+              item={item}
+              currency={currency}
+              onChange={(patch) => onDraft((d) => updateItem(d, item.key, patch))}
+              onRemove={() => remove(item.key, item.name)}
+            />
+          ))}
+        </AnimatePresence>
+        <motion.button
           type="button"
           onClick={() => onDraft(addItem)}
-          className="flex h-11 cursor-pointer items-center gap-2 border-t border-line bg-transparent p-0 text-left text-small font-semibold text-brand hover:text-brand-hover"
+          {...pressMotion(true)}
+          className="flex h-11 origin-left cursor-pointer items-center gap-2 border-t border-line bg-transparent p-0 text-left text-small font-semibold text-brand hover:text-brand-hover"
         >
           <Icon name="plus" size={16} strokeWidth={2.2} />
           {copy.addItem}
-        </button>
+        </motion.button>
         <Charges
           draft={draft}
           subtotal={subtotalOf(draft)}

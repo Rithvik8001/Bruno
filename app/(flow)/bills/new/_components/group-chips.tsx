@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PressLink } from "@/components/motion/motion-link";
 import { routes } from "@/lib/auth/rules";
 import type { GroupSummary } from "@/lib/groups/queries";
 import { cn } from "@/lib/utils/cn";
@@ -17,7 +17,7 @@ export function GroupChips({ groups, selectedId }: GroupChipsProps) {
       {groups.map((group) => {
         const selected = group.id === selectedId;
         return (
-          <Link
+          <PressLink
             key={group.id}
             href={routes.newBillFor(group.id)}
             replace
@@ -34,7 +34,7 @@ export function GroupChips({ groups, selectedId }: GroupChipsProps) {
           >
             <span aria-hidden className="size-1.5 rounded-full bg-current" />
             {group.name}
-          </Link>
+          </PressLink>
         );
       })}
     </nav>

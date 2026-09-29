@@ -58,6 +58,7 @@ async function groupBalances(groupId: string) {
 
 function refresh(groupId?: string): void {
   revalidatePath(routes.groups);
+  revalidatePath(routes.activity);
   if (groupId) revalidatePath(routes.group(groupId));
 }
 

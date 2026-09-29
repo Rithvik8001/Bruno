@@ -135,13 +135,36 @@ export interface ProductPattern {
 }
 
 export const productPatterns: readonly ProductPattern[] = [
-  { title: "Live presence", body: "Green dot on avatars of people viewing the bill; new claims pop in with a spring.", where: "Live claiming", tint: "green" },
-  { title: "Rolling share", body: "Your total rolls digit by digit on every claim, 300ms.", where: "Live claiming", tint: "brand" },
-  { title: "Totals check", body: "A single status line turns green the moment items + tax + tip match the receipt.", where: "Review items", tint: "amber" },
-  { title: "Split remainder", body: "Status chip counts what’s left or over; a one-tap fix fills the rest.", where: "Split editor", tint: "orange" },
-  { title: "Explain a balance", body: "Disclosure grows open (grid-rows 0fr → 1fr) to show the maths behind a number.", where: "Receipt detail", tint: "violet" },
-  { title: "Copy confirm", body: "Copy buttons swap to a green “Copied” for 2s. No toast needed.", where: "Group detail", tint: "cyan" },
+  { title: "Live presence", body: "Green dot on people viewing the bill; hovered avatars lift. A claim pops the claimer’s buddy onto the item (.3 → 1.12 → 1, 420ms spring).", where: "Live claiming", tint: "green" },
+  { title: "Rolling share", body: "Your share counts from the shown value to the new one, 420ms ease-out. Hero balances take 900ms. Only digits move.", where: "Live claiming", tint: "brand" },
+  { title: "Staggered rise", body: "Lists rise 10px, 55ms apart, only in the first 2.5s. Anything added later pops in on a spring.", where: "Home, groups, activity", tint: "blue" },
+  { title: "Totals check", body: "One status line cross-fades as values change and turns green with a check-in when items + tax + tip match.", where: "Review items", tint: "amber" },
+  { title: "Split remainder", body: "Counts what’s left or over with a one-tap fix. The segmented thumb glides on a soft spring.", where: "Split editor", tint: "orange" },
+  { title: "Explain a balance", body: "Disclosure grows open to its natural height, 300ms, to show the maths behind a number.", where: "Receipt detail", tint: "violet" },
+  { title: "Copy confirm", body: "The label swaps to “Copied” with a check-in and reverts after 2s. No toast needed.", where: "Group detail", tint: "cyan" },
+  { title: "Confetti", body: "Receipt scraps for settled up, account created, password reset, onboarding done and five taps on the logo.", where: "Moments", tint: "pink" },
 ];
+
+export interface BuddyPick {
+  readonly tint: PaletteTint;
+  readonly label: string;
+}
+
+export const buddyPicks = [
+  { tint: "violet", label: "Violet" },
+  { tint: "pink", label: "Pink" },
+  { tint: "blue", label: "Blue" },
+  { tint: "green", label: "Green" },
+  { tint: "amber", label: "Amber" },
+] as const satisfies readonly [BuddyPick, ...BuddyPick[]];
+
+export const buddyPickName = "Rithvik Kumar";
+
+export const codeDemo = {
+  correct: "424242",
+  hint: "Try 424242, or any other code to see the shake.",
+  accepted: "Code accepted",
+} as const;
 
 export interface BuddySpecimen {
   readonly shape: BuddyShape;

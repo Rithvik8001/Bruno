@@ -34,7 +34,7 @@ export function ClaimVisual() {
                 <span className="truncate font-medium">{line.name}</span>
               </span>
               <span className="flex items-center gap-2.5">
-                {claimed && <AvatarRow people={line.by.map((id) => people[id])} />}
+                {claimed && <AvatarRow pop="view" people={line.by.map((id) => people[id])} />}
                 <span className="min-w-11 text-right font-medium">{formatCents(line.price)}</span>
               </span>
             </MockRow>

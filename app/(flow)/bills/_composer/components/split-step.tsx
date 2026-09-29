@@ -2,6 +2,7 @@
 
 import { AmountInput } from "@/components/ui/amount-input";
 import { Button } from "@/components/ui/button";
+import { RollingNumber } from "@/components/ui/rolling-number";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { Tabs } from "@/components/ui/segmented-control";
 import { Stepper } from "@/components/ui/stepper";
@@ -105,10 +106,10 @@ export function SplitStep({ draft, onDraft, composer, roster, memberIds, you, er
   const fixLabel = draft.method === "AMOUNT" ? copy.fix.AMOUNT : copy.fix.PERCENT;
 
   return (
-    <div className="grid animate-rise gap-5">
+    <div className="grid gap-5">
       <StepHeader
         back={{ label: copy.back, onBack }}
-        status={{ ...status, pop: view.check.kind === "ok" }}
+        status={status}
         title={copy.title}
         body={copy.body(total, draft.title.trim())}
       />
@@ -191,7 +192,7 @@ export function SplitStep({ draft, onDraft, composer, roster, memberIds, you, er
       >
         <span className="text-footnote text-text-2">{copy.assigned}</span>
         <span className="text-title font-semibold">
-          {formatMoney(view.assigned, currency)}{" "}
+          <RollingNumber speed="live" value={formatMoney(view.assigned, currency)} />{" "}
           <span className="text-small font-medium text-muted">{copy.of(total)}</span>
         </span>
       </FlowFooter>

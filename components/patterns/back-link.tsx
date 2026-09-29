@@ -1,9 +1,11 @@
-import Link from "next/link";
-import { Icon } from "@/components/icons/icon";
-import { cn } from "@/lib/utils/cn";
+"use client";
 
-export const backClassName =
-  "-ml-1.5 inline-flex h-9 cursor-pointer items-center gap-1.5 justify-self-start rounded-sm bg-transparent pr-2.5 pl-1.5 text-small font-medium text-text-2 no-underline hover:bg-surface hover:text-text";
+import { motion } from "motion/react";
+import { Icon } from "@/components/icons/icon";
+import { PressLink } from "@/components/motion/motion-link";
+import { pressMotion } from "@/components/motion/press";
+import { cn } from "@/lib/utils/cn";
+import { backClassName } from "./back-link-styles";
 
 type BackLinkProps = { label: string; className?: string } & (
   | { href: string; onClick?: never }
@@ -19,14 +21,14 @@ export function BackLink({ label, className, href, onClick }: BackLinkProps) {
   );
   if (href !== undefined) {
     return (
-      <Link href={href} className={cn(backClassName, className)}>
+      <PressLink href={href} className={cn(backClassName, className)}>
         {content}
-      </Link>
+      </PressLink>
     );
   }
   return (
-    <button type="button" onClick={onClick} className={cn(backClassName, className)}>
+    <motion.button type="button" onClick={onClick} {...pressMotion()} className={cn(backClassName, className)}>
       {content}
-    </button>
+    </motion.button>
   );
 }

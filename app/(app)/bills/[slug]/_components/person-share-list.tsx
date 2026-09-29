@@ -1,11 +1,15 @@
 "use client";
 
+import { AnimatePresence, motion } from "motion/react";
 import { useId, useState } from "react";
 import { Icon } from "@/components/icons/icon";
 import { Avatar } from "@/components/ui/avatar";
 import { Chip } from "@/components/ui/chip";
+import { pressMotion } from "@/components/motion/press";
+import { Stagger, StaggerItem } from "@/components/motion/stagger";
 import type { BuddyShape } from "@/lib/design-system/buddies";
 import type { PaletteTint, Tint } from "@/lib/design-system/tokens";
+import { EASE, SOFT_SPRING, T } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils/cn";
 import type { ExplainLine } from "../_lib/view";
 
@@ -38,11 +42,14 @@ function PersonShareRow({ item, open, onToggle }: { item: PersonShareItem; open:
           {item.status.label}
         </Chip>
         {expandable && (
-          <Icon
-            name="chevron-down"
-            size={16}
-            className={cn("text-muted transition-transform duration-200 ease-standard", open && "rotate-180")}
-          />
+          <motion.span
+            className="inline-grid text-muted"
+            initial={false}
+            animate={{ rotate: open ? 180 : 0 }}
+            transition={SOFT_SPRING}
+          >
+            <Icon name="chevron-down" size={16} />
+          </motion.span>
         )}
       </span>
     </>
@@ -50,30 +57,33 @@ function PersonShareRow({ item, open, onToggle }: { item: PersonShareItem; open:
   const row = "grid w-full grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3.5 px-3.5 py-3 text-left";
 
   return (
-    <div className="rounded-tile bg-surface">
+    <StaggerItem className="rounded-tile bg-surface">
       {expandable ? (
-        <button
+        <motion.button
           type="button"
           aria-expanded={open}
-          aria-controls={panelId}
+          aria-controls={open ? panelId : undefined}
           aria-label={item.expandLabel}
           onClick={onToggle}
+          {...pressMotion(true)}
           className={cn(row, "cursor-pointer rounded-tile bg-transparent")}
         >
           {summary}
-        </button>
+        </motion.button>
       ) : (
         <div className={row}>{summary}</div>
       )}
-      {expandable && (
-        <div
-          id={panelId}
-          className={cn(
-            "grid transition-[grid-template-rows] duration-300 ease-standard",
-            open ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
-          )}
-        >
-          <div className="overflow-hidden">
+      <AnimatePresence initial={false}>
+        {expandable && open && (
+          <motion.div
+            key="panel"
+            id={panelId}
+            className="overflow-hidden"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: T.t3, ease: EASE }}
+          >
             <div className="grid gap-1.5 pr-3.5 pb-3.5 pl-[68px] text-small text-text-2">
               {item.lines.map((line, index) => (
                 <div
@@ -89,10 +99,10 @@ function PersonShareRow({ item, open, onToggle }: { item: PersonShareItem; open:
                 </div>
               ))}
             </div>
-          </div>
-        </div>
-      )}
-    </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </StaggerItem>
   );
 }
 
@@ -101,7 +111,7 @@ export function PersonShareList({ title, items }: { title: string; items: readon
   return (
     <section className="grid gap-2">
       <h2 className="m-0 text-body font-semibold">{title}</h2>
-      <div className="grid gap-2">
+      <Stagger className="grid gap-2">
         {items.map((item) => (
           <PersonShareRow
             key={item.id}
@@ -110,7 +120,7 @@ export function PersonShareList({ title, items }: { title: string; items: readon
             onToggle={() => setOpenId((current) => (current === item.id ? null : item.id))}
           />
         ))}
-      </div>
+      </Stagger>
     </section>
   );
 }

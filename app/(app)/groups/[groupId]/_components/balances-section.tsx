@@ -1,6 +1,7 @@
-import Link from "next/link";
 import { Icon } from "@/components/icons/icon";
-import { buttonVariants } from "@/components/ui/button";
+import { PressLink } from "@/components/motion/motion-link";
+import { Stagger, StaggerItem } from "@/components/motion/stagger";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { Avatar } from "@/components/ui/avatar";
 import { Chip } from "@/components/ui/chip";
 import { balanceTint } from "@/lib/design-system/semantics";
@@ -45,21 +46,21 @@ export function BalancesSection({ groupId, balances, payments, settlements, curr
             <span className="font-semibold">{copy.pendingTitle(firstNameOf(s.from.displayName), formatMoney(s.amount, s.currency))}</span>{" "}
             {copy.pendingBody}
           </span>
-          <Link
+          <PressLink
             href={routes.settle(groupId, s.from.id, back)}
             className="inline-flex h-8 shrink-0 items-center rounded-sm bg-bg px-2.5 text-footnote font-semibold whitespace-nowrap text-text no-underline hover:text-text"
           >
             {copy.pendingCta}
-          </Link>
+          </PressLink>
         </div>
       ))}
-      <ul aria-label={copy.label} className="m-0 grid list-none p-0 [&>li+li]:border-t [&>li+li]:border-line">
+      <Stagger as="ul" aria-label={copy.label} className="m-0 grid list-none p-0 [&>li+li]:border-t [&>li+li]:border-line">
         {balances.map((row) => {
           const direction = row.net > 0 ? "owed" : row.net < 0 ? "owes" : "settled";
           const caption =
             direction === "owes" ? copy.owes(row.openTitles) : direction === "owed" ? copy.owed(row.paid, row.involved) : copy.square;
           return (
-            <li key={row.person.id} className="grid min-h-16 grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3.5">
+            <StaggerItem as="li" key={row.person.id} className="grid min-h-16 grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3.5">
               <Avatar name={row.person.displayName} tint={row.person.tint} buddy={row.person.buddy} size="xl" />
               <span className="grid min-w-0">
                 <span className="truncate font-medium">
@@ -70,10 +71,10 @@ export function BalancesSection({ groupId, balances, payments, settlements, curr
               <Chip tint={balanceTint[direction]} size="sm" className="h-7.5 px-2.5 text-small">
                 {signed(row.net)}
               </Chip>
-            </li>
+            </StaggerItem>
           );
         })}
-      </ul>
+      </Stagger>
       {payments.length > 0 && (
         <section className="grid gap-3.5 rounded-card bg-surface px-5 py-4.5">
           <div className="flex items-center justify-between gap-3">
@@ -101,12 +102,13 @@ export function BalancesSection({ groupId, balances, payments, settlements, curr
             })}
           </ul>
           {mine && (
-            <Link
+            <PressLink
+              wide
               href={routes.settle(groupId, mine.from === you ? mine.to : mine.from, back)}
               className={cn(buttonVariants({ size: "md" }), "h-11 text-small font-semibold")}
             >
               {copy.settleUp}
-            </Link>
+            </PressLink>
           )}
         </section>
       )}

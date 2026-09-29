@@ -40,7 +40,7 @@ export function longDay(date: Date, now: Date): string {
 
 export function momentLabel(date: Date, now: Date): string {
   const ago = daysAgo(date, now);
-  if (ago === 0) return clock.format(date).replace(/\s/g, " ");
+  if (ago === 0) return clockTime(date);
   if (ago === 1) return dayWords.yesterday;
   if (ago > 1 && ago <= WEEK_DAYS) return weekday.format(date);
   return date.getFullYear() === now.getFullYear() ? dayMonth.format(date) : dayMonthYear.format(date);
@@ -58,4 +58,8 @@ export function relativeDay(date: Date, now: Date): string {
 export function inlineDay(date: Date, now: Date): string {
   const label = relativeDay(date, now);
   return (Object.values(dayWords) as string[]).includes(label) ? label.toLowerCase() : `on ${label}`;
+}
+
+export function clockTime(date: Date): string {
+  return clock.format(date).replace(/\s/g, " ");
 }

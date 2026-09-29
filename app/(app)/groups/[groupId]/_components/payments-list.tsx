@@ -1,10 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
+import { Stagger, StaggerItem } from "@/components/motion/stagger";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
+import { InlineAlert } from "@/components/ui/inline-alert";
 import { useToast } from "@/components/ui/toast";
 import type { ActionResult } from "@/lib/actions/errors";
 import { formatMoney } from "@/lib/currency";
@@ -26,25 +28,28 @@ export function PaymentsList({ settlements, you }: PaymentsListProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
   const copy = groupDetailCopy.paymentList;
   const now = new Date();
   const nameOf = (p: PersonView) => (p.id === you ? groupDetailCopy.youName : firstNameOf(p.displayName));
 
   const run = (task: () => Promise<ActionResult<unknown>>, message: string) =>
     startTransition(async () => {
+      setError(null);
       const result = await task();
-      toast(
-        result.ok
-          ? { message, icon: "check", tint: "green" }
-          : { message: result.error.message, icon: "alert", tint: "red" },
-      );
+      if (!result.ok) {
+        setError(result.error.message);
+        return;
+      }
+      toast({ message });
       router.refresh();
     });
 
   return (
     <section className="grid gap-2">
       <h2 className="m-0 text-body font-semibold">{copy.title}</h2>
-      <ul aria-label={copy.label} className="m-0 grid list-none p-0 [&>li+li]:border-t [&>li+li]:border-line">
+      {error && <InlineAlert>{error}</InlineAlert>}
+      <Stagger as="ul" aria-label={copy.label} className="m-0 grid list-none p-0 [&>li+li]:border-t [&>li+li]:border-line">
         {settlements.map((s) => {
           const status =
             s.status === "CONFIRMED" || s.counts
@@ -53,7 +58,7 @@ export function PaymentsList({ settlements, you }: PaymentsListProps) {
                 ? { label: copy.status.auto(inlineDay(s.autoConfirmAt, now)), tint: "blue" as const }
                 : { label: copy.status.pending, tint: "blue" as const };
           return (
-            <li key={s.id} className="grid gap-2 py-3">
+            <StaggerItem as="li" key={s.id} className="grid gap-2 py-3">
               <div className="grid grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3.5">
                 <Avatar name={s.from.displayName} tint={s.from.tint} buddy={s.from.buddy} size="xl" />
                 <span className="grid min-w-0">
@@ -88,10 +93,10 @@ export function PaymentsList({ settlements, you }: PaymentsListProps) {
                   )}
                 </div>
               )}
-            </li>
+            </StaggerItem>
           );
         })}
-      </ul>
+      </Stagger>
     </section>
   );
 }

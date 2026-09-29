@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { buttonVariants } from "@/components/ui/button";
+import { PressLink } from "@/components/motion/motion-link";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { Chip, Tag } from "@/components/ui/chip";
 import { routes } from "@/lib/auth/rules";
 import { requireAppContext } from "@/lib/auth/session";
@@ -89,9 +89,9 @@ export default async function BillPage({ params }: PageProps<"/bills/[slug]">) {
       <BillReceipt detail={detail} you={you} />
       <BillActivity rows={detail.activity} you={you} now={now} />
       {settle && (
-        <Link href={settle.href} className={cn(buttonVariants({ size: "lg" }), "justify-self-start")}>
+        <PressLink href={settle.href} className={cn(buttonVariants({ size: "lg" }), "justify-self-start")}>
           {settle.label}
-        </Link>
+        </PressLink>
       )}
     </div>
   );

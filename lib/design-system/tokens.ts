@@ -105,11 +105,11 @@ export const palettes = {
   },
   dark: {
     neutral: {
-      bg: "#141414",
-      surface: "#1D1D1D",
-      "surface-2": "#262626",
-      line: "#2A2A2A",
-      border: "#383838",
+      bg: "#000000",
+      surface: "#111111",
+      "surface-2": "#1A1A1A",
+      line: "#1F1F1F",
+      border: "#2E2E2E",
       muted: "#8B8B88",
       "text-2": "#A9A9A5",
       text: "#F2F1EE",

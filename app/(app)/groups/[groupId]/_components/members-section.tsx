@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Stagger, StaggerItem } from "@/components/motion/stagger";
 import { Avatar } from "@/components/ui/avatar";
 import { IconButton } from "@/components/ui/icon-button";
 import type { GroupRole } from "@/lib/domain/permissions";
@@ -30,11 +31,11 @@ export function MembersSection({ groupId, members, canManage, inviteUrl, inviteL
 
   return (
     <div className="grid gap-4">
-      <ul className="m-0 grid list-none p-0 [&>li+li]:border-t [&>li+li]:border-line">
+      <Stagger as="ul" className="m-0 grid list-none p-0 [&>li+li]:border-t [&>li+li]:border-line">
         {members.map(({ person, role, joined, isYou }) => {
           const hasOptions = isYou || canManage;
           return (
-            <li key={person.id} className="grid min-h-16 grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3.5">
+            <StaggerItem as="li" key={person.id} className="grid min-h-16 grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3.5">
               <Avatar name={person.displayName} tint={person.tint} buddy={person.buddy} size="xl" />
               <span className="grid min-w-0">
                 <span className="truncate font-medium">
@@ -54,10 +55,10 @@ export function MembersSection({ groupId, members, canManage, inviteUrl, inviteL
               ) : (
                 <span />
               )}
-            </li>
+            </StaggerItem>
           );
         })}
-      </ul>
+      </Stagger>
       <div className="flex items-center gap-3 rounded-tile bg-surface py-1.5 pr-1.5 pl-4">
         <span className="min-w-0 flex-1 truncate text-small text-text-2">{inviteLabel}</span>
         <CopyLinkButton url={inviteUrl} label={groupDetailCopy.copyLink} variant="floating" />

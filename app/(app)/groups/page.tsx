@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Stagger, StaggerItem } from "@/components/motion/stagger";
 import { routes } from "@/lib/auth/rules";
 import { requireAppContext } from "@/lib/auth/session";
 import { listGroupsFor } from "@/lib/groups/queries";
@@ -14,13 +15,13 @@ export default async function GroupsPage() {
 
   return (
     <GroupsView hasGroups={groups.length > 0}>
-      <ul className="m-0 grid list-none gap-2.5 p-0">
+      <Stagger as="ul" className="m-0 grid list-none gap-2.5 p-0">
         {groups.map((group) => (
-          <li key={group.id}>
+          <StaggerItem as="li" key={group.id}>
             <GroupCard group={group} />
-          </li>
+          </StaggerItem>
         ))}
-      </ul>
+      </Stagger>
     </GroupsView>
   );
 }

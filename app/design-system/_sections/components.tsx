@@ -1,4 +1,5 @@
-import { Avatar, AvatarStack } from "@/components/ui/avatar";
+import { Avatar } from "@/components/ui/avatar";
+import { AvatarStack } from "@/components/ui/avatar-stack";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AmountChip, StatusChip, Tag } from "@/components/ui/chip";
@@ -54,7 +55,7 @@ export function ComponentsSection() {
 
       <Demo
         title="Button"
-        description="Primary is brand; secondary is surface grey; tertiary is text. Sizes 32 / 40 / 48. Press scales to 0.98. Loading keeps width. Focus: 2px brand ring, 2px offset."
+        description="Primary is brand; secondary is surface grey; tertiary is text. Sizes 32 / 40 / 48. Press scales to .95 (.985 when wider than 260px) in 110ms and springs back, with a 5ms haptic. Loading hides the label, keeps width and spins a 16px ring. Focus: 2px brand ring, 2px offset."
       >
         <div className="flex flex-wrap items-center gap-3">
           <LoadingButtonDemo />
@@ -111,7 +112,7 @@ export function ComponentsSection() {
           <MoneyInputDemo />
         </Demo>
         <div className="grid gap-6">
-          <Demo title="Segmented control" description="Grey track, white floating thumb. 2–4 options. Arrow keys move the selection.">
+          <Demo title="Segmented control" description="Grey track, white floating thumb that glides on a soft spring. 2–4 options. Arrow keys move the selection.">
             <SegmentedDemo />
           </Demo>
           <Demo title="Select">
@@ -121,7 +122,7 @@ export function ComponentsSection() {
       </DemoGrid>
 
       <DemoGrid>
-        <Demo title="Checkbox" description="22px, radius 7. Checked fills brand. Whole row is the target.">
+        <Demo title="Checkbox" description="22px, radius 7. Checked fills brand in 150ms, pops .7 → 1.12 → 1 and draws its check. Whole row is the target.">
           <div className="grid gap-0.5">
             <Checkbox defaultChecked>Include tip in the split</Checkbox>
             <Checkbox disabled>Round to nearest dollar</Checkbox>
@@ -162,7 +163,7 @@ export function ComponentsSection() {
 
       <Demo
         title="Receipt line item and balance summary"
-        description="The one card with a perforated edge. Tap a line to claim it: instant press, the checkmark fills brand, your share rolls. Space toggles a focused line."
+        description="The one card with a perforated edge. Tap a line to claim it: instant press, the check draws in, your share rolls from the old figure in 420ms. Space toggles a focused line."
       >
         <ClaimReceiptDemo />
       </Demo>
@@ -182,7 +183,7 @@ export function ComponentsSection() {
       <DemoGrid>
         <Demo
           title="Toast"
-          description="Floating white, tinted icon, one line, optional undo. Bottom-centre, 4s, Esc dismisses. Never stacks."
+          description="Ink pill, one past-tense line naming who and how much, optional undo. Rises on a spring, bottom-centre, 2.8s (6s with an action), Esc dismisses, at most two. Only for results that happen off-screen — errors stay inline."
         >
           <ToastDemo />
         </Demo>
@@ -195,7 +196,7 @@ export function ComponentsSection() {
       </DemoGrid>
 
       <DemoGrid>
-        <Demo title="Empty state" description="A 3D moment on a tint, one sentence, one action. Centred in the space the content will take.">
+        <Demo title="Empty state" description="A 3D moment on a tint, one sentence, one action. Rises in, centred in the space the content will take.">
           <EmptyState
             icon={{ moment: "receipt" }}
             message="Nothing owed, nothing owing. Enjoy it."
@@ -206,7 +207,7 @@ export function ComponentsSection() {
             }
           />
         </Demo>
-        <Demo title="Skeleton" description="Same heights and columns as the list row so nothing jumps. Pulses opacity.">
+        <Demo title="Skeleton" description="Same heights and columns as the list row so nothing jumps. Pulses opacity .55 → 1 → .55 over 1.6s. No shimmer.">
           <div className="grid">
             <ListRowSkeleton titleWidth="45%" captionWidth="30%" />
             <ListRowSkeleton titleWidth="60%" captionWidth="25%" />

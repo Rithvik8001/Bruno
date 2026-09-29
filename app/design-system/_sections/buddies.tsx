@@ -1,5 +1,6 @@
 import { Icon } from "@/components/icons/icon";
-import { Avatar, AvatarStack, avatarPixels } from "@/components/ui/avatar";
+import { Avatar, avatarPixels } from "@/components/ui/avatar";
+import { AvatarStack } from "@/components/ui/avatar-stack";
 import { GroupArtTile, MomentTile } from "@/components/ui/icon-3d";
 import { buddyShapes } from "@/lib/design-system/buddies";
 import { groupArt, momentIcons } from "@/lib/design-system/icons3d";

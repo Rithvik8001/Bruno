@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { PrintIn } from "@/components/motion/rise";
 import { CheckIndicator } from "@/components/ui/checkbox";
 import { Chip } from "@/components/ui/chip";
 import { Receipt, ReceiptHeader } from "@/components/ui/receipt";
@@ -41,9 +42,9 @@ export function HeroReceipt() {
         />
         <div className="min-h-65">
           {frame.lines.map((line) => (
-            <div
+            <PrintIn
               key={line.name}
-              className="grid min-h-13 animate-print-in grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-t border-line"
+              className="grid min-h-13 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-t border-line"
             >
               <span className="flex min-w-0 items-center gap-3">
                 <CheckIndicator checked={line.claimed} />
@@ -55,10 +56,10 @@ export function HeroReceipt() {
                 </span>
               </span>
               <span className="flex items-center gap-2.5">
-                {line.claimed && <AvatarRow animated people={line.by.map((id) => people[id])} />}
+                {line.claimed && <AvatarRow pop="mount" people={line.by.map((id) => people[id])} />}
                 <span className="min-w-11 text-right font-medium">{formatCents(line.price)}</span>
               </span>
-            </div>
+            </PrintIn>
           ))}
         </div>
         <div className="mt-1 grid grid-cols-3 gap-2 border-t border-border pt-3.5">
@@ -72,6 +73,7 @@ export function HeroReceipt() {
                 </span>
                 <RollingNumber
                   value={formatCents(t.amount)}
+                  speed="live"
                   className={cn(
                     "text-[1.25rem] leading-6.5 font-semibold tracking-[-0.015em] transition-colors duration-220",
                     frame.settled ? "text-green" : "text-text",

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { Icon } from "@/components/icons/icon";
+import { CheckIn } from "@/components/motion/check-in";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Chip } from "@/components/ui/chip";
@@ -71,7 +73,7 @@ export function NewPasswordStep({ email, otp, onCodeRejected, onReset }: NewPass
   };
 
   return (
-    <form onSubmit={onSubmit} noValidate className="grid animate-rise gap-4">
+    <form onSubmit={onSubmit} noValidate className="grid gap-4">
       <div className="grid gap-2">
         <PasswordField
           name="new-password"
@@ -90,13 +92,14 @@ export function NewPasswordStep({ email, otp, onCodeRejected, onReset }: NewPass
         <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0">
           {rules.map((rule) => (
             <li key={rule.id}>
-              <Chip
-                tint={rule.ok ? "green" : "muted"}
-                size="sm"
-                icon={rule.ok ? "check" : undefined}
-                dot={!rule.ok}
-                className="font-medium transition-colors"
-              >
+              <Chip tint={rule.ok ? "green" : "muted"} size="sm" className="font-medium transition-colors duration-200">
+                {rule.ok ? (
+                  <CheckIn className="grid place-items-center">
+                    <Icon name="check" size={14} strokeWidth={2.2} />
+                  </CheckIn>
+                ) : (
+                  <span aria-hidden className="size-1.5 rounded-full bg-current" />
+                )}
                 {rule.label}
               </Chip>
             </li>

@@ -1,5 +1,9 @@
-import Link from "next/link";
+"use client";
+
+import { motion } from "motion/react";
 import type { MouseEventHandler, ReactNode } from "react";
+import { PressLink } from "@/components/motion/motion-link";
+import { pressMotion } from "@/components/motion/press";
 import { cn } from "@/lib/utils/cn";
 
 interface ListRowContent {
@@ -37,16 +41,21 @@ export function ListRow(props: ListRowProps) {
 
   if (props.href !== undefined) {
     return (
-      <Link href={props.href} className={cn(rowClass, interactiveClass, className)}>
+      <PressLink wide href={props.href} className={cn(rowClass, interactiveClass, className)}>
         {body}
-      </Link>
+      </PressLink>
     );
   }
   if (props.onClick !== undefined) {
     return (
-      <button type="button" onClick={props.onClick} className={cn(rowClass, interactiveClass, className)}>
+      <motion.button
+        type="button"
+        onClick={props.onClick}
+        {...pressMotion(true)}
+        className={cn(rowClass, interactiveClass, className)}
+      >
         {body}
-      </button>
+      </motion.button>
     );
   }
   return <div className={cn(rowClass, className)}>{body}</div>;

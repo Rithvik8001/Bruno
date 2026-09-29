@@ -1,5 +1,6 @@
 export * from "./amount-input";
 export * from "./avatar";
+export * from "./avatar-stack";
 export * from "./buddy";
 export * from "./button";
 export * from "./checkbox";

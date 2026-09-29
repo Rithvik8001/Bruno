@@ -51,7 +51,7 @@ export function GroupSettings({ groupId, initial, currencyLocked, canDelete }: G
         return;
       }
       setOpen(false);
-      toast({ message: copy.saved, icon: "check", tint: "green" });
+      toast({ message: copy.saved });
       router.refresh();
     });
 
@@ -63,7 +63,7 @@ export function GroupSettings({ groupId, initial, currencyLocked, canDelete }: G
         return;
       }
       setOpen(false);
-      toast({ message: copy.resetDone, icon: "link", tint: "blue" });
+      toast({ message: copy.resetDone });
       router.refresh();
     });
 

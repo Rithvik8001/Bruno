@@ -1,7 +1,8 @@
-import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
+import { PressLink, type PressLinkProps } from "@/components/motion/motion-link";
 import { Avatar, type StackPerson } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils/cn";
+import { BuddyPop, type PopTrigger } from "./buddy-pop";
 
 export function Frame({
   children,
@@ -47,25 +48,33 @@ export function FeaturePills({ features }: { features: readonly string[] }) {
 
 export function AvatarRow({
   people,
-  animated = false,
+  pop,
   className,
 }: {
   people: readonly StackPerson[];
-  animated?: boolean;
+  pop?: PopTrigger;
   className?: string;
 }) {
   return (
     <span className={cn("flex pl-1.5", className)}>
-      {people.map((p) => (
-        <Avatar
-          key={p.id}
-          name={p.name}
-          initials={p.initials}
-          tint={p.tint}
-          size="sm"
-          className={cn("-ml-1.5 ring-2 ring-surface", animated && "animate-pop-in")}
-        />
-      ))}
+      {people.map((p, i) => {
+        const avatar = (
+          <Avatar
+            key={p.id}
+            name={p.name}
+            initials={p.initials}
+            tint={p.tint}
+            size="sm"
+            className={cn("ring-2 ring-surface", !pop && "-ml-1.5")}
+          />
+        );
+        if (!pop) return avatar;
+        return (
+          <BuddyPop key={p.id} trigger={pop} index={i} className="-ml-1.5 inline-flex">
+            {avatar}
+          </BuddyPop>
+        );
+      })}
     </span>
   );
 }
@@ -73,8 +82,8 @@ export function AvatarRow({
 export const navLinkClass =
   "inline-flex h-9 items-center rounded-sm px-3 text-small font-medium text-text-2 no-underline transition-colors hover:bg-surface hover:text-text";
 
-export function NavLink({ className, ...rest }: ComponentProps<typeof Link>) {
-  return <Link className={cn(navLinkClass, className)} {...rest} />;
+export function NavLink({ className, ...rest }: PressLinkProps) {
+  return <PressLink className={cn(navLinkClass, className)} {...rest} />;
 }
 
 export function SurfaceCard({ children, className }: { children: ReactNode; className?: string }) {

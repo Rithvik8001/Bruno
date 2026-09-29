@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { PressLink } from "@/components/motion/motion-link";
 import { Avatar } from "@/components/ui/avatar";
 import { routes } from "@/lib/auth/rules";
 import { daysAgo } from "@/lib/dates";
@@ -48,7 +48,8 @@ function contentOf(nextUp: HomeNextUp, now: Date): CardContent {
 export function NextUpCard({ nextUp, now }: { nextUp: HomeNextUp; now: Date }) {
   const content = contentOf(nextUp, now);
   return (
-    <Link
+    <PressLink
+      wide
       href={content.href}
       className="grid w-full grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-3.5 rounded-card bg-surface px-4.5 py-4 text-text no-underline transition-colors hover:bg-surface-2 hover:text-text"
     >
@@ -60,6 +61,6 @@ export function NextUpCard({ nextUp, now }: { nextUp: HomeNextUp; now: Date }) {
       <span className="inline-flex h-9 items-center rounded-control bg-bg px-3.5 text-small font-semibold whitespace-nowrap shadow-float">
         {content.cta}
       </span>
-    </Link>
+    </PressLink>
   );
 }

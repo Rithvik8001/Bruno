@@ -99,7 +99,7 @@ export function MemberSheet({ groupId, target, canManage, onClose }: MemberSheet
                   run(async () => {
                     const role: GroupRole = target.role === "ADMIN" ? "MEMBER" : "ADMIN";
                     const result = await setMemberRole({ groupId, personId: target.personId, role });
-                    if (result.ok) toast({ message: role === "ADMIN" ? copy.makeAdmin : copy.makeMember, icon: "check", tint: "green" });
+                    if (result.ok) toast({ message: role === "ADMIN" ? copy.makeAdmin : copy.makeMember });
                     return result;
                   })
                 }

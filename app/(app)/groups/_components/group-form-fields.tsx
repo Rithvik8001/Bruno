@@ -1,5 +1,7 @@
 "use client";
 
+import { motion } from "motion/react";
+import { hoverLift } from "@/components/motion/press";
 import { GroupArtTile, Icon3d } from "@/components/ui/icon-3d";
 import { Select } from "@/components/ui/select";
 import { TextField } from "@/components/ui/text-field";
@@ -69,7 +71,7 @@ export function GroupFormFields({
           {GROUP_ART_IDS.map((art) => {
             const on = chosen === art;
             return (
-              <button
+              <motion.button
                 key={art}
                 type="button"
                 role="radio"
@@ -78,13 +80,14 @@ export function GroupFormFields({
                 title={groupArt[art]}
                 data-tint={on ? value.tint : undefined}
                 onClick={() => set("art", value.art === art ? null : art)}
+                {...hoverLift}
                 className={cn(
-                  "grid h-12 cursor-pointer place-items-center rounded-control transition-[background-color,transform] duration-200 ease-spring hover:-translate-y-0.5 hover:scale-106 active:scale-92",
+                  "grid h-12 cursor-pointer place-items-center rounded-control transition-colors duration-200",
                   on ? "bg-tint-bg ring-2 ring-tint" : "bg-surface",
                 )}
               >
                 <Icon3d icon={art} size={30} />
-              </button>
+              </motion.button>
             );
           })}
         </div>
@@ -92,7 +95,7 @@ export function GroupFormFields({
 
       <div role="radiogroup" aria-label={copy.colour.label} className="flex flex-wrap gap-2">
         {PALETTE_TINTS.map((tint) => (
-          <button
+          <motion.button
             key={tint}
             type="button"
             role="radio"
@@ -100,6 +103,7 @@ export function GroupFormFields({
             aria-label={tint}
             data-tint={tint}
             onClick={() => set("tint", tint)}
+            {...hoverLift}
             className={cn(
               "size-8 cursor-pointer rounded-full bg-tint transition-shadow",
               value.tint === tint && "ring-2 ring-tint ring-offset-2 ring-offset-bg",

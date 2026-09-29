@@ -20,6 +20,8 @@ export const routes = {
   join: "/j",
   authApi: "/api/auth",
   group: (id: string) => `/groups/${encodeURIComponent(id)}`,
+  groupTab: (id: string, tab: "bills" | "balances" | "members") =>
+    tab === "bills" ? `/groups/${encodeURIComponent(id)}` : `/groups/${encodeURIComponent(id)}?tab=${tab}`,
   newBillFor: (groupId: string) => `/bills/new?group=${encodeURIComponent(groupId)}`,
   manualBill: (groupId: string) => `/bills/new/manual?group=${encodeURIComponent(groupId)}`,
   bill: (slug: string) => `/bills/${encodeURIComponent(slug)}`,

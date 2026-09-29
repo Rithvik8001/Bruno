@@ -1,8 +1,11 @@
 "use client";
 
+import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { BrunoMark } from "@/components/brand/bruno-mark";
+import { LiveMark } from "@/components/brand/live-logo";
+import { pressMotion } from "@/components/motion/press";
+import { StepSwap } from "@/components/motion/rise";
 import { routes } from "@/lib/auth/rules";
 import type { BuddyShape } from "@/lib/design-system/buddies";
 import { createGroup, joinGroup } from "@/lib/groups/actions";
@@ -45,6 +48,11 @@ export function OnboardingFlow({ person, defaultBuddy }: OnboardingFlowProps) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
+  const go = (next: FlowState) => {
+    setState(next);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const saveAndContinue = () =>
     startTransition(async () => {
       setError(null);
@@ -53,8 +61,7 @@ export function OnboardingFlow({ person, defaultBuddy }: OnboardingFlowProps) {
         setError(result.error.fields?.displayName ?? result.error.message);
         return;
       }
-      setState({ step: "crew" });
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      go({ step: "crew" });
     });
 
   const finishCrew = () =>
@@ -85,8 +92,7 @@ export function OnboardingFlow({ person, defaultBuddy }: OnboardingFlowProps) {
         setError(completed.error.message);
         return;
       }
-      setState({ step: "done", ...done });
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      go({ step: "done", ...done });
     });
 
   const skip = () =>
@@ -99,24 +105,25 @@ export function OnboardingFlow({ person, defaultBuddy }: OnboardingFlowProps) {
     <div className="grid min-h-dvh grid-rows-[auto_1fr]">
       <header className="flex items-center justify-between gap-4 px-5 py-4">
         <span className="flex w-22 text-text">
-          <BrunoMark size={28} />
+          <LiveMark size={28} />
         </span>
         <ProgressTrack position={POSITION[state.step]} name={profile.displayName} tint={profile.tint} buddy={profile.buddy} />
         <span className="flex w-22 justify-end">
           {state.step !== "done" && (
-            <button
+            <motion.button
               type="button"
               onClick={skip}
               disabled={pending}
-              className="h-8 cursor-pointer rounded-sm bg-transparent px-2.5 text-small font-medium text-text-2 hover:bg-surface hover:text-text"
+              {...(pending ? {} : pressMotion())}
+              className="h-8 cursor-pointer rounded-sm bg-transparent px-2.5 text-small font-medium text-text-2 transition-colors hover:bg-surface hover:text-text"
             >
               {welcomeCopy.skip}
-            </button>
+            </motion.button>
           )}
         </span>
       </header>
       <main className="flex justify-center px-5 pt-5 pb-14">
-        <div className="w-full max-w-110">
+        <StepSwap stepKey={state.step} className="w-full max-w-110">
           {state.step === "profile" && (
             <ProfileStep value={profile} onChange={setProfile} onNext={saveAndContinue} pending={pending} error={error ?? undefined} />
           )}
@@ -137,7 +144,7 @@ export function OnboardingFlow({ person, defaultBuddy }: OnboardingFlowProps) {
               invite={invite}
               onInvite={setInvite}
               onSubmit={finishCrew}
-              onBack={() => setState({ step: "profile" })}
+              onBack={() => go({ step: "profile" })}
               pending={pending}
               error={error}
             />
@@ -145,7 +152,7 @@ export function OnboardingFlow({ person, defaultBuddy }: OnboardingFlowProps) {
           {state.step === "done" && (
             <DoneStep profile={profile} friends={state.friends} line={state.line} href={state.href} />
           )}
-        </div>
+        </StepSwap>
       </main>
     </div>
   );

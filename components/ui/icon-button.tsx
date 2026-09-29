@@ -1,49 +1,33 @@
-import { cva, type VariantProps } from "class-variance-authority";
-import type { ButtonHTMLAttributes, Ref } from "react";
-import { Icon, type IconName } from "@/components/icons/icon";
-import { cn } from "@/lib/utils/cn";
+"use client";
 
-export const iconButtonVariants = cva(
-  [
-    "inline-grid size-10 shrink-0 cursor-pointer place-items-center rounded-control",
-    "transition-[transform,background-color,color] duration-150 ease-standard active:scale-95",
-    "disabled:cursor-not-allowed disabled:text-muted",
-  ],
-  {
-    variants: {
-      variant: {
-        ghost: "bg-transparent text-text-2 hover:bg-surface hover:text-text",
-        tinted: "bg-brand-tint text-brand",
-      },
-    },
-    defaultVariants: { variant: "ghost" },
-  },
-);
+import { motion, type HTMLMotionProps } from "motion/react";
+import type { Ref } from "react";
+import { Icon, type IconName } from "@/components/icons/icon";
+import { pressMotion } from "@/components/motion/press";
+import { cn } from "@/lib/utils/cn";
+import { iconButtonVariants, type IconButtonVariantProps } from "./icon-button-variants";
+
+export { iconButtonVariants } from "./icon-button-variants";
 
 export interface IconButtonProps
-  extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "children" | "aria-label">,
-    VariantProps<typeof iconButtonVariants> {
+  extends Omit<HTMLMotionProps<"button">, "children" | "aria-label">,
+    IconButtonVariantProps {
   icon: IconName;
   label: string;
   ref?: Ref<HTMLButtonElement>;
 }
 
-export function IconButton({
-  icon,
-  label,
-  variant,
-  className,
-  type = "button",
-  ...rest
-}: IconButtonProps) {
+export function IconButton({ icon, label, variant, className, type = "button", disabled, ...rest }: IconButtonProps) {
   return (
-    <button
+    <motion.button
       type={type}
       aria-label={label}
+      disabled={disabled}
       className={cn(iconButtonVariants({ variant }), className)}
+      {...(disabled ? {} : pressMotion())}
       {...rest}
     >
       <Icon name={icon} strokeWidth={variant === "tinted" ? 2 : undefined} />
-    </button>
+    </motion.button>
   );
 }

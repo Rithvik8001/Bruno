@@ -1,13 +1,16 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { PopIn } from "@/app/(flow)/_components/pop-in";
+import { CheckIn } from "@/components/motion/check-in";
+import { PressLink } from "@/components/motion/motion-link";
 import { BackLink } from "@/components/patterns/back-link";
 import { TearOffStub } from "@/components/patterns/tear-off-stub";
 import { Icon } from "@/components/icons/icon";
 import { Avatar } from "@/components/ui/avatar";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { Chip } from "@/components/ui/chip";
 import { MomentTile } from "@/components/ui/icon-3d";
 import { InlineAlert } from "@/components/ui/inline-alert";
@@ -40,6 +43,8 @@ export interface SettleScreenProps {
 }
 
 const copy = settleCopy;
+
+const DONE_CHECK_DELAY = 0.5;
 
 export function SettleScreen({ view: live, backHref, backKind }: SettleScreenProps) {
   const router = useRouter();
@@ -110,8 +115,6 @@ export function SettleScreen({ view: live, backHref, backKind }: SettleScreenPro
         setDone({ kind: "recorded", id: data.id, amount, method, left, pending });
         toast({
           message: pending ? copy.payer.toast(name) : left ? copy.recipient.toastPartial(name) : copy.recipient.toastFull(name),
-          icon: "check",
-          tint: "green",
         });
       },
     );
@@ -123,7 +126,7 @@ export function SettleScreen({ view: live, backHref, backKind }: SettleScreenPro
       () => confirmSettlement({ settlementId: view.pending?.id ?? "" }),
       () => {
         setDone({ kind: "confirmed" });
-        toast({ message: copy.confirm.toast(name), icon: "check", tint: "green" });
+        toast({ message: copy.confirm.toast(name) });
       },
     );
 
@@ -133,7 +136,7 @@ export function SettleScreen({ view: live, backHref, backKind }: SettleScreenPro
       () => declineSettlement({ settlementId: view.pending?.id ?? "" }),
       () => {
         setDone({ kind: "declined" });
-        toast({ message: copy.confirm.toastDeclined(name), icon: "check", tint: "neutral" });
+        toast({ message: copy.confirm.toastDeclined(name) });
       },
     );
 
@@ -143,7 +146,7 @@ export function SettleScreen({ view: live, backHref, backKind }: SettleScreenPro
       () => {
         setDone(null);
         setFrozen(null);
-        toast({ message: copy.undone, icon: "check", tint: "neutral" });
+        toast({ message: copy.undone });
       },
       false,
     );
@@ -151,9 +154,11 @@ export function SettleScreen({ view: live, backHref, backKind }: SettleScreenPro
   const header = (
     <div className="flex items-center justify-between gap-3">
       <BackLink href={backHref} label={backKind === "group" ? view.group.name : copy.back[backKind]} />
-      <Chip tint={settleStatusTint[status]} size="sm" dot role="status">
-        {copy.status[status]}
-      </Chip>
+      <PopIn popKey={status}>
+        <Chip tint={settleStatusTint[status]} size="sm" dot role="status">
+          {copy.status[status]}
+        </Chip>
+      </PopIn>
     </div>
   );
 
@@ -164,9 +169,11 @@ export function SettleScreen({ view: live, backHref, backKind }: SettleScreenPro
       <div className="grid gap-6 px-5 pt-5 pb-10">
         <div className="flex items-center justify-between gap-3">
           <BackLink href={backHref} label={backKind === "group" ? view.group.name : copy.back[backKind]} />
-          <Chip tint={role === "awaiting" ? "blue" : "green"} size="sm" dot role="status">
-            {role === "awaiting" ? copy.status.awaiting : copy.status.settled}
-          </Chip>
+          <PopIn popKey={role}>
+            <Chip tint={role === "awaiting" ? "blue" : "green"} size="sm" dot role="status">
+              {role === "awaiting" ? copy.status.awaiting : copy.status.settled}
+            </Chip>
+          </PopIn>
         </div>
         <div className="grid gap-1.5">
           <h1 className="m-0 text-heading">{role === "awaiting" ? copy.awaiting.title(name) : copy.square.title(name)}</h1>
@@ -190,9 +197,9 @@ export function SettleScreen({ view: live, backHref, backKind }: SettleScreenPro
           </div>
         )}
         {error && <InlineAlert>{error}</InlineAlert>}
-        <Link href={backHref} className={cn(buttonVariants({ size: "lg" }), "justify-self-start")}>
+        <PressLink href={backHref} className={cn(buttonVariants({ size: "lg" }), "justify-self-start")}>
           {copy.backTo[backKind]}
-        </Link>
+        </PressLink>
       </div>
     );
   }
@@ -236,6 +243,7 @@ export function SettleScreen({ view: live, backHref, backKind }: SettleScreenPro
 
       <TearOffStub
         torn={done !== null}
+        celebrate={status === "settled"}
         tearOff={
           <>
             <Button size="lg" fullWidth loading={busy} disabled={!valid} onClick={confirming ? confirm : record}>
@@ -252,16 +260,27 @@ export function SettleScreen({ view: live, backHref, backKind }: SettleScreenPro
         done={
           <>
             <div className="flex items-center gap-3">
-              <MomentTile icon={done?.kind === "declined" ? "warning" : "moneywings"} tint={done?.kind === "declined" ? "amber" : "green"} size="sm" />
+              <span className="relative shrink-0">
+                <MomentTile icon={done?.kind === "declined" ? "warning" : "moneywings"} tint={done?.kind === "declined" ? "amber" : "green"} size="sm" />
+                {done && done.kind !== "declined" && (
+                  <CheckIn
+                    aria-hidden
+                    transition={{ delay: DONE_CHECK_DELAY }}
+                    className="absolute -right-1 -bottom-1 grid size-5 place-items-center rounded-full bg-green text-bg ring-2 ring-surface"
+                  >
+                    <Icon name="check" size={12} strokeWidth={3} />
+                  </CheckIn>
+                )}
+              </span>
               <span className="grid">
                 <span className="font-semibold">{doneTitle}</span>
                 <span className="text-footnote text-text-2">{doneSub}</span>
               </span>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Link href={backHref} className={cn(buttonVariants({ size: "md" }), "h-11 text-small font-semibold")}>
+              <PressLink href={backHref} className={cn(buttonVariants({ size: "md" }), "h-11 text-small font-semibold")}>
                 {copy.backTo[backKind]}
-              </Link>
+              </PressLink>
               {done?.kind === "recorded" && (
                 <Button variant="elevated" size="md" className="h-11 text-small font-semibold" loading={busy} onClick={() => undo(done.id)}>
                   {copy.undo}

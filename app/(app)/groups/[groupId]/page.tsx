@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Icon } from "@/components/icons/icon";
-import { AvatarStack } from "@/components/ui/avatar";
-import { buttonVariants } from "@/components/ui/button";
-import { GroupArtTile } from "@/components/ui/icon-3d";
+import { PressLink } from "@/components/motion/motion-link";
+import { backClassName } from "@/components/patterns/back-link-styles";
+import { AvatarStack } from "@/components/ui/avatar-stack";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { firstParam } from "@/lib/auth/redirect";
 import { routes } from "@/lib/auth/rules";
 import { requireAppContext } from "@/lib/auth/session";
@@ -17,6 +17,7 @@ import { GROUP_TABS, groupDetailCopy, type GroupTab } from "./_data";
 import { CopyLinkButton } from "./_components/copy-link-button";
 import { GroupSettings } from "./_components/group-settings";
 import { GroupTabs } from "./_components/group-tabs";
+import { HeaderArt } from "./_components/header-art";
 import { MembersSection } from "./_components/members-section";
 import { SummaryTiles } from "./_components/summary-tiles";
 import { TabEmpty } from "./_components/tab-empty";
@@ -47,17 +48,14 @@ export default async function GroupPage({ params, searchParams }: PageProps<"/gr
 
   return (
     <div className="grid gap-6 px-5 pt-5 pb-10">
-      <Link
-        href={routes.groups}
-        className="-ml-1.5 inline-flex h-9 items-center gap-1.5 justify-self-start rounded-sm pr-2.5 pl-1.5 text-small font-medium text-text-2 no-underline hover:bg-surface hover:text-text"
-      >
+      <PressLink href={routes.groups} className={backClassName}>
         <Icon name="chevron-left" size={18} />
         {copy.back}
-      </Link>
+      </PressLink>
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex min-w-0 items-center gap-3.5">
-          <GroupArtTile name={group.name} art={group.art} tint={group.tint} size="lg" />
+          <HeaderArt name={group.name} art={group.art} tint={group.tint} size="lg" />
           <div className="grid min-w-0 gap-1.5">
             <h1 className="m-0 truncate text-heading">{group.name}</h1>
             <div className="flex min-w-0 items-center gap-2.5">
@@ -72,10 +70,10 @@ export default async function GroupPage({ params, searchParams }: PageProps<"/gr
         </div>
         <div className="flex items-center gap-2">
           <CopyLinkButton url={inviteUrl} />
-          <Link href={routes.newBillFor(group.id)} className={cn(buttonVariants({ size: "md" }), "gap-1.5 pr-3.5 pl-2.5 text-small")}>
+          <PressLink href={routes.newBillFor(group.id)} className={cn(buttonVariants({ size: "md" }), "gap-1.5 pr-3.5 pl-2.5 text-small")}>
             <Icon name="plus" size={18} strokeWidth={2} />
             {copy.addBill}
-          </Link>
+          </PressLink>
           {canManage && (
             <GroupSettings
               groupId={group.id}
@@ -98,9 +96,9 @@ export default async function GroupPage({ params, searchParams }: PageProps<"/gr
           title={copy.bills.title}
           body={copy.bills.body}
           action={
-            <Link href={routes.newBillFor(group.id)} className={cn(buttonVariants({ variant: "elevated", size: "md" }), "text-small")}>
+            <PressLink href={routes.newBillFor(group.id)} className={cn(buttonVariants({ variant: "elevated", size: "md" }), "text-small")}>
               {copy.addBill}
-            </Link>
+            </PressLink>
           }
         />
       )}

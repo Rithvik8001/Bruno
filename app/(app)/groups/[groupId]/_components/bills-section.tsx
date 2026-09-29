@@ -1,3 +1,4 @@
+import { Stagger, StaggerItem } from "@/components/motion/stagger";
 import { BillRow } from "@/components/patterns/bill-row";
 import { routes } from "@/lib/auth/rules";
 import type { BillSummary } from "@/lib/bills/queries";
@@ -10,9 +11,9 @@ import { groupDetailCopy } from "../_data";
 export function BillsSection({ bills, you, now }: { bills: readonly BillSummary[]; you: PersonId; now: Date }) {
   const copy = groupDetailCopy;
   return (
-    <ul aria-label={copy.billList.label} className="m-0 grid list-none gap-2.5 p-0">
+    <Stagger as="ul" aria-label={copy.billList.label} className="m-0 grid list-none gap-2.5 p-0">
       {bills.map((bill) => (
-        <li key={bill.id}>
+        <StaggerItem as="li" key={bill.id}>
           <BillRow
             href={routes.bill(bill.slug)}
             title={bill.title}
@@ -21,8 +22,8 @@ export function BillsSection({ bills, you, now }: { bills: readonly BillSummary[
             total={formatMoney(bill.total, bill.currency)}
             when={shortDay(bill.occurredAt, now)}
           />
-        </li>
+        </StaggerItem>
       ))}
-    </ul>
+    </Stagger>
   );
 }

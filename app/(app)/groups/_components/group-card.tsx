@@ -1,5 +1,5 @@
-import Link from "next/link";
-import { AvatarStack } from "@/components/ui/avatar";
+import { PressLink } from "@/components/motion/motion-link";
+import { AvatarStack } from "@/components/ui/avatar-stack";
 import { AmountChip } from "@/components/ui/chip";
 import { GroupArtTile } from "@/components/ui/icon-3d";
 import { routes } from "@/lib/auth/rules";
@@ -9,7 +9,8 @@ import { balanceCaption, groupMeta } from "../_lib/summary";
 
 export function GroupCard({ group }: { group: GroupSummary }) {
   return (
-    <Link
+    <PressLink
+      wide
       href={routes.group(group.id)}
       className="grid grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-3.5 rounded-card bg-surface p-4 text-text no-underline transition-colors hover:bg-surface-2 hover:text-text"
     >
@@ -29,6 +30,6 @@ export function GroupCard({ group }: { group: GroupSummary }) {
         <AmountChip amount={group.yourBalance} settledLabel={groupsCopy.card.settled} className="h-7 text-footnote" />
         <span className="text-caption font-normal whitespace-nowrap text-muted">{balanceCaption(group.yourBalance)}</span>
       </span>
-    </Link>
+    </PressLink>
   );
 }

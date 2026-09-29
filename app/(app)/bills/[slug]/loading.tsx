@@ -13,7 +13,7 @@ export default function BillLoading() {
         <ListRowSkeleton titleWidth="35%" captionWidth="45%" />
         <ListRowSkeleton titleWidth="45%" captionWidth="30%" />
       </div>
-      <Skeleton className="h-64 animate-pulse-soft rounded-card bg-surface" />
+      <Skeleton className="h-64 rounded-card bg-surface" />
     </div>
   );
 }

@@ -134,19 +134,20 @@ enum ActivityType {
 }
 
 model Person {
-  id           String    @id @default(cuid())
-  userId       String?   @unique
-  user         User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
-  displayName  String
-  tint         String
-  buddy        String?
-  email        String?
-  onboardedAt  DateTime?
-  mergedIntoId String?
-  mergedInto   Person?   @relation("PersonMerge", fields: [mergedIntoId], references: [id], onDelete: Restrict)
-  mergedFrom   Person[]  @relation("PersonMerge")
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @default(now()) @updatedAt
+  id             String    @id @default(cuid())
+  userId         String?   @unique
+  user           User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  displayName    String
+  tint           String
+  buddy          String?
+  email          String?
+  onboardedAt    DateTime?
+  activitySeenAt DateTime?
+  mergedIntoId   String?
+  mergedInto     Person?   @relation("PersonMerge", fields: [mergedIntoId], references: [id], onDelete: Restrict)
+  mergedFrom     Person[]  @relation("PersonMerge")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @default(now()) @updatedAt
 
   guestTokens        GuestToken[]
   groupsCreated      Group[]           @relation("GroupCreator")

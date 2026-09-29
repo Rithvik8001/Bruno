@@ -1,3 +1,4 @@
+import { Stagger, StaggerItem } from "@/components/motion/stagger";
 import { Avatar } from "@/components/ui/avatar";
 import { AmountChip } from "@/components/ui/chip";
 import { ListRow } from "@/components/ui/list-row";
@@ -32,24 +33,25 @@ export function PeopleSection({ people, meta }: PeopleSectionProps) {
         title={homeCopy.people.title}
         aside={meta ? <span className="text-footnote font-medium text-muted">{meta}</span> : undefined}
       />
-      <div className="grid">
+      <Stagger className="grid">
         {people.map((row) => (
-          <ListRow
-            key={row.person.id}
-            href={
-              row.groupId
-                ? row.balances.size > 0
-                  ? routes.settle(row.groupId, row.person.id, routes.app)
-                  : `${routes.group(row.groupId)}?tab=balances`
-                : routes.groups
-            }
-            leading={<Avatar name={row.person.displayName} tint={row.person.tint} buddy={row.person.buddy} size="xl" />}
-            title={row.person.displayName}
-            caption={personCaption(row)}
-            trailing={<Balances row={row} />}
-          />
+          <StaggerItem key={row.person.id}>
+            <ListRow
+              href={
+                row.groupId
+                  ? row.balances.size > 0
+                    ? routes.settle(row.groupId, row.person.id, routes.app)
+                    : `${routes.group(row.groupId)}?tab=balances`
+                  : routes.groups
+              }
+              leading={<Avatar name={row.person.displayName} tint={row.person.tint} buddy={row.person.buddy} size="xl" />}
+              title={row.person.displayName}
+              caption={personCaption(row)}
+              trailing={<Balances row={row} />}
+            />
+          </StaggerItem>
         ))}
-      </div>
+      </Stagger>
     </section>
   );
 }

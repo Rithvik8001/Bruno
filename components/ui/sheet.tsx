@@ -1,9 +1,11 @@
 "use client";
 
+import { motion } from "motion/react";
 import { useEffect, useId, useRef, type ReactNode } from "react";
 import { Icon, type IconName } from "@/components/icons/icon";
 import type { MomentIconId } from "@/lib/design-system/icons3d";
 import type { Tint } from "@/lib/design-system/tokens";
+import { EASE } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils/cn";
 import { Icon3d } from "./icon-3d";
 
@@ -75,8 +77,11 @@ export function Sheet({ open, onOpenChange, className, ...content }: SheetProps)
   }, [open]);
 
   return (
-    <dialog
+    <motion.dialog
       ref={ref}
+      initial={false}
+      animate={open ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
+      transition={{ duration: 0.3, ease: EASE }}
       aria-labelledby={titleId}
       aria-describedby={content.description ? descriptionId : undefined}
       onClose={() => onOpenChange(false)}
@@ -87,13 +92,12 @@ export function Sheet({ open, onOpenChange, className, ...content }: SheetProps)
         sheetPanelClassName,
         "m-0 mx-auto mt-auto max-h-[85dvh] overflow-auto border-0 p-0 text-text sm:my-auto",
         "backdrop:bg-text/30 backdrop:backdrop-blur-[2px]",
-        "translate-y-0 transition-[translate,opacity] duration-300 ease-standard starting:translate-y-8 starting:opacity-0",
         className,
       )}
     >
       <div className={sheetBodyClassName}>
         <SheetContent {...content} titleId={titleId} descriptionId={descriptionId} />
       </div>
-    </dialog>
+    </motion.dialog>
   );
 }

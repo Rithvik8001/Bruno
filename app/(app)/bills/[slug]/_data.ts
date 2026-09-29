@@ -1,3 +1,4 @@
+import { billFieldWords } from "@/lib/bills/messages";
 import type { BillChangeField } from "@/lib/bills/diff";
 import type { PersonBillStatus } from "@/lib/ledger/allocation";
 import type { Tint } from "@/lib/design-system/tokens";
@@ -82,7 +83,7 @@ export const billDetailCopy = {
   activity: {
     title: "On this bill",
     created: (items: number) => `added the bill · ${plural(items, "item", "items")}`,
-    updated: (fields: readonly BillChangeField[]) => `changed the ${fields.map((f) => fieldWords[f]).join(", ")}`,
+    updated: (fields: readonly BillChangeField[]) => `changed the ${fields.map((f) => billFieldWords[f]).join(", ")}`,
     someone: "Someone",
   },
   settle: {
@@ -96,11 +97,3 @@ export const billDetailCopy = {
   },
 } as const;
 
-const fieldWords = {
-  title: "name",
-  date: "date",
-  payer: "payer",
-  items: "items",
-  amounts: "tax and tip",
-  split: "split",
-} as const satisfies Record<BillChangeField, string>;

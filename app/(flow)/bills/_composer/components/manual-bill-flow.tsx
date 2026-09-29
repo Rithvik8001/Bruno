@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
+import { StepSwap } from "@/components/motion/rise";
 import { useToast } from "@/components/ui/toast";
 import { routes } from "@/lib/auth/rules";
 import { createBill, updateBill } from "@/lib/bills/actions";
@@ -89,14 +90,12 @@ export function ManualBillFlow({ composer, you, mode, initialDraft, initialStep 
       const total = draftTotals(draft)?.total;
       toast({
         message: modeCopy.saved(result.data.title, total === undefined ? "" : formatMoney(total, composer.currency)),
-        icon: "check",
-        tint: "green",
       });
       router.push(result.data.href);
     });
 
   return (
-    <div className="px-5 pt-5 pb-10">
+    <StepSwap stepKey={step} className="px-5 pt-5 pb-10">
       {step === "items" && (
         <ItemsStep
           draft={draft}
@@ -142,6 +141,6 @@ export function ManualBillFlow({ composer, you, mode, initialDraft, initialStep 
           onSave={() => save("split")}
         />
       )}
-    </div>
+    </StepSwap>
   );
 }

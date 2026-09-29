@@ -1,5 +1,5 @@
-import Link from "next/link";
-import { buttonVariants } from "@/components/ui/button";
+import { PressLink } from "@/components/motion/motion-link";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { heroContent, routes, SECTION_IDS } from "../_data";
 import { HeroReceipt } from "../_visuals/hero-receipt";
 
@@ -17,12 +17,12 @@ export function Hero() {
           {heroContent.body}
         </p>
         <div className="flex flex-wrap items-center gap-2.5">
-          <Link href={routes.signUp} className={buttonVariants({ size: "lg" })}>
+          <PressLink href={routes.signUp} className={buttonVariants({ size: "lg" })}>
             Get started free
-          </Link>
-          <Link href={`#${SECTION_IDS.how}`} className={buttonVariants({ variant: "secondary", size: "lg" })}>
+          </PressLink>
+          <PressLink href={`#${SECTION_IDS.how}`} className={buttonVariants({ variant: "secondary", size: "lg" })}>
             See how it works
-          </Link>
+          </PressLink>
         </div>
         <p className="m-0 mt-5 text-footnote text-muted">{heroContent.footnote}</p>
       </div>

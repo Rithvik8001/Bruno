@@ -1,11 +1,15 @@
 "use client";
 
+import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { Icon } from "@/components/icons/icon";
+import { pressMotion } from "@/components/motion/press";
+import { Rise } from "@/components/motion/rise";
 import { Button } from "@/components/ui/button";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { Receipt } from "@/components/ui/receipt";
 import { RollingNumber } from "@/components/ui/rolling-number";
+import { SOFT_SPRING } from "@/lib/motion/tokens";
 import { currencySymbol, formatAmount, formatMoney } from "@/lib/currency";
 import type { PersonId } from "@/lib/domain/ids";
 import type { BillComposer } from "@/lib/groups/queries";
@@ -59,13 +63,12 @@ export function ClaimStep({
   const progress = view.lines.length === 0 ? 0 : Math.round((view.claimed / view.lines.length) * 100);
 
   return (
-    <div className="grid animate-rise gap-5">
+    <div className="grid gap-5">
       <StepHeader
         back={{ label: copy.back, onBack }}
         status={{
           label: view.ready ? copy.status.ready : copy.status.progress(view.claimed, view.lines.length),
           tone: view.ready ? "ok" : "pending",
-          pop: view.ready,
         }}
         title={copy.title}
         body={copy.body}
@@ -87,9 +90,11 @@ export function ClaimStep({
             aria-label={copy.status.progress(view.claimed, view.lines.length)}
             className="h-1.5 w-30 shrink-0 overflow-hidden rounded-full bg-surface-2"
           >
-            <span
-              className="block h-full rounded-full bg-brand transition-[width] duration-300 ease-standard"
-              style={{ width: `${progress}%` }}
+            <motion.span
+              className="block h-full origin-left rounded-full bg-brand"
+              initial={false}
+              animate={{ scaleX: progress / 100 }}
+              transition={SOFT_SPRING}
             />
           </span>
         </div>
@@ -116,27 +121,30 @@ export function ClaimStep({
         </div>
       </Receipt>
 
-      {view.unclaimedKeys.length > 0 && (
-        <div className="flex animate-rise items-center gap-3 rounded-tile bg-surface py-3.5 pr-2 pl-4 text-small">
-          <span className="min-w-0 flex-1">
-            <span className="block font-semibold">
-              {copy.unclaimed(view.unclaimedKeys.length, formatMoney(view.unclaimedTotal, currency))}
+      <AnimatePresence initial={false}>
+        {view.unclaimedKeys.length > 0 && (
+          <Rise key="unclaimed" className="flex items-center gap-3 rounded-tile bg-surface py-3.5 pr-2 pl-4 text-small">
+            <span className="min-w-0 flex-1">
+              <span className="block font-semibold">
+                {copy.unclaimed(view.unclaimedKeys.length, formatMoney(view.unclaimedTotal, currency))}
+              </span>
+              <span className="block text-footnote text-text-2">{copy.unclaimedBody}</span>
             </span>
-            <span className="block text-footnote text-text-2">{copy.unclaimedBody}</span>
-          </span>
-          <Button
-            variant="elevated"
-            size="sm"
-            onClick={() => onDraft((d) => claimRest(d, view.unclaimedKeys, memberIds))}
-          >
-            {copy.splitRest}
-          </Button>
-        </div>
-      )}
+            <Button
+              variant="elevated"
+              size="sm"
+              onClick={() => onDraft((d) => claimRest(d, view.unclaimedKeys, memberIds))}
+            >
+              {copy.splitRest}
+            </Button>
+          </Rise>
+        )}
+      </AnimatePresence>
 
-      <button
+      <motion.button
         type="button"
         onClick={onEditor}
+        {...pressMotion(true)}
         className="flex w-full cursor-pointer items-center gap-3 rounded-tile bg-surface px-4 py-3.5 text-left text-small transition-colors duration-150 ease-standard hover:bg-surface-2"
       >
         <span data-tint="indigo" className="grid size-8 shrink-0 place-items-center rounded-control bg-tint-bg text-tint">
@@ -147,7 +155,7 @@ export function ClaimStep({
           <span className="block text-footnote text-text-2">{copy.editor.body}</span>
         </span>
         <Icon name="chevron-right" size={18} className="text-muted" />
-      </button>
+      </motion.button>
 
       {error && <InlineAlert>{error}</InlineAlert>}
 
@@ -161,7 +169,7 @@ export function ClaimStep({
         <span className="text-footnote text-text-2">{copy.shareLabel(name)}</span>
         <span className="flex text-title font-semibold">
           <span>{currencySymbol(currency)}</span>
-          <RollingNumber value={formatAmount(share.total, currency, "never")} />
+          <RollingNumber speed="live" value={formatAmount(share.total, currency, "never")} />
         </span>
       </FlowFooter>
     </div>

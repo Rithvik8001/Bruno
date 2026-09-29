@@ -1,3 +1,5 @@
+"use client";
+
 import type { InputHTMLAttributes, ReactNode, Ref } from "react";
 import { cn } from "@/lib/utils/cn";
 import { Field, type FieldFeedback } from "./field";

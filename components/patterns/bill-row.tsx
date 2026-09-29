@@ -1,4 +1,6 @@
-import Link from "next/link";
+"use client";
+
+import { PressLink } from "@/components/motion/motion-link";
 import { StatusChip, Tag } from "@/components/ui/chip";
 import type { BillDisplayStatus } from "@/lib/bills/status";
 import type { GroupArtId } from "@/lib/design-system/icons3d";
@@ -25,7 +27,8 @@ export interface BillRowProps {
 
 export function BillRow({ href, title, status, meta, total, when, group }: BillRowProps) {
   return (
-    <Link
+    <PressLink
+      wide
       href={href}
       className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-tile bg-surface px-4 py-3.5 text-text no-underline transition-colors duration-150 ease-standard hover:bg-surface-2 hover:text-text"
     >
@@ -47,6 +50,6 @@ export function BillRow({ href, title, status, meta, total, when, group }: BillR
         <span className="font-semibold">{total}</span>
         <span className="text-caption font-normal whitespace-nowrap text-muted">{when}</span>
       </span>
-    </Link>
+    </PressLink>
   );
 }

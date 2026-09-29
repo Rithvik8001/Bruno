@@ -1,5 +1,6 @@
 import { formatMoney, type CurrencyCode } from "@/lib/currency";
 import { negateCents } from "@/lib/money";
+import type { BillChangeField } from "./diff";
 import { FULL_PERCENT_BPS, type SplitError } from "./types";
 
 export const billMessages = {
@@ -41,3 +42,12 @@ export function splitErrorMessage(error: SplitError, currency: CurrencyCode): st
         : `${formatMoney(negateCents(error.difference), currency)} more than the bill.`;
   }
 }
+
+export const billFieldWords = {
+  title: "name",
+  date: "date",
+  payer: "payer",
+  items: "items",
+  amounts: "tax and tip",
+  split: "split",
+} as const satisfies Record<BillChangeField, string>;

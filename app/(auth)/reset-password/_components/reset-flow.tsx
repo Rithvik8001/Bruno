@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { StepSwap } from "@/components/motion/rise";
 import { AuthHeader } from "../../_components/auth-header";
 import { RESET_STAGES, resetCopy } from "../_data";
 import { CodeStep } from "./code-step";
@@ -39,36 +40,39 @@ export function ResetFlow({ initialEmail }: ResetFlowProps) {
         title={header.title}
         subtitle={header.subtitle}
         visual={<ResetJourney position={positionOf(state)} />}
+        stepKey={state.step}
       />
 
-      {state.step === "email" && (
-        <EmailStep
-          email={email}
-          onEmailChange={setEmail}
-          onCodeSent={(sentTo) => setState({ step: "code", email: sentTo })}
-        />
-      )}
+      <StepSwap stepKey={state.step}>
+        {state.step === "email" && (
+          <EmailStep
+            email={email}
+            onEmailChange={setEmail}
+            onCodeSent={(sentTo) => setState({ step: "code", email: sentTo })}
+          />
+        )}
 
-      {state.step === "code" && (
-        <CodeStep
-          key={`${state.email}:${state.error ?? ""}`}
-          email={state.email}
-          initialError={state.error}
-          onVerified={(otp) => setState({ step: "password", email: state.email, otp })}
-          onChangeEmail={() => setState({ step: "email" })}
-        />
-      )}
+        {state.step === "code" && (
+          <CodeStep
+            key={`${state.email}:${state.error ?? ""}`}
+            email={state.email}
+            initialError={state.error}
+            onVerified={(otp) => setState({ step: "password", email: state.email, otp })}
+            onChangeEmail={() => setState({ step: "email" })}
+          />
+        )}
 
-      {state.step === "password" && (
-        <NewPasswordStep
-          email={state.email}
-          otp={state.otp}
-          onCodeRejected={(error) => setState({ step: "code", email: state.email, error })}
-          onReset={(outcome) => setState({ step: "done", ...outcome })}
-        />
-      )}
+        {state.step === "password" && (
+          <NewPasswordStep
+            email={state.email}
+            otp={state.otp}
+            onCodeRejected={(error) => setState({ step: "code", email: state.email, error })}
+            onReset={(outcome) => setState({ step: "done", ...outcome })}
+          />
+        )}
 
-      {state.step === "done" && <DoneStep signedIn={state.signedIn} signedOutCount={state.signedOutCount} />}
+        {state.step === "done" && <DoneStep signedIn={state.signedIn} signedOutCount={state.signedOutCount} />}
+      </StepSwap>
     </>
   );
 }

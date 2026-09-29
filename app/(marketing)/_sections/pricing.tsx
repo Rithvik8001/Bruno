@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { Icon } from "@/components/icons/icon";
-import { buttonVariants } from "@/components/ui/button";
+import { PressLink } from "@/components/motion/motion-link";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { Chip } from "@/components/ui/chip";
 import { cn } from "@/lib/utils/cn";
 import { plans, pricingContent, routes, SECTION_IDS, type Plan } from "../_data";
@@ -23,12 +23,13 @@ function PlanCard({ plan }: { plan: Plan }) {
           <span className="text-small text-text-2">{plan.period}</span>
         </div>
       </div>
-      <Link
+      <PressLink
+        wide
         href={routes.signUp}
         className={cn(buttonVariants({ variant: plan.cta.variant, size: "md", fullWidth: true }), "h-11 text-small")}
       >
         {plan.cta.label}
-      </Link>
+      </PressLink>
       <ul className="m-0 grid list-none content-start gap-2.5 p-0 text-small">
         {plan.features.map((f) => (
           <li key={f.label} className="flex items-start gap-2.5">

@@ -1,11 +1,39 @@
-import type { ComingSoonContent } from "../_data";
+import { billFieldWords } from "@/lib/bills/messages";
+import type { BillChangeField } from "@/lib/bills/diff";
+import type { FeedFilter } from "@/lib/feed/types";
+
+const list = (words: readonly string[]) =>
+  words.length <= 1 ? (words[0] ?? "") : `${words.slice(0, -1).join(", ")} and ${words.at(-1)}`;
 
 export const activityCopy = {
   metaTitle: "Activity",
-  comingSoon: {
-    title: "Activity",
-    body: "Claims, payments and reminders will show up here as they happen.",
-    moment: "hourglass",
-    tint: "cyan",
+  title: "Activity",
+  filtersLabel: "Filter activity",
+  filters: { all: "All", you: "You", payments: "Payments" } as const satisfies Record<FeedFilter, string>,
+  empty: {
+    title: "Quiet so far.",
+    body: "Bills, claims and payments will show up here as they happen.",
   },
-} as const satisfies { metaTitle: string; comingSoon: ComingSoonContent };
+  earlier: "Show earlier",
+  you: "You",
+  youLower: "you",
+  your: "your",
+  someone: "Someone",
+  line: {
+    billAdded: (title: string) => `added ${title}`,
+    billEdited: (fields: readonly BillChangeField[], title: string) =>
+      `changed the ${list(fields.map((f) => billFieldWords[f]))} on ${title}`,
+    billDeleted: (title: string) => `deleted ${title}`,
+    paid: (to: string) => `paid ${to}`,
+    saysPaid: (to: string) => `says they paid ${to}`,
+    confirmed: (fromPossessive: string) => `confirmed ${fromPossessive} payment`,
+    declined: (fromPossessive: string) => `said they didn't get ${fromPossessive} payment`,
+    cancelled: (to: string) => `cancelled a payment to ${to}`,
+    cancelledFrom: (fromPossessive: string) => `cancelled ${fromPossessive} payment`,
+    joined: (group: string) => `joined ${group}`,
+    started: (group: string) => `started ${group}`,
+    left: (group: string) => `left ${group}`,
+    removed: (name: string, group: string) => `removed ${name} from ${group}`,
+  },
+  possessive: (name: string) => `${name}’s`,
+} as const;

@@ -8,6 +8,7 @@ import {
   type MomentIconId,
 } from "@/lib/design-system/icons3d";
 import type { Tint } from "@/lib/design-system/tokens";
+import { PopSwap } from "@/components/motion/check-in";
 import { cn } from "@/lib/utils/cn";
 
 export interface Icon3dProps {
@@ -63,7 +64,9 @@ export function MomentTile({ icon, tint, label, size, className }: MomentTilePro
       aria-label={label}
       className={cn(artTileVariants({ size }), className)}
     >
-      <Icon3d icon={icon} size={px} />
+      <PopSwap swapKey={icon} className="grid">
+        <Icon3d icon={icon} size={px} />
+      </PopSwap>
     </span>
   );
 }
@@ -77,9 +80,12 @@ export interface GroupArtTileProps extends VariantProps<typeof artTileVariants> 
 
 export function GroupArtTile({ name, tint, art, size, className }: GroupArtTileProps) {
   const px = Math.round(tilePixels[size ?? "md"] * 0.68);
+  const icon = groupArtFor(name, art);
   return (
     <span role="img" aria-label={name} data-tint={tint} className={cn(artTileVariants({ size }), className)}>
-      <Icon3d icon={groupArtFor(name, art)} size={px} className="translate-y-[2%]" />
+      <PopSwap swapKey={icon} className="grid">
+        <Icon3d icon={icon} size={px} className="translate-y-[2%]" />
+      </PopSwap>
     </span>
   );
 }

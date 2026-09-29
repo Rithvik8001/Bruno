@@ -48,7 +48,7 @@ export function EmailStep({ email, onEmailChange, onCodeSent }: EmailStepProps) 
   };
 
   return (
-    <form onSubmit={onSubmit} noValidate className="grid animate-rise gap-4">
+    <form onSubmit={onSubmit} noValidate className="grid gap-4">
       <TextField
         label={authCopy.email.label}
         name="email"

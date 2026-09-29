@@ -1,6 +1,9 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { motion } from "motion/react";
+import { useId, type ReactNode } from "react";
+import { buzz, HAPTICS } from "@/lib/motion/haptics";
+import { SOFT_SPRING } from "@/lib/motion/tokens";
 import { useRovingSelection } from "@/lib/hooks/use-roving-selection";
 import { cn } from "@/lib/utils/cn";
 
@@ -34,9 +37,9 @@ const itemClass = {
 
 const thumbClass = (selected: boolean, size: Size) =>
   cn(
-    "cursor-pointer rounded-sm font-medium transition-[background-color,color,box-shadow] duration-150 ease-standard",
+    "relative cursor-pointer rounded-sm bg-transparent font-medium transition-colors duration-150 ease-standard",
     itemClass[size],
-    selected ? "bg-bg text-text shadow-thumb" : "bg-transparent text-text-2 hover:text-text",
+    selected ? "text-text" : "text-text-2 hover:text-text",
   );
 
 function SegmentGroup<T extends string>({
@@ -49,7 +52,12 @@ function SegmentGroup<T extends string>({
   role,
 }: SegmentedBaseProps<T> & { size: Size; role: "radiogroup" | "tablist" }) {
   const values = options.map((o) => o.value);
-  const { register, onKeyDown } = useRovingSelection(values, value, onValueChange);
+  const thumbId = useId();
+  const select = (next: T) => {
+    if (next !== value) buzz(HAPTICS.select);
+    onValueChange(next);
+  };
+  const { register, onKeyDown } = useRovingSelection(values, value, select);
   const itemRole = role === "tablist" ? "tab" : "radio";
 
   return (
@@ -57,7 +65,7 @@ function SegmentGroup<T extends string>({
       role={role}
       aria-label={label}
       onKeyDown={onKeyDown}
-      className={cn("gap-0.5 rounded-control bg-surface p-0.75", trackClass[size], className)}
+      className={cn("isolate gap-0.5 rounded-control bg-surface p-0.75", trackClass[size], className)}
     >
       {options.map((o) => {
         const selected = o.value === value;
@@ -71,9 +79,17 @@ function SegmentGroup<T extends string>({
             {...(itemRole === "tab"
               ? { "aria-selected": selected, "aria-controls": o.controls }
               : { "aria-checked": selected })}
-            onClick={() => onValueChange(o.value)}
+            onClick={() => select(o.value)}
             className={thumbClass(selected, size)}
           >
+            {selected && (
+              <motion.span
+                layoutId={thumbId}
+                aria-hidden
+                transition={SOFT_SPRING}
+                className="absolute inset-0 -z-10 rounded-sm bg-bg shadow-thumb"
+              />
+            )}
             {o.label}
           </button>
         );

@@ -1,12 +1,19 @@
 "use client";
 
+import { AnimatePresence, motion, useAnimate, useReducedMotion } from "motion/react";
 import { useState } from "react";
 import { Icon } from "@/components/icons/icon";
+import { DotBurst } from "@/components/motion/bursts";
+import { CheckIn } from "@/components/motion/check-in";
+import { hoverLift, pressMotion } from "@/components/motion/press";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/ui/text-field";
 import { BUDDY_SHAPES, buddyShapes, type BuddyShape } from "@/lib/design-system/buddies";
 import { PALETTE_TINTS, type PaletteTint } from "@/lib/design-system/tokens";
+import { buzz, HAPTICS } from "@/lib/motion/haptics";
+import { SQUISH } from "@/lib/motion/keyframes";
+import { SPRING, T } from "@/lib/motion/tokens";
 import { firstNameOf } from "@/lib/people/defaults";
 import { cn } from "@/lib/utils/cn";
 import { welcomeCopy } from "../_data";
@@ -27,34 +34,50 @@ export interface ProfileStepProps {
 }
 
 export function ProfileStep({ value, onChange, onNext, pending, error }: ProfileStepProps) {
-  const [squish, setSquish] = useState(0);
+  const [burst, setBurst] = useState(0);
+  const [scope, animate] = useAnimate<HTMLSpanElement>();
+  const reduce = useReducedMotion();
   const copy = welcomeCopy.profile;
   const first = firstNameOf(value.displayName) || "there";
+  const squish = () => {
+    if (reduce || !scope.current) return;
+    void animate(scope.current, SQUISH.keyframes, SQUISH.transition);
+  };
   const pick = (next: Partial<ProfileValue>) => {
     onChange({ ...value, ...next });
-    setSquish((n) => n + 1);
+    setBurst((n) => n + 1);
+    squish();
   };
 
   return (
-    <div className="grid animate-rise gap-6">
+    <div className="grid gap-6">
       <div className="grid gap-1.5 text-center">
         <h1 className="m-0 text-heading text-balance">{copy.title(first)}</h1>
         <p className="m-0 text-text-2">{copy.subtitle}</p>
       </div>
 
       <div className="grid justify-items-center gap-3.5 pt-2 pb-1">
-        <button
-          key={squish}
-          type="button"
-          aria-label={copy.avatar}
-          onClick={() => setSquish((n) => n + 1)}
-          className={cn("cursor-pointer rounded-full", squish > 0 && "animate-squish")}
-        >
-          <Avatar name={value.displayName || first} tint={value.tint} buddy={value.buddy} size="3xl" className="size-28" />
-        </button>
-        <span data-tint={value.tint} className="inline-flex h-7 items-center rounded-sm bg-tint-bg px-3 text-footnote font-semibold text-tint">
-          {buddyShapes[value.buddy].name}
+        <span data-tint={value.tint} className="relative grid place-items-center">
+          <motion.button type="button" aria-label={copy.avatar} onClick={squish} {...pressMotion()} className="cursor-pointer rounded-full">
+            <span ref={scope} className="block origin-bottom">
+              <Avatar name={value.displayName || first} tint={value.tint} buddy={value.buddy} size="3xl" className="size-28" />
+            </span>
+          </motion.button>
+          {burst > 0 && <DotBurst key={burst} />}
         </span>
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.span
+            key={value.buddy}
+            data-tint={value.tint}
+            initial={{ opacity: 0, scale: 0.6, y: 4 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, transition: { duration: T.t1 } }}
+            transition={SPRING}
+            className="inline-flex h-7 items-center rounded-sm bg-tint-bg px-3 text-footnote font-semibold text-tint"
+          >
+            {buddyShapes[value.buddy].name}
+          </motion.span>
+        </AnimatePresence>
       </div>
 
       <TextField
@@ -79,13 +102,9 @@ export function ProfileStep({ value, onChange, onNext, pending, error }: Profile
               onClick={() => pick({ buddy: shape })}
               className="gap-1.5 px-1 pt-2.5 pb-2"
             >
-              <Avatar
-                name={value.displayName || first}
-                tint={value.tint}
-                buddy={shape}
-                size="2xl"
-                className={cn("size-13 transition-transform duration-300 ease-spring", value.buddy === shape && "scale-106")}
-              />
+              <motion.span initial={false} animate={{ scale: value.buddy === shape ? 1.06 : 1 }} transition={SPRING} className="block">
+                <Avatar name={value.displayName || first} tint={value.tint} buddy={shape} size="2xl" className="size-13" />
+              </motion.span>
               <span className={cn("text-caption", value.buddy === shape ? "text-text" : "font-medium text-text-2")}>
                 {buddyShapes[shape].name}
               </span>
@@ -98,7 +117,7 @@ export function ProfileStep({ value, onChange, onNext, pending, error }: Profile
         <span className="text-small font-medium">{copy.colour}</span>
         <div role="radiogroup" aria-label={copy.colour} className="grid grid-cols-9 gap-1.5">
           {PALETTE_TINTS.map((tint) => (
-            <button
+            <motion.button
               key={tint}
               type="button"
               role="radio"
@@ -106,15 +125,25 @@ export function ProfileStep({ value, onChange, onNext, pending, error }: Profile
               aria-label={tint}
               data-tint={tint}
               onClick={() => pick({ tint })}
+              onTapStart={() => buzz(HAPTICS.select)}
+              initial={false}
+              animate={{ scale: value.tint === tint ? 1.08 : 1 }}
+              whileHover={hoverLift.whileHover}
+              whileTap={hoverLift.whileTap}
+              transition={hoverLift.transition}
               className={cn(
-                "grid aspect-square cursor-pointer place-items-center rounded-full bg-tint-bg transition-[box-shadow,transform] duration-300 ease-spring hover:-translate-y-0.5 active:scale-90",
-                value.tint === tint && "scale-108 ring-2 ring-tint ring-offset-2 ring-offset-bg",
+                "grid aspect-square cursor-pointer place-items-center rounded-full bg-tint-bg transition-shadow duration-300 ease-spring",
+                value.tint === tint && "ring-2 ring-tint ring-offset-2 ring-offset-bg",
               )}
             >
               <span className="grid size-[44%] place-items-center rounded-full bg-tint">
-                {value.tint === tint && <Icon name="check" size={10} strokeWidth={4} className="text-white" />}
+                {value.tint === tint && (
+                  <CheckIn className="grid place-items-center">
+                    <Icon name="check" size={10} strokeWidth={4} className="text-white" />
+                  </CheckIn>
+                )}
               </span>
-            </button>
+            </motion.button>
           ))}
         </div>
       </div>

@@ -92,17 +92,6 @@
   --default-transition-duration: var(--motion-fast);
   --default-transition-timing-function: var(--motion-ease-standard);
 
-  --animate-pulse-soft: pulse-soft 1.6s var(--motion-ease-standard) infinite;
-  --animate-rise: rise var(--motion-slow) var(--motion-ease-standard) both;
-  --animate-pop-in: pop-in var(--motion-base) var(--motion-ease-spring) both;
-  --animate-print-in: print-in var(--motion-base) var(--motion-ease-standard) both;
-  --animate-bob: bob 2.6s ease-in-out infinite;
-  --animate-twinkle: twinkle 1.8s var(--motion-ease-standard) infinite;
-  --animate-check-in: check-in 420ms var(--motion-ease-spring) both;
-  --animate-shake: shake 380ms ease-out;
-  --animate-squish: squish 560ms ease-out;
-  --animate-wave: wave 1.6s ease-in-out 2;
-  --animate-pop-spring: pop-spring 480ms var(--motion-ease-spring) both;
   --animate-buddy-blink: buddy-blink var(--buddy-blink-duration, 4s) linear var(--buddy-blink-delay, 0s) infinite;
 
   --breakpoint-nav: 47.5rem;
@@ -111,58 +100,6 @@
   --container-landing: 70rem;
 }
 
-@keyframes pulse-soft {
-  0%,
-  100% {
-    opacity: 0.55;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-@keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-}
-@keyframes pop-in {
-  from {
-    opacity: 0;
-    transform: scale(0.6);
-  }
-}
-@keyframes bob {
-  0%,
-  100% {
-    transform: translateY(0) rotate(-4deg);
-  }
-  50% {
-    transform: translateY(-4px) rotate(4deg);
-  }
-}
-@keyframes twinkle {
-  0%,
-  100% {
-    opacity: 0;
-    transform: scale(0.4);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-@keyframes check-in {
-  0% {
-    transform: scale(0) rotate(-30deg);
-  }
-  70% {
-    transform: scale(1.2) rotate(6deg);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
 @keyframes buddy-blink {
   0%,
   93%,
@@ -173,56 +110,6 @@
     transform: scaleY(0.1);
   }
 }
-@keyframes squish {
-  25% {
-    transform: scale(1.16, 0.86);
-  }
-  50% {
-    transform: scale(0.92, 1.1);
-  }
-  75% {
-    transform: scale(1.04, 0.97);
-  }
-}
-@keyframes wave {
-  30% {
-    transform: translateY(-10px) rotate(-8deg);
-  }
-  60% {
-    transform: translateY(-4px) rotate(6deg);
-  }
-}
-@keyframes pop-spring {
-  0% {
-    opacity: 0;
-    transform: scale(0.3);
-  }
-  70% {
-    opacity: 1;
-    transform: scale(1.12);
-  }
-}
-@keyframes shake {
-  20% {
-    transform: translateX(-8px);
-  }
-  40% {
-    transform: translateX(7px);
-  }
-  60% {
-    transform: translateX(-4px);
-  }
-  80% {
-    transform: translateX(2px);
-  }
-}
-@keyframes print-in {
-  from {
-    opacity: 0;
-    transform: translateY(-6px);
-  }
-}
-
 @layer base {
   html {
     color-scheme: light;
@@ -276,6 +163,9 @@
   svg[data-duotone] :is(rect, circle, ellipse, path[d$="z"], path[d$="Z"]):not([fill]) {
     fill: currentColor;
     fill-opacity: 0.16;
+  }
+  [aria-current="page"] > * > svg[data-duotone] :is(rect, circle, ellipse, path[d$="z"], path[d$="Z"]):not([fill]) {
+    fill-opacity: 0.24;
   }
 }
 

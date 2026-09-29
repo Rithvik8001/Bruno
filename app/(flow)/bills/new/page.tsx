@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { buttonVariants } from "@/components/ui/button";
+import { PressLink } from "@/components/motion/motion-link";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { EmptyState } from "@/components/ui/empty-state";
 import { firstParam } from "@/lib/auth/redirect";
 import { billParams, routes } from "@/lib/auth/rules";
@@ -40,9 +40,9 @@ export default async function NewBillPage({ searchParams }: PageProps<"/bills/ne
           message={copy.empty.message}
           className="min-h-80"
           action={
-            <Link href={routes.groups} className={cn(buttonVariants({ size: "md" }), "text-small")}>
+            <PressLink href={routes.groups} className={cn(buttonVariants({ size: "md" }), "text-small")}>
               {copy.empty.cta}
-            </Link>
+            </PressLink>
           }
         />
       )}

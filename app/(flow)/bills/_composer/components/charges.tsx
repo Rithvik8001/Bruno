@@ -1,6 +1,8 @@
 "use client";
 
+import { motion } from "motion/react";
 import type { ReactNode } from "react";
+import { pressMotion } from "@/components/motion/press";
 import { AmountInput } from "@/components/ui/amount-input";
 import type { BillTotals } from "@/lib/bills/types";
 import { formatAmount, formatMoney, type CurrencyCode } from "@/lib/currency";
@@ -34,19 +36,20 @@ function TipPresets({ tip, onTip }: { tip: DraftTip; onTip: (tip: DraftTip) => v
       {TIP_PRESETS.map((percent) => {
         const selected = tip.mode === "percent" && tip.percent === percent;
         return (
-          <button
+          <motion.button
             key={percent}
             type="button"
             role="radio"
             aria-checked={selected}
             onClick={() => onTip(selected ? { mode: "none" } : { mode: "percent", percent })}
+            {...pressMotion()}
             className={cn(
               "h-5.5 cursor-pointer rounded-xs px-1.75 text-[11px] font-semibold transition-[background-color,color] duration-150 ease-standard",
               selected ? "bg-bg text-text shadow-thumb" : "bg-transparent text-muted hover:text-text",
             )}
           >
             {percent}%
-          </button>
+          </motion.button>
         );
       })}
     </span>

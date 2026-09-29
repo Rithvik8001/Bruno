@@ -1,9 +1,13 @@
 "use client";
 
+import { AnimatePresence, motion } from "motion/react";
+import { pressMotion } from "@/components/motion/press";
 import { Avatar } from "@/components/ui/avatar";
 import { CheckIndicator } from "@/components/ui/checkbox";
 import { formatAmount, type CurrencyCode } from "@/lib/currency";
 import type { PersonId } from "@/lib/domain/ids";
+import { buzz, HAPTICS } from "@/lib/motion/haptics";
+import { EASE, SPRING_CURVE, T } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils/cn";
 import { composerCopy } from "../data";
 import type { ClaimLine } from "../lib/derive";
@@ -26,18 +30,21 @@ export function ClaimRow({ line, selected, roster, you, currency, onToggle }: Cl
   const claimed = line.claimants.length > 0;
 
   return (
-    <button
+    <motion.button
       type="button"
       aria-pressed={mine}
-      onClick={onToggle}
+      onClick={() => {
+        if (!mine) buzz(HAPTICS.select);
+        onToggle();
+      }}
+      {...pressMotion(true)}
       className={cn(
         "grid min-h-15 w-full cursor-pointer grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-t border-line bg-transparent p-0 text-left",
-        "transition-[transform,opacity] duration-150 ease-standard active:scale-[0.985] active:opacity-70",
         "focus-visible:rounded-xs focus-visible:-outline-offset-2",
       )}
     >
       <span className="flex min-w-0 items-center gap-3">
-        <CheckIndicator checked={mine} className={mine ? "animate-check-in" : undefined} />
+        <CheckIndicator checked={mine} />
         <span className="grid min-w-0">
           <span className="truncate font-medium">
             {line.name}
@@ -50,19 +57,23 @@ export function ClaimRow({ line, selected, roster, you, currency, onToggle }: Cl
       </span>
       <span className="flex items-center gap-2.5">
         <span aria-hidden className="flex">
-          {line.claimants.slice(0, MAX_FACES).map((id) => {
-            const person = roster.get(id);
-            return person ? (
-              <Avatar
-                key={id}
-                name={person.displayName}
-                tint={person.tint}
-                buddy={person.buddy}
-                size="sm"
-                className="-ml-1.5 animate-pop-in ring-2 ring-surface first:ml-0"
-              />
-            ) : null;
-          })}
+          <AnimatePresence mode="popLayout" initial={false}>
+            {line.claimants.slice(0, MAX_FACES).map((id) => {
+              const person = roster.get(id);
+              return person ? (
+                <motion.span
+                  key={id}
+                  initial={{ scale: 0.3, opacity: 0 }}
+                  animate={{ scale: [0.3, 1.12, 1], opacity: 1 }}
+                  exit={{ scale: 0.3, opacity: 0, transition: { duration: T.t1, ease: EASE } }}
+                  transition={{ duration: T.pop, ease: SPRING_CURVE, opacity: { duration: T.t1 } }}
+                  className="-ml-1.5 inline-flex rounded-full ring-2 ring-surface first:ml-0"
+                >
+                  <Avatar name={person.displayName} tint={person.tint} buddy={person.buddy} size="sm" />
+                </motion.span>
+              ) : null;
+            })}
+          </AnimatePresence>
         </span>
         <span className="grid justify-items-end">
           <span className={mine ? "font-semibold" : "font-medium"}>{formatAmount(line.price, currency)}</span>
@@ -71,6 +82,6 @@ export function ClaimRow({ line, selected, roster, you, currency, onToggle }: Cl
           )}
         </span>
       </span>
-    </button>
+    </motion.button>
   );
 }
