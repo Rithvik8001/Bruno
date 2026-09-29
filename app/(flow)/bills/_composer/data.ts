@@ -41,6 +41,14 @@ export const flowModeCopy = {
   },
 } as const satisfies Record<FlowModeKind, Record<string, string | ((title: string, total: string) => string)>>;
 
+export const claimingEditCopy = {
+  back: "Claiming",
+  itemsTitle: "Edit the items",
+  itemsBody: "Claims on items you keep stay put. Everyone sees changes straight away.",
+  saved: (title: string) => `${title} updated. Back to claiming.`,
+  live: (title: string) => `${title} is open. Send the link round.`,
+} as const;
+
 export const composerCopy = {
   items: {
     place: { label: "Place", placeholder: "Where was this?" },
@@ -72,6 +80,7 @@ export const composerCopy = {
     },
     footer: (items: number, group: string) => `${plural(items, "item", "items")} · ${group}`,
     cta: "Split it",
+    claimingCta: "Save and back to claiming",
   },
   claim: {
     back: "Items",
@@ -88,6 +97,7 @@ export const composerCopy = {
     unclaimedBody: "Keep assigning, or split what's left between everyone.",
     splitRest: "Split the rest",
     editor: { title: "Need percentages or fixed amounts?", body: "Open the split editor." },
+    live: { title: "Let everyone claim", body: "Send a link and they tap their own items.", saving: "Saving the bill…" },
     shareLabel: (name: string) => (name === "You" ? "Your share" : `${name}'s share`),
     status: { ready: "Ready", progress: (done: number, all: number) => `${done} of ${all} claimed` },
   },

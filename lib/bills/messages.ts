@@ -51,3 +51,17 @@ export const billFieldWords = {
   amounts: "tax and tip",
   split: "split",
 } as const satisfies Record<BillChangeField, string>;
+
+export interface ClaimedItem {
+  readonly name: string;
+  readonly ways: number;
+}
+
+const claimedName = (item: ClaimedItem) =>
+  item.ways === 1 ? item.name : item.ways === 2 ? `half the ${item.name}` : `a share of the ${item.name}`;
+
+export function claimedList(items: readonly ClaimedItem[]): string {
+  const names = items.map(claimedName);
+  if (names.length <= 1) return names.join("");
+  return `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
+}

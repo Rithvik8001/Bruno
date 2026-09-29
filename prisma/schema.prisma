@@ -131,6 +131,9 @@ enum ActivityType {
   SETTLEMENT_RECORDED
   SETTLEMENT_CONFIRMED
   SETTLEMENT_CANCELLED
+  BILL_CLAIMING_OPENED
+  BILL_CLAIMED
+  CLAIMS_REMINDED
 }
 
 model Person {
@@ -254,6 +257,7 @@ model Bill {
   discountCents Int         @default(0)
   totalCents    Int         @default(0)
   slug          String      @unique
+  claimCode     String?     @unique
   finalizedAt   DateTime?
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @default(now()) @updatedAt

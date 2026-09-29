@@ -15,6 +15,16 @@ export const iconRegistry = {
   "chevron-right": { node: <path d="M9 6l6 6-6 6" /> },
   "arrow-right": { node: <path d="M5 12h14M13 6l6 6-6 6" /> },
   "align-left": { node: <path d="M4 7h16M4 12h10M4 17h6" /> },
+  bell: { node: <path d="M6 16V11a6 6 0 1112 0v5l1.5 2h-15zM10 20.5a2 2 0 004 0" /> },
+  split: { node: <path d="M12 4v16M5 8l-2 4 2 4M19 8l2 4-2 4" /> },
+  "person-outline": {
+    node: (
+      <>
+        <circle cx="12" cy="9" r="3.5" />
+        <path d="M5.5 19.5c1.2-3 3.7-4.5 6.5-4.5s5.3 1.5 6.5 4.5" />
+      </>
+    ),
+  },
   pencil: { node: <path d="M4 20h4L19 9l-4-4L4 16v4zM13 7l4 4" /> },
   search: {
     node: (

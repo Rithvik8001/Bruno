@@ -29,6 +29,7 @@ export const routes = {
     `/bills/${encodeURIComponent(slug)}/edit${step ? `?step=${step}` : ""}`,
   invite: (slug: string) => `/j/${encodeURIComponent(slug)}`,
   claimGuest: (token: string) => `/j/claim/${encodeURIComponent(token)}`,
+  claimBill: (code: string) => `/b/${encodeURIComponent(code)}`,
   settle: (groupId: string, personId: string, back?: string) =>
     `/groups/${encodeURIComponent(groupId)}/settle/${encodeURIComponent(personId)}${back ? `?back=${encodeURIComponent(back)}` : ""}`,
 } as const;
@@ -54,6 +55,6 @@ export const signedInRoutePrefixes: readonly string[] = [
   routes.join,
 ];
 
-export const publicRoutePrefixes: readonly string[] = ["/j/claim"];
+export const publicRoutePrefixes: readonly string[] = ["/j/claim", "/b"];
 
 export const otpExpiresInMinutes = authRules.otp.expiresInSeconds / 60;

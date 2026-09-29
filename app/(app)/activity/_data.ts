@@ -1,4 +1,4 @@
-import { billFieldWords } from "@/lib/bills/messages";
+import { billFieldWords, claimedList, type ClaimedItem } from "@/lib/bills/messages";
 import type { BillChangeField } from "@/lib/bills/diff";
 import type { FeedFilter } from "@/lib/feed/types";
 
@@ -24,6 +24,11 @@ export const activityCopy = {
     billEdited: (fields: readonly BillChangeField[], title: string) =>
       `changed the ${list(fields.map((f) => billFieldWords[f]))} on ${title}`,
     billDeleted: (title: string) => `deleted ${title}`,
+    billClaiming: (title: string, reopened: boolean) =>
+      reopened ? `reopened claiming on ${title}` : `opened ${title} for claiming`,
+    billClaimed: (items: readonly ClaimedItem[], title: string) => `claimed ${claimedList(items)} on ${title}`,
+    claimsReminded: (count: number, title: string) =>
+      `reminded ${count} ${count === 1 ? "person" : "people"} to claim on ${title}`,
     paid: (to: string) => `paid ${to}`,
     saysPaid: (to: string) => `says they paid ${to}`,
     confirmed: (fromPossessive: string) => `confirmed ${fromPossessive} payment`,
@@ -35,6 +40,7 @@ export const activityCopy = {
     added: (name: string, group: string) => `added ${name} to ${group}`,
     addedGuest: (name: string) => `added ${name} as a guest`,
     claimed: "joined Bruno and took over their guest spot",
+    linked: (group: string) => `joined ${group} from a bill link`,
     left: (group: string) => `left ${group}`,
     removed: (name: string, group: string) => `removed ${name} from ${group}`,
   },

@@ -2,6 +2,7 @@ import "server-only";
 import {
   ledgerView,
   loadPeople,
+  claimingBills,
   summarizeBills,
   toGroupRef,
   type BillGroupRef,
@@ -149,7 +150,8 @@ export async function getHomeSummary(you: PersonId): Promise<HomeSummaryData> {
     .slice(0, PEOPLE_MAX);
 
   const summaries = summarizeBills(ledger.bills, view, people, groups, you, now);
-  const openBills = summaries.filter((b) => b.yourBalance !== 0).slice(0, OPEN_BILLS);
+  const claiming = await claimingBills(groupRows.map((g) => g.id));
+  const openBills = [...claiming, ...summaries.filter((b) => b.yourBalance !== 0)].slice(0, OPEN_BILLS);
 
   const lead = personRows.find((p) => p.primary !== 0);
   const toConfirm = (await pendingForYou(you))[0];
@@ -169,6 +171,6 @@ export async function getHomeSummary(you: PersonId): Promise<HomeSummaryData> {
     people: personRows,
     nextUp: nextUpOf(toConfirm, lead, leadBill, primaryCurrency),
     openBills,
-    hasAnyBills: ledger.bills.length > 0,
+    hasAnyBills: ledger.bills.length > 0 || claiming.length > 0,
   };
 }

@@ -26,6 +26,7 @@ export const groupDetailCopy = {
   billList: {
     label: "Bills in this group",
     paidBy: (name: string) => `Paid by ${name}`,
+    claiming: (claimed: number, items: number) => `${claimed} of ${items} claimed`,
   },
   balanceList: {
     label: "Balances",

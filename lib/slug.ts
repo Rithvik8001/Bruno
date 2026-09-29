@@ -19,8 +19,18 @@ export function slugify(title: string): string {
   );
 }
 
+const CODE_LENGTH = 12;
+
+function randomChars(length: number): string {
+  return Array.from({ length }, () => ALPHABET[randomInt(ALPHABET.length)]).join("");
+}
+
 function suffix(): string {
-  return Array.from({ length: SUFFIX_LENGTH }, () => ALPHABET[randomInt(ALPHABET.length)]).join("");
+  return randomChars(SUFFIX_LENGTH);
+}
+
+export function createCode(): string {
+  return randomChars(CODE_LENGTH);
 }
 
 export function createSlug(title: string): string {

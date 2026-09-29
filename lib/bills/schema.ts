@@ -26,6 +26,7 @@ export const billTipSchema = z.discriminatedUnion("kind", [
 ]);
 
 export const billItemSchema = z.object({
+  id: idSchema.optional(),
   name: z.string().trim().min(1, billMessages.itemNameMissing).max(ITEM_NAME_MAX, billMessages.itemNameTooLong(ITEM_NAME_MAX)),
   quantity: z.number().int().min(1).max(ITEM_QUANTITY_MAX),
   priceCents: centsSchema,

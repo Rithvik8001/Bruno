@@ -16,6 +16,7 @@ import { useToast } from "@/components/ui/toast";
 import { useCooldown } from "@/lib/hooks/use-cooldown";
 import { routes } from "@/lib/auth/rules";
 import { deleteBill } from "@/lib/bills/actions";
+import { reopenClaiming } from "@/lib/claiming/actions";
 import { cn } from "@/lib/utils/cn";
 import { billDetailCopy } from "../_data";
 
@@ -25,13 +26,14 @@ export interface BillActionsProps {
   shareText: string;
   editHref: string | null;
   splitHref: string | null;
+  canReopen: boolean;
 }
 
 type SheetState = "menu" | "confirm" | null;
 
 const SHARED_SECONDS = 2;
 
-export function BillActions({ billId, title, shareText, editHref, splitHref }: BillActionsProps) {
+export function BillActions({ billId, title, shareText, editHref, splitHref, canReopen }: BillActionsProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [sheet, setSheet] = useState<SheetState>(null);
@@ -64,6 +66,18 @@ export function BillActions({ billId, title, shareText, editHref, splitHref }: B
       close();
       toast({ message: copy.deleteSheet.done(result.data.title) });
       router.push(routes.group(result.data.groupId));
+    });
+
+  const reopen = () =>
+    startTransition(async () => {
+      const result = await reopenClaiming({ billId });
+      if (!result.ok) {
+        setError(result.error.message);
+        return;
+      }
+      close();
+      toast({ message: copy.actions.reopened });
+      router.push(routes.claimBill(result.data.code));
     });
 
   return (
@@ -118,6 +132,11 @@ export function BillActions({ billId, title, shareText, editHref, splitHref }: B
               </>
             ) : (
               <>
+                {canReopen && (
+                  <Button variant="secondary" size="lg" fullWidth loading={pending} onClick={reopen}>
+                    {copy.actions.reopen}
+                  </Button>
+                )}
                 {splitHref && (
                   <PressLink wide href={splitHref} className={cn(buttonVariants({ variant: "secondary", size: "lg", fullWidth: true }))}>
                     {copy.actions.changeSplit}

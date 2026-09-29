@@ -6,11 +6,12 @@ import { StepSwap } from "@/components/motion/rise";
 import { useToast } from "@/components/ui/toast";
 import { routes } from "@/lib/auth/rules";
 import { createBill, updateBill } from "@/lib/bills/actions";
+import { startClaiming } from "@/lib/claiming/actions";
 import type { ActionResult } from "@/lib/actions/errors";
 import { formatMoney } from "@/lib/currency";
 import type { PersonId } from "@/lib/domain/ids";
 import type { BillComposer } from "@/lib/groups/queries";
-import { composerCopy, flowModeCopy } from "../data";
+import { claimingEditCopy, composerCopy, flowModeCopy } from "../data";
 import { draftTotals, toBillValues, toCreateInput, type FlowMode } from "../lib/derive";
 import { emptyDraft, todayIso, type BillDraft } from "../lib/draft";
 import { dayLabel } from "../lib/format";
@@ -53,7 +54,9 @@ export function ManualBillFlow({ composer, you, mode, initialDraft, initialStep 
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const modeCopy = flowModeCopy[mode.kind];
-  const exitHref = mode.kind === "edit" ? routes.bill(mode.slug) : routes.newBillFor(composer.id);
+  const claimCode = mode.kind === "edit" ? mode.claimCode : null;
+  const claimHref = claimCode ? routes.claimBill(claimCode) : null;
+  const exitHref = claimHref ?? (mode.kind === "edit" ? routes.bill(mode.slug) : routes.newBillFor(composer.id));
 
   const go = (next: FlowStep) => {
     setError(null);
@@ -74,6 +77,33 @@ export function ManualBillFlow({ composer, you, mode, initialDraft, initialStep 
     const result = await createBill(toCreateInput(draft, composer.id, memberIds, flow));
     return result.ok ? { ok: true, data: { href: routes.group(result.data.groupId), title: result.data.title } } : result;
   };
+
+  const saveItems = () =>
+    startTransition(async () => {
+      if (mode.kind !== "edit" || !claimHref) return;
+      setError(null);
+      const result = await updateBill({ ...toBillValues(draft, memberIds, "items"), billId: mode.billId });
+      if (!result.ok) {
+        setError(result.error.message);
+        return;
+      }
+      toast({ message: claimingEditCopy.saved(result.data.title) });
+      router.push(claimHref);
+    });
+
+  const goLive = () =>
+    startTransition(async () => {
+      setError(null);
+      const result = await startClaiming(toCreateInput(draft, composer.id, memberIds, "items"));
+      if (!result.ok) {
+        const back = stepForFields(result.error.fields);
+        if (back) go(back);
+        setError(result.error.message);
+        return;
+      }
+      toast({ message: claimingEditCopy.live(result.data.title) });
+      router.push(routes.claimBill(result.data.code));
+    });
 
   const save = (flow: FlowMode) =>
     startTransition(async () => {
@@ -104,9 +134,11 @@ export function ManualBillFlow({ composer, you, mode, initialDraft, initialStep 
           composer={composer}
           you={you}
           error={error}
-          modeCopy={modeCopy}
+          modeCopy={claimHref ? claimingEditCopy : modeCopy}
+          cta={claimHref ? composerCopy.items.claimingCta : composerCopy.items.cta}
+          pending={pending}
           onBack={() => router.push(exitHref)}
-          onNext={() => go("claim")}
+          onNext={claimHref ? saveItems : () => go("claim")}
         />
       )}
       {step === "claim" && (
@@ -123,6 +155,8 @@ export function ManualBillFlow({ composer, you, mode, initialDraft, initialStep 
           cta={modeCopy.finish}
           onBack={() => go("items")}
           onEditor={() => go("split")}
+          onLive={mode.kind === "create" ? goLive : null}
+          livePending={pending}
           onFinish={() => save("items")}
         />
       )}
@@ -137,7 +171,7 @@ export function ManualBillFlow({ composer, you, mode, initialDraft, initialStep 
           error={error}
           pending={pending}
           cta={modeCopy.save}
-          onBack={() => go("claim")}
+          onBack={() => (claimHref ? router.push(claimHref) : go("claim"))}
           onSave={() => save("split")}
         />
       )}

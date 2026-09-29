@@ -15,10 +15,14 @@ export function BillsSection({ bills, you, now }: { bills: readonly BillSummary[
       {bills.map((bill) => (
         <StaggerItem as="li" key={bill.id}>
           <BillRow
-            href={routes.bill(bill.slug)}
+            href={bill.claiming ? routes.claimBill(bill.claiming.code) : routes.bill(bill.slug)}
             title={bill.title}
             status={bill.status}
-            meta={copy.billList.paidBy(bill.payer.id === you ? copy.youName.toLowerCase() : firstNameOf(bill.payer.displayName))}
+            meta={
+              bill.claiming
+                ? copy.billList.claiming(bill.claiming.claimed, bill.claiming.items)
+                : copy.billList.paidBy(bill.payer.id === you ? copy.youName.toLowerCase() : firstNameOf(bill.payer.displayName))
+            }
             total={formatMoney(bill.total, bill.currency)}
             when={shortDay(bill.occurredAt, now)}
           />

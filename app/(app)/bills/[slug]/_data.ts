@@ -1,9 +1,11 @@
-import { billFieldWords } from "@/lib/bills/messages";
+import { billFieldWords, claimedList, type ClaimedItem } from "@/lib/bills/messages";
 import type { BillChangeField } from "@/lib/bills/diff";
+
 import type { PersonBillStatus } from "@/lib/ledger/allocation";
 import type { Tint } from "@/lib/design-system/tokens";
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
 
 export const personStatusTint = {
   payer: "neutral",
@@ -23,6 +25,8 @@ export const billDetailCopy = {
     more: "More options",
     menuBody: "Changes update everyone's balances straight away.",
     changeSplit: "Change the split",
+    reopen: "Reopen claiming",
+    reopened: "Claiming is open again. Send the link round.",
     delete: "Delete bill",
     cancel: "Cancel",
   },
@@ -84,6 +88,10 @@ export const billDetailCopy = {
     title: "On this bill",
     created: (items: number) => `added the bill · ${plural(items, "item", "items")}`,
     updated: (fields: readonly BillChangeField[]) => `changed the ${fields.map((f) => billFieldWords[f]).join(", ")}`,
+    claimingOpened: (reopened: boolean) => (reopened ? "reopened claiming" : "opened the bill for claiming"),
+    claimed: (items: readonly ClaimedItem[]) => `claimed ${claimedList(items)}`,
+    reminded: (n: number) => `reminded ${plural(n, "person", "people")} to claim`,
+    joined: "joined from the link",
     someone: "Someone",
   },
   settle: {

@@ -1,4 +1,5 @@
 import type { BillChangeField } from "@/lib/bills/diff";
+import type { ClaimedItem } from "@/lib/bills/messages";
 import type { BillGroupRef } from "@/lib/bills/queries";
 import type { CurrencyCode } from "@/lib/currency";
 import type { MomentIconId } from "@/lib/design-system/icons3d";
@@ -14,7 +15,7 @@ export interface FeedCursor {
   readonly id: string;
 }
 
-export type MemberJoinVia = "joined" | "started" | "added" | "guest" | "claimed";
+export type MemberJoinVia = "joined" | "started" | "added" | "guest" | "claimed" | "linked";
 
 export type FeedAmountSign = "in" | "out" | "neutral";
 
@@ -39,6 +40,9 @@ export type FeedEvent =
   | { readonly kind: "billAdded"; readonly title: string }
   | { readonly kind: "billEdited"; readonly title: string; readonly fields: readonly BillChangeField[] }
   | { readonly kind: "billDeleted"; readonly title: string }
+  | { readonly kind: "billClaiming"; readonly title: string; readonly reopened: boolean }
+  | { readonly kind: "billClaimed"; readonly title: string; readonly items: readonly ClaimedItem[] }
+  | { readonly kind: "claimsReminded"; readonly title: string; readonly count: number }
   | { readonly kind: "payment"; readonly from: PersonView | null; readonly to: PersonView | null; readonly pending: boolean }
   | { readonly kind: "paymentConfirmed"; readonly from: PersonView | null; readonly to: PersonView | null }
   | {

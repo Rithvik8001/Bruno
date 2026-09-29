@@ -1,4 +1,4 @@
-import { parseActivityPayload, type ActivityType } from "@/lib/activity";
+import { parseActivityPayload, type ActivityPayload, type ActivityType } from "@/lib/activity";
 import { routes } from "@/lib/auth/rules";
 import { isBillChangeField } from "@/lib/bills/diff";
 import type { BillGroupRef } from "@/lib/bills/queries";
@@ -39,6 +39,9 @@ const look = {
   billAdded: { moment: "receipt", tint: "violet" },
   billEdited: { moment: "memo", tint: "blue" },
   billDeleted: { moment: "receipt", tint: "red" },
+  billClaiming: { moment: "receipt", tint: "orange" },
+  billClaimed: { moment: "check", tint: "green" },
+  claimsReminded: { moment: "bell", tint: "amber" },
   payment: { moment: "moneybag", tint: "green" },
   paymentConfirmed: { moment: "check", tint: "green" },
   paymentCancelled: { moment: "moneywings", tint: "amber" },
@@ -52,7 +55,8 @@ const joinVia = {
   added: "added",
   guest: "guest",
   claim: "claimed",
-} as const satisfies Record<string, MemberJoinVia>;
+  claimLink: "linked",
+} as const satisfies Record<ActivityPayload<"MEMBER_JOINED">["via"], MemberJoinVia>;
 
 const joinLook = {
   joined: look.memberJoined,
@@ -60,6 +64,7 @@ const joinLook = {
   added: { moment: "people", tint: "indigo" },
   guest: { moment: "people", tint: "indigo" },
   claimed: { moment: "link", tint: "cyan" },
+  linked: { moment: "link", tint: "cyan" },
 } as const satisfies Record<MemberJoinVia, { moment: MomentIconId; tint: PaletteTint }>;
 
 const groupTab = (group: BillGroupRef, tab: "bills" | "balances" | "members") => routes.groupTab(group.id, tab);
@@ -146,6 +151,21 @@ function eventOf(row: FeedRow, ctx: FeedContext): { event: FeedEvent; href: stri
         href: groupTab(row.group, "members"),
         amount: null,
       };
+    }
+    case "BILL_CLAIMING_OPENED": {
+      const p = parseActivityPayload("BILL_CLAIMING_OPENED", row.payload);
+      if (!p) return null;
+      return { event: { kind: "billClaiming", title: p.title, reopened: p.reopened }, href: billHref, amount: null };
+    }
+    case "BILL_CLAIMED": {
+      const p = parseActivityPayload("BILL_CLAIMED", row.payload);
+      if (!p || p.items.length === 0) return null;
+      return { event: { kind: "billClaimed", title: p.title, items: p.items }, href: billHref, amount: null };
+    }
+    case "CLAIMS_REMINDED": {
+      const p = parseActivityPayload("CLAIMS_REMINDED", row.payload);
+      if (!p) return null;
+      return { event: { kind: "claimsReminded", title: p.title, count: p.personIds.length }, href: billHref, amount: null };
     }
     case "BILL_FINALIZED":
     case "ITEM_CLAIMED":

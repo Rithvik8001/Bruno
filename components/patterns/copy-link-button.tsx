@@ -8,18 +8,19 @@ import { pressMotion } from "@/components/motion/press";
 import { useToast } from "@/components/ui/toast";
 import { buzz, HAPTICS } from "@/lib/motion/haptics";
 import { cn } from "@/lib/utils/cn";
-import { groupDetailCopy } from "../_data";
 
 const RESET_MS = 2000;
 
 export interface CopyLinkButtonProps {
   url: string;
-  label?: string;
+  label: string;
+  copiedLabel: string;
   variant?: "surface" | "floating";
+  onCopied?: () => void;
   className?: string;
 }
 
-export function CopyLinkButton({ url, label = groupDetailCopy.inviteLink, variant = "surface", className }: CopyLinkButtonProps) {
+export function CopyLinkButton({ url, label, copiedLabel, variant = "surface", onCopied, className }: CopyLinkButtonProps) {
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
 
@@ -34,6 +35,7 @@ export function CopyLinkButton({ url, label = groupDetailCopy.inviteLink, varian
       await navigator.clipboard.writeText(url);
       buzz(HAPTICS.select);
       setCopied(true);
+      onCopied?.();
     } catch {
       toast({ message: url });
     }
@@ -60,7 +62,7 @@ export function CopyLinkButton({ url, label = groupDetailCopy.inviteLink, varian
       ) : (
         variant === "surface" && <Icon name="link" size={18} strokeWidth={2} />
       )}
-      {copied ? groupDetailCopy.copied : label}
+      {copied ? copiedLabel : label}
     </motion.button>
   );
 }

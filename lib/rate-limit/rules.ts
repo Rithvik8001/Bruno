@@ -27,6 +27,17 @@ export const rateRules = {
   addGuest: { person: [{ seconds: HOUR, max: 20 }] },
   guestInvite: { person: [{ seconds: HOUR, max: 10 }] },
   claim: { ip: [{ seconds: MINUTE, max: 10 }] },
+  liveClaim: {
+    person: [{ seconds: MINUTE, max: 120 }],
+    ip: [{ seconds: MINUTE, max: 240 }],
+  },
+  claimJoin: {
+    ip: [
+      { seconds: MINUTE, max: 10 },
+      { seconds: HOUR, max: 40 },
+    ],
+  },
+  claimRemind: { person: [{ seconds: HOUR, max: 6 }] },
 } as const satisfies Record<string, RateRule>;
 
 export type RateRuleName = keyof typeof rateRules;

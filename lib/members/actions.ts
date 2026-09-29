@@ -4,15 +4,14 @@ import { activity } from "@/lib/activity";
 import { defineAction } from "@/lib/actions/action";
 import { actionFail, actionOk, actionRateLimited } from "@/lib/actions/errors";
 import { routes } from "@/lib/auth/rules";
-import { buddyShapeFor } from "@/lib/design-system/buddies";
 import { db } from "@/lib/db";
-import { serverEnv } from "@/lib/env";
+import { appUrl } from "@/lib/site";
 import { groupMessages } from "@/lib/groups/messages";
-import { defaultPersonTint } from "@/lib/people/defaults";
 import { personSelect, toPersonView, type PersonView } from "@/lib/people/person";
 import { consumeRate } from "@/lib/rate-limit/limiter";
 import { refreshGroup } from "@/lib/revalidate";
-import { GUEST_TOKEN_TTL_MS, hashGuestToken, newGuestToken } from "./guest-token";
+import { hashGuestToken, issueGuestToken } from "./guest-token";
+import { createGuestMember } from "./guests";
 import { mergeGuestInto } from "./merge";
 import { memberMessages } from "./messages";
 import { activeGuest, activeMember, activeMemberCount, lookupForGroup } from "./queries";
@@ -71,11 +70,7 @@ export const addGuest = defineAction(guestSchema, async ({ groupId, name, buddy,
   }
 
   const guest = await db.$transaction(async (tx) => {
-    const created = await tx.person.create({
-      data: { displayName: name, tint: tint ?? defaultPersonTint(name), buddy: buddyShapeFor(name, buddy) },
-      select: personSelect,
-    });
-    await tx.groupMember.create({ data: { groupId, personId: created.id, role: "MEMBER", addedById: person.id } });
+    const created = await createGuestMember(tx, { groupId, name, addedById: person.id, buddy, tint });
     const draft = activity("MEMBER_JOINED", { personId: created.id, via: "guest" });
     await tx.activityEvent.create({ data: { groupId, actorId: person.id, type: draft.type, payload: draft.payload } });
     return created;
@@ -102,20 +97,8 @@ export const createGuestInvite = defineAction(guestRefSchema, async ({ groupId, 
   const verdict = await consumeRate("guestInvite", person.id);
   if (!verdict.ok) return actionRateLimited(verdict.retryAfter, memberMessages.tooManyInvites);
 
-  const token = newGuestToken();
-  await db.$transaction([
-    db.guestToken.deleteMany({ where: { personId, usedAt: null } }),
-    db.guestToken.create({
-      data: {
-        tokenHash: hashGuestToken(token),
-        personId,
-        groupId,
-        createdById: person.id,
-        expiresAt: new Date(Date.now() + GUEST_TOKEN_TTL_MS),
-      },
-    }),
-  ]);
-  return actionOk({ url: new URL(routes.claimGuest(token), serverEnv().BETTER_AUTH_URL).toString() });
+  const token = await issueGuestToken({ personId, groupId, createdById: person.id });
+  return actionOk({ url: appUrl(routes.claimGuest(token)) });
 });
 
 type ClaimOutcome = { ok: true; groupId: string } | { ok: false; message: string; code: "notFound" | "conflict" };

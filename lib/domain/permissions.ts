@@ -33,8 +33,14 @@ export function canEditBill(actor: PersonId, bill: BillAccess, membership: Membe
   return bill.createdById === actor || isActiveAdmin(membership, bill.groupId);
 }
 
-export function canClaim(bill: BillAccess): boolean {
-  return bill.deletedAt === null && bill.status === "CLAIMING";
+export type Claimer =
+  | { readonly kind: "member"; readonly membership: Membership }
+  | { readonly kind: "guest" }
+  | { readonly kind: "joining" };
+
+export function canClaim(bill: BillAccess, claimer: Claimer | null): boolean {
+  if (bill.deletedAt !== null || bill.status !== "CLAIMING" || claimer === null) return false;
+  return claimer.kind !== "member" || isActiveMember(claimer.membership);
 }
 
 export function canLeaveGroup(balances: ReadonlyMap<CurrencyCode, Cents>): boolean {

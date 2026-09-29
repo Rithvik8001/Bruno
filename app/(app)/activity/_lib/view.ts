@@ -37,6 +37,12 @@ export function feedLine(item: FeedItem, you: PersonId): FeedLine {
       return { who: actor, what: line.billEdited(item.fields, item.title) };
     case "billDeleted":
       return { who: actor, what: line.billDeleted(item.title) };
+    case "billClaiming":
+      return { who: actor, what: line.billClaiming(item.title, item.reopened) };
+    case "billClaimed":
+      return { who: actor, what: line.billClaimed(item.items, item.title) };
+    case "claimsReminded":
+      return { who: actor, what: line.claimsReminded(item.count, item.title) };
     case "payment":
       return {
         who: subject(item.from, you),
@@ -65,6 +71,8 @@ export function feedLine(item: FeedItem, you: PersonId): FeedLine {
           return { who: actor, what: line.addedGuest(object(item.person, you)) };
         case "claimed":
           return { who: subject(item.person, you), what: line.claimed };
+        case "linked":
+          return { who: subject(item.person, you), what: line.linked(item.group.name) };
       }
     case "memberLeft":
       return item.removed

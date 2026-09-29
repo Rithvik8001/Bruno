@@ -6,6 +6,7 @@ import { Icon } from "@/components/icons/icon";
 import { pressMotion } from "@/components/motion/press";
 import { Rise } from "@/components/motion/rise";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { Receipt } from "@/components/ui/receipt";
 import { RollingNumber } from "@/components/ui/rolling-number";
@@ -35,6 +36,8 @@ export interface ClaimStepProps {
   cta: string;
   onBack: () => void;
   onEditor: () => void;
+  onLive: (() => void) | null;
+  livePending: boolean;
   onFinish: () => void;
 }
 
@@ -51,12 +54,14 @@ export function ClaimStep({
   cta,
   onBack,
   onEditor,
+  onLive,
+  livePending,
   onFinish,
 }: ClaimStepProps) {
   const copy = composerCopy.claim;
   const currency = composer.currency;
   const [selected, setSelected] = useState<PersonId>(you);
-  const view = claimView(draft, memberIds);
+  const view = claimView(draft);
   const share = view.shareOf(selected);
   const name = shortName(selected, roster, you, copy.you);
   const payer = shortName(draft.payerId, roster, you, copy.you.toLowerCase());
@@ -140,6 +145,30 @@ export function ClaimStep({
           </Rise>
         )}
       </AnimatePresence>
+
+      {onLive && (
+        <motion.button
+          type="button"
+          onClick={onLive}
+          disabled={livePending}
+          aria-busy={livePending || undefined}
+          {...pressMotion(true)}
+          className="flex w-full cursor-pointer items-center gap-3 rounded-tile bg-surface px-4 py-3.5 text-left text-small transition-colors duration-150 ease-standard hover:bg-surface-2 aria-busy:cursor-progress"
+        >
+          <span data-tint="cyan" className="grid size-8 shrink-0 place-items-center rounded-control bg-tint-bg text-tint">
+            <Icon name="link" size={16} strokeWidth={2} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-semibold">{copy.live.title}</span>
+            <span className="block text-footnote text-text-2">{livePending ? copy.live.saving : copy.live.body}</span>
+          </span>
+          {livePending ? (
+            <Spinner className="size-4 shrink-0 text-brand" />
+          ) : (
+            <Icon name="chevron-right" size={18} className="text-muted" />
+          )}
+        </motion.button>
+      )}
 
       <motion.button
         type="button"

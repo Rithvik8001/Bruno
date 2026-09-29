@@ -35,6 +35,9 @@ export function Icon3d({ icon, size, label, className }: Icon3dProps) {
 export const artTileVariants = cva("inline-grid shrink-0 place-items-center bg-tint-bg", {
   variants: {
     size: {
+      "3xs": "size-5 rounded-[6px]",
+      "2xs": "size-6 rounded-[7px]",
+      xs: "size-7 rounded-sm",
       sm: "size-9 rounded-control",
       md: "size-11 rounded-tile",
       lg: "size-14 rounded-[18px]",
@@ -46,7 +49,7 @@ export const artTileVariants = cva("inline-grid shrink-0 place-items-center bg-t
 
 export type ArtTileSize = NonNullable<VariantProps<typeof artTileVariants>["size"]>;
 
-const tilePixels = { sm: 36, md: 44, lg: 56, xl: 72 } as const satisfies Record<ArtTileSize, number>;
+const tilePixels = { "3xs": 20, "2xs": 24, xs: 28, sm: 36, md: 44, lg: 56, xl: 72 } as const satisfies Record<ArtTileSize, number>;
 
 export interface MomentTileProps extends VariantProps<typeof artTileVariants> {
   icon: MomentIconId;

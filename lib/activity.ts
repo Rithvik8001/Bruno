@@ -14,7 +14,7 @@ export const activityPayloadSchemas = {
   ITEM_UNCLAIMED: z.object({ lineItemId: id, name: z.string(), personId: id }),
   MEMBER_JOINED: z.object({
     personId: id,
-    via: z.enum(["invite", "claim", "created", "added", "guest"]),
+    via: z.enum(["invite", "claim", "created", "added", "guest", "claimLink"]),
     fromGuestId: id.optional(),
   }),
   MEMBER_LEFT: z.object({ personId: id }),
@@ -28,6 +28,9 @@ export const activityPayloadSchemas = {
   }),
   SETTLEMENT_CONFIRMED: z.object({ settlementId: id, auto: z.boolean() }),
   SETTLEMENT_CANCELLED: z.object({ settlementId: id }),
+  BILL_CLAIMING_OPENED: z.object({ title: z.string(), itemCount: z.number().int(), reopened: z.boolean() }),
+  BILL_CLAIMED: z.object({ title: z.string(), personId: id, items: z.array(z.object({ name: z.string(), ways: z.number().int().min(1) })) }),
+  CLAIMS_REMINDED: z.object({ title: z.string(), personIds: z.array(id).min(1) }),
 } as const satisfies Record<string, z.ZodType>;
 
 export type ActivityType = keyof typeof activityPayloadSchemas;

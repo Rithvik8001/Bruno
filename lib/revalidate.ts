@@ -8,5 +8,6 @@ export function refreshGroup(groupId: string): void {
   revalidatePath(routes.app);
   revalidatePath(routes.activity);
   revalidatePath("/bills/[slug]", "page");
+  revalidatePath("/b/[code]", "page");
   revalidatePath("/groups/[groupId]/settle/[personId]", "page");
 }

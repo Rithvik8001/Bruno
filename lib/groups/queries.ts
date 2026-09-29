@@ -2,6 +2,7 @@ import "server-only";
 import {
   ledgerView,
   loadPeople,
+  claimingBills,
   summarizeBills,
   toGroupRef,
   type BillSummary,
@@ -214,9 +215,10 @@ export async function getGroupForMember(id: string, you: PersonId): Promise<Grou
   const entries = inScope(ledger.bills, summary.id);
   const bills = entries.filter((b) => b.currency === summary.currency);
   const net = balancesIn(ledger, summary.id, now).get(summary.currency) ?? new Map<PersonId, Cents>();
-  const [people, settlements] = await Promise.all([
+  const [people, settlements, claiming] = await Promise.all([
     loadPeople(entries.map((b) => b.payerId)),
     listGroupSettlements(summary.id, you),
+    claimingBills([summary.id]),
   ]);
   const groupRef = toGroupRef(row);
 
@@ -228,7 +230,7 @@ export async function getGroupForMember(id: string, you: PersonId): Promise<Grou
     spent: sumCents(bills.map((b) => b.total)),
     yourShare: sumCents(bills.map((b) => b.shares.get(you) ?? cents(0))),
     everyoneSquare: [...net.values()].every((v) => v === 0),
-    bills: summarizeBills(entries, view, people, new Map([[groupRef.id, groupRef]]), you, now),
+    bills: [...claiming, ...summarizeBills(entries, view, people, new Map([[groupRef.id, groupRef]]), you, now)],
     balances: memberBalances(
       roster,
       ledger,

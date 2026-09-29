@@ -3,7 +3,7 @@ import ExistingAccountEmail, { existingAccountSubject, existingAccountText } fro
 import ResetCodeEmail, { resetCodeSubject, resetCodeText } from "@/emails/reset-code";
 import VerifyCodeEmail, { verifyCodeSubject, verifyCodeText } from "@/emails/verify-code";
 import { sendEmail } from "@/lib/email/send";
-import { serverEnv } from "@/lib/env";
+import { appUrl } from "@/lib/site";
 import { otpExpiresInMinutes, routes } from "./rules";
 
 export async function sendVerificationCode(email: string, code: string): Promise<void> {
@@ -29,7 +29,7 @@ export async function sendPasswordResetCode(email: string, code: string): Promis
 }
 
 export async function sendExistingAccountNotice(email: string): Promise<void> {
-  const props = { signInUrl: new URL(routes.signIn, serverEnv().BETTER_AUTH_URL).toString() };
+  const props = { signInUrl: appUrl(routes.signIn) };
   await sendEmail({
     to: email,
     subject: existingAccountSubject,

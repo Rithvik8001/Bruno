@@ -10,12 +10,12 @@ import { firstParam } from "@/lib/auth/redirect";
 import { routes } from "@/lib/auth/rules";
 import { requireAppContext } from "@/lib/auth/session";
 import { canManageGroup } from "@/lib/domain/permissions";
-import { serverEnv } from "@/lib/env";
+import { appUrl, displayUrl } from "@/lib/site";
 import { getGroupForMember } from "@/lib/groups/queries";
 import { firstNameOf } from "@/lib/people/defaults";
 import { cn } from "@/lib/utils/cn";
 import { GROUP_TABS, groupDetailCopy, type GroupTab } from "./_data";
-import { CopyLinkButton } from "./_components/copy-link-button";
+import { CopyLinkButton } from "@/components/patterns/copy-link-button";
 import { GroupSettings } from "./_components/group-settings";
 import { GroupTabs } from "./_components/group-tabs";
 import { HeaderArt } from "./_components/header-art";
@@ -42,7 +42,7 @@ export default async function GroupPage({ params, searchParams }: PageProps<"/gr
   const tab = tabFrom(firstParam((await searchParams).tab));
   const canManage = canManageGroup(group.you);
   const invitePath = routes.invite(group.slug);
-  const inviteUrl = new URL(invitePath, serverEnv().BETTER_AUTH_URL).toString();
+  const inviteUrl = appUrl(invitePath);
   const copy = groupDetailCopy;
   const now = new Date();
   const names = group.roster.map((m) => (m.person.id === person.id ? copy.youName : firstNameOf(m.person.displayName)));
@@ -70,7 +70,7 @@ export default async function GroupPage({ params, searchParams }: PageProps<"/gr
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <CopyLinkButton url={inviteUrl} />
+          <CopyLinkButton url={inviteUrl} label={copy.inviteLink} copiedLabel={copy.copied} />
           <PressLink href={routes.newBillFor(group.id)} className={cn(buttonVariants({ size: "md" }), "gap-1.5 pr-3.5 pl-2.5 text-small")}>
             <Icon name="plus" size={18} strokeWidth={2} />
             {copy.addBill}
@@ -124,7 +124,7 @@ export default async function GroupPage({ params, searchParams }: PageProps<"/gr
           you={person.id}
           canManage={canManage}
           inviteUrl={inviteUrl}
-          inviteLabel={inviteUrl.replace(/^https?:\/\//, "")}
+          inviteLabel={displayUrl(inviteUrl)}
           members={group.roster.map((m) => ({
             person: m.person,
             role: m.role,

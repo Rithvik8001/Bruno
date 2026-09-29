@@ -86,4 +86,6 @@ export interface StackPerson {
   readonly tint: Tint;
   readonly initials?: string;
   readonly buddy?: BuddyShape | null;
+  readonly online?: boolean;
+  readonly anonymous?: boolean;
 }

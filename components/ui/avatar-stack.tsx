@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import { Icon } from "@/components/icons/icon";
 import { EASE, T } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils/cn";
 import { Avatar, avatarVariants, type AvatarSize, type StackPerson } from "./avatar";
@@ -34,7 +35,16 @@ export function AvatarStack({ people, max = 4, size = "md", className }: AvatarS
           transition={LIFT}
           className={cn("relative list-none rounded-full outline-none", i > 0 && overlap)}
         >
-          <Avatar name={p.name} tint={p.tint} initials={p.initials} buddy={p.buddy} size={size} className={ring} />
+          {p.anonymous ? (
+            <span className={cn(avatarVariants({ size }), "bg-surface-2 text-muted", ring)}>
+              <Icon name="person-outline" size={14} strokeWidth={2} />
+            </span>
+          ) : (
+            <Avatar name={p.name} tint={p.tint} initials={p.initials} buddy={p.buddy} size={size} className={ring} />
+          )}
+          {p.online && (
+            <span aria-hidden className="absolute -right-px -bottom-px size-2 rounded-full bg-green ring-2 ring-bg" />
+          )}
           <span aria-hidden className="pointer-events-none absolute bottom-[calc(100%+8px)] left-1/2 z-20 -translate-x-1/2">
             <motion.span
               variants={{ rest: { opacity: 0, y: 4 }, lift: { opacity: 1, y: 0 } }}

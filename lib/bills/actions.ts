@@ -1,21 +1,31 @@
 "use server";
 
+import { after } from "next/server";
 import { activity } from "@/lib/activity";
 import { defineAction } from "@/lib/actions/action";
-import { actionFail, actionInvalid, actionOk, type ActionResult } from "@/lib/actions/errors";
-import { isCurrencyCode, type CurrencyCode } from "@/lib/currency";
+import { actionFail, actionInvalid, actionOk } from "@/lib/actions/errors";
+import { isCurrencyCode } from "@/lib/currency";
 import { db } from "@/lib/db";
-import { groupId as toGroupId, personId as toPersonId, type PersonId } from "@/lib/domain/ids";
-import { canAddBill, canEditBill, type Membership } from "@/lib/domain/permissions";
+import type { PersonId } from "@/lib/domain/ids";
+import { canAddBill } from "@/lib/domain/permissions";
 import type { Cents } from "@/lib/money";
+import { broadcastBill } from "@/lib/realtime/broadcast";
 import { refreshGroup } from "@/lib/revalidate";
-import { uniqueSlug } from "@/lib/slug";
 import { changedFields } from "./diff";
-import { toBillInput } from "./input";
-import { billMessages, splitErrorMessage } from "./messages";
+import { billMessages } from "./messages";
+import {
+  billColumns,
+  checkPeople,
+  claimingTotal,
+  editAccess,
+  freeSlug,
+  loadGroupRoster,
+  splitTotal,
+  writeItems,
+  writeParticipants,
+} from "./persist";
 import { billRefSchema, createBillSchema, updateBillSchema, type BillValues } from "./schema";
-import { computeShares } from "./split";
-import { itemCreates, occurredAtOf, participantRows, peopleOnBill, tipColumns } from "./write";
+import { itemCreates, participantRows, peopleOnBill } from "./write";
 
 export interface CreatedBill {
   readonly id: string;
@@ -29,6 +39,7 @@ export interface UpdatedBill {
   readonly slug: string;
   readonly groupId: string;
   readonly title: string;
+  readonly claimCode: string | null;
 }
 
 export interface DeletedBill {
@@ -36,54 +47,8 @@ export interface DeletedBill {
   readonly title: string;
 }
 
-async function slugFor(title: string): Promise<string> {
-  return uniqueSlug(title, async (slug) => (await db.bill.count({ where: { slug } })) > 0);
-}
-
-async function loadGroup(groupId: string) {
-  const group = await db.group.findFirst({
-    where: { id: groupId, deletedAt: null },
-    select: { currency: true, members: { where: { leftAt: null }, select: { personId: true, role: true, leftAt: true } } },
-  });
-  if (!group) return null;
-  const roster: Membership[] = group.members.map((m) => ({
-    groupId: toGroupId(groupId),
-    personId: toPersonId(m.personId),
-    role: m.role,
-    leftAt: m.leftAt,
-  }));
-  return { currency: group.currency, roster };
-}
-
-function checkPeople(values: BillValues, allowed: ReadonlySet<string>): Record<string, string> {
-  const fields: Record<string, string> = {};
-  if (!allowed.has(values.payerId)) fields.payerId = billMessages.payerNotMember;
-  if (peopleOnBill(values).some((id) => !allowed.has(id))) fields.participants = billMessages.unknownPerson;
-  return fields;
-}
-
-function splitTotal(values: BillValues, currency: CurrencyCode): ActionResult<Cents> {
-  const split = computeShares(toBillInput(values));
-  if (split.ok) return actionOk(split.value.totals.total);
-  const message = splitErrorMessage(split.error, currency);
-  return actionInvalid({ split: message }, message);
-}
-
-function billColumns(values: BillValues, total: Cents) {
-  return {
-    title: values.title,
-    occurredAt: occurredAtOf(values.occurredOn),
-    payerId: values.payerId,
-    splitMethod: values.method,
-    taxCents: values.taxCents,
-    ...tipColumns(values.tip),
-    discountCents: values.discountCents,
-    totalCents: total,
-  };
-}
-
 export const createBill = defineAction(createBillSchema, async (input, { person }) => {
-  const group = await loadGroup(input.groupId);
+  const group = await loadGroupRoster(input.groupId);
   if (!group) return actionFail("notFound", billMessages.groupGone);
   const me = group.roster.find((m) => m.personId === person.id) ?? null;
   if (!canAddBill(me)) return actionFail("forbidden", billMessages.notMember);
@@ -95,7 +60,7 @@ export const createBill = defineAction(createBillSchema, async (input, { person 
   const total = splitTotal(input, currency);
   if (!total.ok) return total;
 
-  const slug = await slugFor(input.title);
+  const slug = await freeSlug(input.title);
   const actor: PersonId = person.id;
   const bill = await db.$transaction(async (tx) => {
     const created = await tx.bill.create({
@@ -138,6 +103,7 @@ async function loadEditable(billId: string, you: PersonId) {
     select: {
       id: true,
       slug: true,
+      claimCode: true,
       title: true,
       occurredAt: true,
       payerId: true,
@@ -153,25 +119,21 @@ async function loadEditable(billId: string, you: PersonId) {
       discountCents: true,
       items: {
         orderBy: { position: "asc" },
-        select: { name: true, quantity: true, priceCents: true, claims: { select: { personId: true } } },
+        select: { id: true, name: true, quantity: true, priceCents: true, claims: { select: { personId: true } } },
       },
       participants: { select: { personId: true, shares: true, percentBps: true, amountCents: true } },
     },
   });
   if (!bill || !bill.groupId) return null;
-  const group = await loadGroup(bill.groupId);
+  const group = await loadGroupRoster(bill.groupId);
   if (!group) return null;
-  const me = group.roster.find((m) => m.personId === you) ?? null;
-  const allowed = canEditBill(
-    you,
-    { groupId: toGroupId(bill.groupId), createdById: toPersonId(bill.createdById), status: bill.status, deletedAt: bill.deletedAt },
-    me,
-  );
+  const allowed = editAccess(you, { ...bill, groupId: bill.groupId }, group.roster);
   const values: BillValues = {
     title: bill.title,
     occurredOn: bill.occurredAt.toISOString().slice(0, 10),
     payerId: bill.payerId,
     items: bill.items.map((item) => ({
+      id: item.id,
       name: item.name,
       quantity: item.quantity,
       priceCents: item.priceCents,
@@ -197,33 +159,57 @@ export const updateBill = defineAction(updateBillSchema, async ({ billId, ...inp
   if (!loaded.allowed) return actionFail("forbidden", billMessages.cantEdit);
   const { bill, group, groupId, values: before } = loaded;
   if (!isCurrencyCode(bill.currency)) return actionFail("conflict");
+  const currency = bill.currency;
+
+  const claiming = bill.status === "CLAIMING";
+  const keepClaims = claiming && input.method === "ITEMS";
+  const finalizing = claiming && !keepClaims;
+  const next: BillValues = keepClaims
+    ? {
+        ...input,
+        items: input.items.map((item) => ({
+          ...item,
+          claimedBy: before.items.find((b) => b.id === item.id)?.claimedBy ?? [],
+        })),
+      }
+    : input;
 
   const allowedPeople = new Set<string>([...group.roster.map((m) => m.personId), ...peopleOnBill(before), before.payerId]);
-  const fields = checkPeople(input, allowedPeople);
+  const fields = checkPeople(next, allowedPeople);
   if (Object.keys(fields).length > 0) return actionInvalid(fields);
-  const total = splitTotal(input, bill.currency);
+  const total = keepClaims ? claimingTotal(next, currency) : splitTotal(next, currency);
   if (!total.ok) return total;
 
-  const changes = changedFields(before, input);
-  if (changes.length === 0) return actionOk<UpdatedBill>({ slug: bill.slug, groupId, title: bill.title });
+  const changes = changedFields(before, next).filter((field) => !keepClaims || field !== "split");
+  const result: UpdatedBill = {
+    slug: bill.slug,
+    groupId,
+    title: next.title,
+    claimCode: keepClaims ? bill.claimCode : null,
+  };
+  if (changes.length === 0 && !finalizing) return actionOk(result);
 
-  const draft = activity("BILL_UPDATED", { title: input.title, fields: changes });
+  const existingIds = new Set(before.items.flatMap((item) => (item.id === undefined ? [] : [item.id])));
   await db.$transaction(async (tx) => {
     await tx.bill.update({
       where: { id: bill.id },
-      data: {
-        ...billColumns(input, total.data),
-        items: { deleteMany: {}, create: itemCreates(input) },
-        participants: { deleteMany: {}, create: participantRows(input) },
-      },
+      data: { ...billColumns(next, total.data), ...(finalizing ? { status: "FINALIZED", finalizedAt: new Date() } : {}) },
     });
-    await tx.activityEvent.create({
-      data: { groupId, billId: bill.id, actorId: person.id, type: draft.type, payload: draft.payload },
+    await writeItems(tx, bill.id, existingIds, next, { keepClaims });
+    if (!keepClaims) await writeParticipants(tx, bill.id, next);
+    const events = [
+      ...(changes.length > 0 ? [activity("BILL_UPDATED", { title: next.title, fields: changes })] : []),
+      ...(finalizing ? [activity("BILL_FINALIZED", { title: next.title, total: total.data, currency })] : []),
+    ];
+    await tx.activityEvent.createMany({
+      data: events.map((draft) => ({ groupId, billId: bill.id, actorId: person.id, type: draft.type, payload: draft.payload })),
     });
   });
 
   refreshGroup(groupId);
-  return actionOk<UpdatedBill>({ slug: bill.slug, groupId, title: input.title });
+  const code = bill.claimCode;
+  if (claiming && code) after(() => broadcastBill(code, finalizing ? "status" : "claims"));
+  return actionOk(result);
 });
 
 export const deleteBill = defineAction(billRefSchema, async ({ billId }, { person }) => {
@@ -241,5 +227,7 @@ export const deleteBill = defineAction(billRefSchema, async ({ billId }, { perso
   });
 
   refreshGroup(groupId);
+  const code = bill.claimCode;
+  if (bill.status === "CLAIMING" && code) after(() => broadcastBill(code, "status"));
   return actionOk<DeletedBill>({ groupId, title: bill.title });
 });

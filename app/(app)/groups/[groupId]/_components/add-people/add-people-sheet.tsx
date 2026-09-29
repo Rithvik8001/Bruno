@@ -22,7 +22,7 @@ import { SPRING } from "@/lib/motion/tokens";
 import type { PersonView } from "@/lib/people/person";
 import { firstNameOf } from "@/lib/people/defaults";
 import { groupDetailCopy } from "../../_data";
-import { CopyLinkButton } from "../copy-link-button";
+import { CopyLinkButton } from "@/components/patterns/copy-link-button";
 import { FoundCard, type FoundState } from "./found-card";
 import { GuestForm, type GuestDraft } from "./guest-form";
 import { NotFoundCard } from "./not-found-card";
@@ -297,7 +297,7 @@ function AddPeopleBody({ groupId, groupName, inviteUrl, inviteLabel, onOpenChang
             <span className="text-footnote font-semibold text-muted">{copy.shareLink}</span>
             <div className="flex items-center gap-3 rounded-tile bg-surface py-1.5 pr-1.5 pl-4">
               <span className="min-w-0 flex-1 truncate text-small text-text-2">{inviteLabel}</span>
-              <CopyLinkButton url={inviteUrl} label={copy.copy} variant="floating" />
+              <CopyLinkButton url={inviteUrl} label={copy.copy} copiedLabel={groupDetailCopy.copied} variant="floating" />
             </div>
           </div>
         </div>

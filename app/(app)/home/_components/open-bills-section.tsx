@@ -11,6 +11,7 @@ import { SectionHeader } from "./section-header";
 
 function metaOf(bill: BillSummary): string {
   const copy = homeCopy.bills;
+  if (bill.claiming) return copy.claiming(bill.claiming.claimed, bill.claiming.items);
   return bill.yourBalance > 0 ? copy.owedToYou(bill.owingCount) : copy.youOwe(money(bill.yourBalance, bill.currency));
 }
 
@@ -29,7 +30,7 @@ export function OpenBillsSection({ bills, now }: { bills: readonly BillSummary[]
         {bills.map((bill) => (
           <StaggerItem as="li" key={bill.id}>
             <BillRow
-              href={routes.bill(bill.slug)}
+              href={bill.claiming ? routes.claimBill(bill.claiming.code) : routes.bill(bill.slug)}
               title={bill.title}
               group={bill.group}
               status={bill.status}

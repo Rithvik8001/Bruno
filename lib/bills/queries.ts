@@ -21,6 +21,7 @@ import { cents, sumCents, ZERO_CENTS, type Cents } from "@/lib/money";
 import { parseTint } from "@/lib/people/defaults";
 import { personSelect, toPersonView, type PersonView } from "@/lib/people/person";
 import { isBillChangeField, type BillChangeField } from "./diff";
+import type { ClaimedItem } from "./messages";
 import { billInputFromRow, billSplitSelect } from "./rows";
 import type { CreateBillValues } from "./schema";
 import { computeShares } from "./split";
@@ -47,6 +48,13 @@ export interface BillSummary {
   readonly yourShare: Cents;
   readonly yourBalance: Cents;
   readonly owingCount: number;
+  readonly claiming: ClaimProgress | null;
+}
+
+export interface ClaimProgress {
+  readonly code: string;
+  readonly claimed: number;
+  readonly items: number;
 }
 
 export interface LedgerView {
@@ -120,9 +128,55 @@ export function summarizeBills(
         yourShare: entry.shares.get(you) ?? ZERO_CENTS,
         yourBalance: yourBalanceOn(entry, view, you),
         owingCount: debts.filter((d) => (view.remaining.get(debtKey(d)) ?? ZERO_CENTS) > 0).length,
+        claiming: null,
       },
     ];
   });
+}
+
+export async function claimingBills(groupIds: readonly string[]): Promise<BillSummary[]> {
+  if (groupIds.length === 0) return [];
+  const rows = await db.bill.findMany({
+    where: { groupId: { in: [...groupIds] }, deletedAt: null, status: "CLAIMING", group: { deletedAt: null } },
+    orderBy: { occurredAt: "desc" },
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      occurredAt: true,
+      currency: true,
+      totalCents: true,
+      claimCode: true,
+      payer: { select: personSelect },
+      group: { select: { id: true, name: true, tint: true, art: true } },
+      items: { where: { priceCents: { gt: 0 } }, select: { _count: { select: { claims: true } } } },
+    },
+  });
+  return rows.flatMap((row) =>
+    row.claimCode && row.group
+      ? [
+          {
+            id: billId(row.id),
+            slug: row.slug,
+            title: row.title,
+            occurredAt: row.occurredAt,
+            currency: isCurrencyCode(row.currency) ? row.currency : DEFAULT_CURRENCY,
+            total: cents(row.totalCents),
+            payer: toPersonView(row.payer),
+            group: toGroupRef(row.group),
+            status: "claiming",
+            yourShare: ZERO_CENTS,
+            yourBalance: ZERO_CENTS,
+            owingCount: 0,
+            claiming: {
+              code: row.claimCode,
+              claimed: row.items.filter((item) => item._count.claims > 0).length,
+              items: row.items.length,
+            },
+          },
+        ]
+      : [],
+  );
 }
 
 export interface BillLineShare {
@@ -161,7 +215,12 @@ export interface BillCharges extends BillTotals {
 export type BillEvent =
   | { readonly kind: "created"; readonly itemCount: number }
   | { readonly kind: "updated"; readonly fields: readonly BillChangeField[] }
-  | { readonly kind: "finalized" };
+  | { readonly kind: "finalized" }
+  | { readonly kind: "claimingOpened"; readonly reopened: boolean }
+  | { readonly kind: "claimed"; readonly items: readonly ClaimedItem[] }
+  | { readonly kind: "reminded"; readonly count: number }
+  | { readonly kind: "joined" };
+
 
 export interface BillActivityRow {
   readonly id: string;
@@ -182,6 +241,7 @@ export interface BillDetail {
   readonly status: BillDisplayStatus;
   readonly owingCount: number;
   readonly canEdit: boolean;
+  readonly canReopen: boolean;
   readonly people: readonly BillPersonRow[];
   readonly items: readonly BillItemRow[];
   readonly charges: BillCharges;
@@ -204,6 +264,20 @@ function toEvent(type: string, payload: unknown): BillEvent | null {
     }
     case "BILL_FINALIZED":
       return { kind: "finalized" };
+    case "BILL_CLAIMING_OPENED": {
+      const p = parseActivityPayload("BILL_CLAIMING_OPENED", payload);
+      return p ? { kind: "claimingOpened", reopened: p.reopened } : null;
+    }
+    case "BILL_CLAIMED": {
+      const p = parseActivityPayload("BILL_CLAIMED", payload);
+      return p && p.items.length > 0 ? { kind: "claimed", items: p.items } : null;
+    }
+    case "CLAIMS_REMINDED": {
+      const p = parseActivityPayload("CLAIMS_REMINDED", payload);
+      return p ? { kind: "reminded", count: p.personIds.length } : null;
+    }
+    case "MEMBER_JOINED":
+      return { kind: "joined" };
     default:
       return null;
   }
@@ -329,6 +403,11 @@ export async function getBillDetail(slug: string, you: PersonId): Promise<BillDe
     });
 
   const debts = view.debtsByBill.get(id) ?? [];
+  const canEdit = canEditBill(
+    you,
+    { groupId: group.id, createdById: personId(row.createdById), status: row.status, deletedAt: row.deletedAt },
+    membership ? { groupId: group.id, personId: you, role: membership.role, leftAt: membership.leftAt } : null,
+  );
   return {
     id,
     slug: row.slug,
@@ -340,11 +419,8 @@ export async function getBillDetail(slug: string, you: PersonId): Promise<BillDe
     payer,
     status: entry ? billStatusOf(entry, view, now) : "ready",
     owingCount: debts.filter((d) => (view.remaining.get(debtKey(d)) ?? ZERO_CENTS) > 0).length,
-    canEdit: canEditBill(
-      you,
-      { groupId: group.id, createdById: personId(row.createdById), status: row.status, deletedAt: row.deletedAt },
-      membership ? { groupId: group.id, personId: you, role: membership.role, leftAt: membership.leftAt } : null,
-    ),
+    canEdit,
+    canReopen: canEdit && row.splitMethod === "ITEMS",
     people: personRows,
     items,
     charges: { ...split.value.totals, tipBps: row.tipKind === "PERCENT" ? row.tipValue : null },
@@ -358,6 +434,8 @@ export async function getBillDetail(slug: string, you: PersonId): Promise<BillDe
 export interface EditableBill {
   readonly billId: BillId;
   readonly slug: string;
+  readonly claimCode: string | null;
+  readonly claiming: boolean;
   readonly canEdit: boolean;
   readonly composer: BillComposer;
   readonly values: CreateBillValues;
@@ -367,10 +445,11 @@ const isoDay = (date: Date) => date.toISOString().slice(0, 10);
 
 export async function getEditableBill(slug: string, you: PersonId): Promise<EditableBill | null> {
   const row = await db.bill.findFirst({
-    where: { slug, deletedAt: null, status: "FINALIZED", group: memberOf(you) },
+    where: { slug, deletedAt: null, status: { in: ["FINALIZED", "CLAIMING"] }, group: memberOf(you) },
     select: {
       id: true,
       slug: true,
+      claimCode: true,
       title: true,
       occurredAt: true,
       payerId: true,
@@ -385,7 +464,7 @@ export async function getEditableBill(slug: string, you: PersonId): Promise<Edit
       discountCents: true,
       items: {
         orderBy: { position: "asc" },
-        select: { name: true, quantity: true, priceCents: true, claims: { select: { personId: true } } },
+        select: { id: true, name: true, quantity: true, priceCents: true, claims: { select: { personId: true } } },
       },
       participants: { select: { personId: true, shares: true, percentBps: true, amountCents: true } },
       group: {
@@ -422,6 +501,8 @@ export async function getEditableBill(slug: string, you: PersonId): Promise<Edit
   return {
     billId: billId(row.id),
     slug: row.slug,
+    claimCode: row.claimCode,
+    claiming: row.status === "CLAIMING",
     canEdit: canEditBill(
       you,
       { groupId: gid, createdById: personId(row.createdById), status: row.status, deletedAt: row.deletedAt },
@@ -441,6 +522,7 @@ export async function getEditableBill(slug: string, you: PersonId): Promise<Edit
       occurredOn: isoDay(row.occurredAt),
       payerId: row.payerId,
       items: row.items.map((item) => ({
+        id: item.id,
         name: item.name,
         quantity: item.quantity,
         priceCents: item.priceCents,
@@ -453,4 +535,12 @@ export async function getEditableBill(slug: string, you: PersonId): Promise<Edit
       participants: row.participants.map((p) => ({ ...p })),
     },
   };
+}
+
+export async function claimCodeFor(slug: string, you: PersonId): Promise<string | null> {
+  const row = await db.bill.findFirst({
+    where: { slug, deletedAt: null, status: "CLAIMING", group: memberOf(you) },
+    select: { claimCode: true },
+  });
+  return row?.claimCode ?? null;
 }

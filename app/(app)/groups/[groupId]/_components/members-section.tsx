@@ -14,7 +14,7 @@ import { firstNameOf } from "@/lib/people/defaults";
 import type { PersonView } from "@/lib/people/person";
 import { groupDetailCopy } from "../_data";
 import { AddPeopleSheet } from "./add-people/add-people-sheet";
-import { CopyLinkButton } from "./copy-link-button";
+import { CopyLinkButton } from "@/components/patterns/copy-link-button";
 import { GuestSheet, type GuestTarget } from "./guest-sheet";
 import { MemberSheet, type MemberSheetTarget } from "./member-sheet";
 
@@ -79,7 +79,7 @@ export function MembersSection({ groupId, groupName, currency, you, members, can
         </Button>
         <div className="flex min-w-0 items-center gap-3 rounded-tile bg-surface py-1.5 pr-1.5 pl-4">
           <span className="min-w-0 flex-1 truncate text-small text-text-2">{inviteLabel}</span>
-          <CopyLinkButton url={inviteUrl} label={groupDetailCopy.copyLink} variant="floating" />
+          <CopyLinkButton url={inviteUrl} label={groupDetailCopy.copyLink} copiedLabel={groupDetailCopy.copied} variant="floating" />
         </div>
       </div>
       <Stagger as="ul" className="m-0 grid list-none p-0 [&>li+li]:border-t [&>li+li]:border-line">

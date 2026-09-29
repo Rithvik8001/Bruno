@@ -14,7 +14,7 @@ import { formatMoney } from "@/lib/currency";
 import type { PersonId } from "@/lib/domain/ids";
 import type { BillComposer } from "@/lib/groups/queries";
 import { cn } from "@/lib/utils/cn";
-import { composerCopy, flowModeCopy, type CheckTone } from "../data";
+import { composerCopy, type CheckTone } from "../data";
 import { draftTotals, filledItems, itemsCheck, subtotalOf, type ItemsIssue } from "../lib/derive";
 import { addItem, removeItem, updateItem, type BillDraft } from "../lib/draft";
 import { CheckBanner } from "./check-banner";
@@ -30,9 +30,17 @@ export interface ItemsStepProps {
   composer: BillComposer;
   you: PersonId;
   error: string | null;
-  modeCopy: (typeof flowModeCopy)[keyof typeof flowModeCopy];
+  modeCopy: ItemsModeCopy;
+  cta: string;
+  pending: boolean;
   onBack: () => void;
   onNext: () => void;
+}
+
+export interface ItemsModeCopy {
+  readonly back: string;
+  readonly itemsTitle: string;
+  readonly itemsBody: string;
 }
 
 function checkMessage(issue: ItemsIssue | null, unnamed: number): string {
@@ -51,7 +59,19 @@ function checkMessage(issue: ItemsIssue | null, unnamed: number): string {
   }
 }
 
-export function ItemsStep({ draft, onDraft, onRestore, composer, you, error, modeCopy, onBack, onNext }: ItemsStepProps) {
+export function ItemsStep({
+  draft,
+  onDraft,
+  onRestore,
+  composer,
+  you,
+  error,
+  modeCopy,
+  cta,
+  pending,
+  onBack,
+  onNext,
+}: ItemsStepProps) {
   const copy = composerCopy.items;
   const { toast } = useToast();
   const currency = composer.currency;
@@ -153,8 +173,8 @@ export function ItemsStep({ draft, onDraft, onRestore, composer, you, error, mod
 
       <FlowFooter
         action={
-          <Button size="lg" disabled={!ready} onClick={onNext} className="min-w-0 gap-2">
-            {copy.cta}
+          <Button size="lg" disabled={!ready} loading={pending} onClick={onNext} className="min-w-0 gap-2">
+            {cta}
             <Icon name="arrow-right" size={18} strokeWidth={2} />
           </Button>
         }

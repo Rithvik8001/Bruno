@@ -29,6 +29,7 @@ export const homeCopy = {
     allActivity: "All activity",
     owedToYou: (n: number) => (n === 1 ? "1 owes you" : `${n} owe you`),
     youOwe: (amount: string) => `you owe ${amount}`,
+    claiming: (claimed: number, items: number) => `${claimed} of ${items} claimed`,
   },
   nextUp: {
     owesYou: (first: string, amount: string) => `${first} owes you ${amount}`,

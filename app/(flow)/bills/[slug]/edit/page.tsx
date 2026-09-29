@@ -12,8 +12,9 @@ import { editBillCopy } from "./_data";
 
 export const metadata: Metadata = { title: editBillCopy.metaTitle };
 
-function stepFrom(value: string | undefined, method: SplitMethod): FlowStep {
+function stepFrom(value: string | undefined, method: SplitMethod, claiming: boolean): FlowStep {
   const step = (FLOW_STEPS as readonly string[]).includes(value ?? "") ? (value as FlowStep) : "items";
+  if (claiming) return step === "split" ? "split" : "items";
   if (step === "split" && method === "ITEMS") return "claim";
   if (step === "claim" && method !== "ITEMS") return "split";
   return step;
@@ -30,9 +31,9 @@ export default async function EditBillPage({ params, searchParams }: PageProps<"
     <ManualBillFlow
       composer={bill.composer}
       you={person.id}
-      mode={{ kind: "edit", billId: bill.billId, slug: bill.slug }}
+      mode={{ kind: "edit", billId: bill.billId, slug: bill.slug, claimCode: bill.claiming ? bill.claimCode : null }}
       initialDraft={draftFromBill(bill.values, bill.composer.members.map((m) => m.id))}
-      initialStep={stepFrom(firstParam((await searchParams).step), bill.values.method)}
+      initialStep={stepFrom(firstParam((await searchParams).step), bill.values.method, bill.claiming)}
     />
   );
 }

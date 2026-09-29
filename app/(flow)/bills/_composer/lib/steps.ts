@@ -3,4 +3,4 @@ export type FlowStep = (typeof FLOW_STEPS)[number];
 
 export type ComposerMode =
   | { readonly kind: "create" }
-  | { readonly kind: "edit"; readonly billId: string; readonly slug: string };
+  | { readonly kind: "edit"; readonly billId: string; readonly slug: string; readonly claimCode: string | null };

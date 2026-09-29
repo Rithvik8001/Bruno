@@ -1,10 +1,11 @@
 import { tipOf, toBillInput } from "@/lib/bills/input";
 import type { BillTipValue, CreateBillInput } from "@/lib/bills/schema";
+import { claimSummary } from "@/lib/bills/claims";
 import { computeShares } from "@/lib/bills/split";
 import { billTotals } from "@/lib/bills/totals";
 import { FULL_PERCENT_BPS, type BillCharges, type BillTotals } from "@/lib/bills/types";
-import type { PersonId } from "@/lib/domain/ids";
-import { allocate, cents, sumCents, ZERO_CENTS, type Cents } from "@/lib/money";
+import { lineItemId, type PersonId } from "@/lib/domain/ids";
+import { cents, sumCents, ZERO_CENTS, type Cents } from "@/lib/money";
 import { claimantsOf, includedIds, personIn, type BillDraft, type DraftItem } from "./draft";
 
 export type FlowMode = "items" | "split";
@@ -81,6 +82,7 @@ export function toBillValues(draft: BillDraft, members: readonly PersonId[], mod
     occurredOn: draft.occurredOn,
     payerId: draft.payerId,
     items: filledItems(draft).map((item) => ({
+      ...(item.id === undefined ? {} : { id: item.id }),
       name: item.name,
       quantity: item.quantity,
       priceCents: item.price ?? ZERO_CENTS,
@@ -127,51 +129,35 @@ export interface ClaimView {
   readonly shareOf: (person: PersonId) => { readonly total: Cents; readonly extras: Cents };
 }
 
-export function claimView(draft: BillDraft, members: readonly PersonId[]): ClaimView {
-  const totals = draftTotals(draft);
-  const lines: ClaimLine[] = filledItems(draft).map((item) => {
-    const claimants = claimantsOf(draft, item.key);
-    const price = item.price ?? ZERO_CENTS;
+export function claimView(draft: BillDraft): ClaimView {
+  const items = filledItems(draft);
+  const summary = claimSummary(
+    items.map((item) => ({
+      id: lineItemId(item.key),
+      priceCents: item.price ?? ZERO_CENTS,
+      claimedBy: claimantsOf(draft, item.key),
+    })),
+    charges(draft),
+  );
+  const lines: ClaimLine[] = items.map((item, index) => {
+    const line = summary.lines[index];
     return {
       key: item.key,
       name: item.name,
       quantity: item.quantity,
-      price,
-      claimants,
-      each: claimants.length > 1 ? cents(Math.round(price / claimants.length)) : null,
+      price: line?.price ?? ZERO_CENTS,
+      claimants: line?.claimants ?? [],
+      each: line?.each ?? null,
     };
   });
-  const unclaimed = lines.filter((line) => line.claimants.length === 0 && line.price > 0);
-  const extras = totals ? cents(totals.tax + totals.tip - totals.discount) : ZERO_CENTS;
-  const split = computeShares(previewInput(draft, members, "items"));
-
-  const shareOf = (person: PersonId) => {
-    if (split.ok) {
-      const share = split.value.shares.get(person);
-      return share
-        ? { total: share.total, extras: cents(share.tax + share.tip - share.discount) }
-        : { total: ZERO_CENTS, extras: ZERO_CENTS };
-    }
-    const items = sumCents(
-      lines.map((line) => {
-        const index = line.claimants.indexOf(person);
-        if (index < 0) return ZERO_CENTS;
-        return allocate(line.price, line.claimants.map(() => 1))[index] ?? ZERO_CENTS;
-      }),
-    );
-    const subtotal = totals?.subtotal ?? ZERO_CENTS;
-    const mine = subtotal > 0 ? cents(Math.round((extras * items) / subtotal)) : ZERO_CENTS;
-    return { total: cents(items + mine), extras: mine };
-  };
-
   return {
     lines,
-    claimed: lines.filter((line) => line.claimants.length > 0).length,
-    unclaimedKeys: unclaimed.map((line) => line.key),
-    unclaimedTotal: sumCents(unclaimed.map((line) => line.price)),
-    extras,
-    ready: split.ok,
-    shareOf,
+    claimed: summary.claimed,
+    unclaimedKeys: summary.unclaimedIds.map(String),
+    unclaimedTotal: summary.unclaimedTotal,
+    extras: summary.extras,
+    ready: summary.ready,
+    shareOf: summary.shareOf,
   };
 }
 

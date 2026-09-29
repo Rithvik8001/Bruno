@@ -9,7 +9,14 @@ import { nameOf } from "../_lib/view";
 
 type ShownEvent = Exclude<BillEvent, { kind: "finalized" }>;
 
-const eventMoment = { created: "receipt", updated: "memo" } as const satisfies Record<ShownEvent["kind"], MomentIconId>;
+const eventMoment = {
+  created: "receipt",
+  updated: "memo",
+  claimingOpened: "receipt",
+  claimed: "check",
+  reminded: "bell",
+  joined: "link",
+} as const satisfies Record<ShownEvent["kind"], MomentIconId>;
 
 const BADGE_PX = 22;
 
@@ -20,6 +27,14 @@ function describe(event: ShownEvent): string {
       return copy.created(event.itemCount);
     case "updated":
       return copy.updated(event.fields);
+    case "claimingOpened":
+      return copy.claimingOpened(event.reopened);
+    case "claimed":
+      return copy.claimed(event.items);
+    case "reminded":
+      return copy.reminded(event.count);
+    case "joined":
+      return copy.joined;
   }
 }
 

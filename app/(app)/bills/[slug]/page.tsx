@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { PressLink } from "@/components/motion/motion-link";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { Chip, Tag } from "@/components/ui/chip";
 import { routes } from "@/lib/auth/rules";
 import { requireAppContext } from "@/lib/auth/session";
-import { getBillDetail } from "@/lib/bills/queries";
+import { claimCodeFor, getBillDetail } from "@/lib/bills/queries";
 import { formatMoney } from "@/lib/currency";
 import { longDay } from "@/lib/dates";
 import type { PersonId } from "@/lib/domain/ids";
@@ -24,7 +24,11 @@ export default async function BillPage({ params }: PageProps<"/bills/[slug]">) {
   const { slug } = await params;
   const { person } = await requireAppContext(routes.bill(slug));
   const detail = await getBillDetail(slug, person.id);
-  if (!detail) notFound();
+  if (!detail) {
+    const code = await claimCodeFor(slug, person.id);
+    if (code) redirect(routes.claimBill(code));
+    notFound();
+  }
 
   const you = person.id;
   const now = new Date();
@@ -67,6 +71,7 @@ export default async function BillPage({ params }: PageProps<"/bills/[slug]">) {
           shareText={shareSummary(detail, you, detail.currency)}
           editHref={detail.canEdit ? routes.editBill(detail.slug) : null}
           splitHref={detail.canEdit ? routes.editBill(detail.slug, splitStep) : null}
+          canReopen={detail.canReopen}
         />
       </div>
 

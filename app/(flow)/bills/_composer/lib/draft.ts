@@ -6,6 +6,7 @@ import { SHARES_RANGE, type SplitTab } from "../data";
 
 export interface DraftItem {
   readonly key: string;
+  readonly id?: string;
   readonly name: string;
   readonly quantity: number;
   readonly price: Cents | null;
@@ -134,6 +135,7 @@ function tipDraft(tip: BillTipValue, subtotal: number): DraftTip {
 export function draftFromBill(values: BillValues, members: readonly PersonId[]): BillDraft {
   const items = values.items.map((item, index) => ({
     key: `item-${index}`,
+    ...(item.id === undefined ? {} : { id: item.id }),
     name: item.name,
     quantity: item.quantity,
     price: cents(item.priceCents),
