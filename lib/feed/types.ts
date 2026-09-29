@@ -14,6 +14,8 @@ export interface FeedCursor {
   readonly id: string;
 }
 
+export type MemberJoinVia = "joined" | "started" | "added" | "guest" | "claimed";
+
 export type FeedAmountSign = "in" | "out" | "neutral";
 
 export interface FeedAmount {
@@ -45,7 +47,12 @@ export type FeedEvent =
       readonly to: PersonView | null;
       readonly declined: boolean;
     }
-  | { readonly kind: "memberJoined"; readonly person: PersonView | null; readonly started: boolean }
+  | {
+      readonly kind: "memberJoined";
+      readonly person: PersonView | null;
+      readonly via: MemberJoinVia;
+      readonly fromGuest: PersonView | null;
+    }
   | { readonly kind: "memberLeft"; readonly person: PersonView | null; readonly removed: boolean };
 
 export type FeedItem = FeedBase & FeedEvent;

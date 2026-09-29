@@ -36,10 +36,17 @@ async function logActivity<T extends ActivityType>(
   await db.activityEvent.create({ data: { groupId, actorId, type: draft.type, payload: draft.payload } });
 }
 
-async function loadRoster(groupId: string): Promise<Membership[] | null> {
+interface RosterEntry extends Membership {
+  readonly guest: boolean;
+  readonly addedById: string | null;
+}
+
+async function loadRoster(groupId: string): Promise<RosterEntry[] | null> {
   const group = await db.group.findFirst({
     where: { id: groupId, deletedAt: null },
-    select: { members: { select: { personId: true, role: true, leftAt: true } } },
+    select: {
+      members: { select: { personId: true, role: true, leftAt: true, addedById: true, person: { select: { userId: true } } } },
+    },
   });
   if (!group) return null;
   return group.members.map((m) => ({
@@ -47,6 +54,8 @@ async function loadRoster(groupId: string): Promise<Membership[] | null> {
     personId: toPersonId(m.personId),
     role: m.role,
     leftAt: m.leftAt,
+    guest: m.person.userId === null,
+    addedById: m.addedById,
   }));
 }
 
@@ -141,7 +150,7 @@ export const joinGroup = defineAction(slugSchema, async ({ slug }, { person }) =
 
   await db.groupMember.upsert({
     where: { groupId_personId: { groupId: group.id, personId: person.id } },
-    update: { leftAt: null, role: "MEMBER", joinedAt: new Date() },
+    update: { leftAt: null, role: "MEMBER", joinedAt: new Date(), addedById: null },
     create: { groupId: group.id, personId: person.id, role: "MEMBER" },
   });
   await logActivity(group.id, person.id, "MEMBER_JOINED", { personId: person.id, via: "invite" });
@@ -153,7 +162,7 @@ export const leaveGroup = defineAction(groupRefSchema, async ({ groupId }, { per
   const roster = await loadRoster(groupId);
   const me = roster?.find((m) => m.personId === person.id && m.leftAt === null);
   if (!roster || !me) return actionFail("forbidden", groupMessages.notMember);
-  if (roster.filter((m) => m.leftAt === null).length === 1) return actionFail("conflict", groupMessages.onlyMember);
+  if (roster.filter((m) => m.leftAt === null && !m.guest).length === 1) return actionFail("conflict", groupMessages.onlyMember);
   if (isLastAdmin(roster, person.id)) return actionFail("conflict", groupMessages.lastAdmin);
   if (!canLeaveGroup(balanceOf(await groupBalances(groupId), person.id))) {
     return actionFail("conflict", groupMessages.notSquare);
@@ -172,16 +181,23 @@ const memberRefSchema = groupRefSchema.extend({ personId: z.string().min(1) });
 
 export const removeMember = defineAction(memberRefSchema, async ({ groupId, personId }, { person }) => {
   const roster = await loadRoster(groupId);
-  const me = roster?.find((m) => m.personId === person.id) ?? null;
-  if (!roster || !canManageGroup(me)) return actionFail("forbidden", groupMessages.notAdmin);
-  const target = roster.find((m) => m.personId === personId && m.leftAt === null);
+  const me = roster?.find((m) => m.personId === person.id && m.leftAt === null) ?? null;
+  const target = roster?.find((m) => m.personId === personId && m.leftAt === null);
+  if (!roster || !me) return actionFail("forbidden", groupMessages.notMember);
   if (!target) return actionFail("notFound");
+  const addedThisGuest = target.guest && target.addedById === person.id;
+  if (!canManageGroup(me) && !addedThisGuest) {
+    return actionFail("forbidden", target.guest ? groupMessages.cantRemoveGuest : groupMessages.notAdmin);
+  }
   if (target.personId === person.id) return actionFail("conflict");
   if (!canLeaveGroup(balanceOf(await groupBalances(groupId), target.personId))) {
     return actionFail("conflict", groupMessages.memberNotSquare);
   }
 
-  await db.groupMember.update({ where: { groupId_personId: { groupId, personId } }, data: { leftAt: new Date() } });
+  await db.$transaction([
+    db.groupMember.update({ where: { groupId_personId: { groupId, personId } }, data: { leftAt: new Date() } }),
+    db.guestToken.deleteMany({ where: { personId, usedAt: null } }),
+  ]);
   await logActivity(groupId, person.id, "MEMBER_LEFT", { personId });
   refresh(groupId);
   return actionOk({ id: groupId });
@@ -195,6 +211,7 @@ export const setMemberRole = defineAction(roleSchema, async ({ groupId, personId
   if (!roster || !canManageGroup(me)) return actionFail("forbidden", groupMessages.notAdmin);
   const target = roster.find((m) => m.personId === personId && m.leftAt === null);
   if (!target) return actionFail("notFound");
+  if (target.guest && role === "ADMIN") return actionFail("conflict", groupMessages.guestAdmin);
   if (role === "MEMBER" && isLastAdmin(roster, target.personId)) return actionFail("conflict", groupMessages.lastAdmin);
 
   await db.groupMember.update({ where: { groupId_personId: { groupId, personId } }, data: { role } });

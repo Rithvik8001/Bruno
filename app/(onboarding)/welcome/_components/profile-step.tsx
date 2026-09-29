@@ -4,20 +4,17 @@ import { AnimatePresence, motion, useAnimate, useReducedMotion } from "motion/re
 import { useState } from "react";
 import { Icon } from "@/components/icons/icon";
 import { DotBurst } from "@/components/motion/bursts";
-import { CheckIn } from "@/components/motion/check-in";
-import { hoverLift, pressMotion } from "@/components/motion/press";
+import { BuddyPicker } from "@/components/patterns/buddy-picker";
+import { pressMotion } from "@/components/motion/press";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/ui/text-field";
-import { BUDDY_SHAPES, buddyShapes, type BuddyShape } from "@/lib/design-system/buddies";
-import { PALETTE_TINTS, type PaletteTint } from "@/lib/design-system/tokens";
-import { buzz, HAPTICS } from "@/lib/motion/haptics";
+import { buddyShapes, type BuddyShape } from "@/lib/design-system/buddies";
+import type { PaletteTint } from "@/lib/design-system/tokens";
 import { SQUISH } from "@/lib/motion/keyframes";
 import { SPRING, T } from "@/lib/motion/tokens";
 import { firstNameOf } from "@/lib/people/defaults";
-import { cn } from "@/lib/utils/cn";
 import { welcomeCopy } from "../_data";
-import { ChoiceButton } from "./choice-button";
 
 export interface ProfileValue {
   readonly displayName: string;
@@ -91,62 +88,13 @@ export function ProfileStep({ value, onChange, onNext, pending, error }: Profile
         feedback={error ? { tone: "error", message: error } : undefined}
       />
 
-      <div className="grid gap-2.5">
-        <span className="text-small font-medium">{copy.buddy}</span>
-        <div role="radiogroup" aria-label={copy.buddy} className="grid grid-cols-4 gap-2">
-          {BUDDY_SHAPES.map((shape) => (
-            <ChoiceButton
-              key={shape}
-              selected={value.buddy === shape}
-              aria-label={buddyShapes[shape].name}
-              onClick={() => pick({ buddy: shape })}
-              className="gap-1.5 px-1 pt-2.5 pb-2"
-            >
-              <motion.span initial={false} animate={{ scale: value.buddy === shape ? 1.06 : 1 }} transition={SPRING} className="block">
-                <Avatar name={value.displayName || first} tint={value.tint} buddy={shape} size="2xl" className="size-13" />
-              </motion.span>
-              <span className={cn("text-caption", value.buddy === shape ? "text-text" : "font-medium text-text-2")}>
-                {buddyShapes[shape].name}
-              </span>
-            </ChoiceButton>
-          ))}
-        </div>
-      </div>
-
-      <div className="grid gap-2.5">
-        <span className="text-small font-medium">{copy.colour}</span>
-        <div role="radiogroup" aria-label={copy.colour} className="grid grid-cols-9 gap-1.5">
-          {PALETTE_TINTS.map((tint) => (
-            <motion.button
-              key={tint}
-              type="button"
-              role="radio"
-              aria-checked={value.tint === tint}
-              aria-label={tint}
-              data-tint={tint}
-              onClick={() => pick({ tint })}
-              onTapStart={() => buzz(HAPTICS.select)}
-              initial={false}
-              animate={{ scale: value.tint === tint ? 1.08 : 1 }}
-              whileHover={hoverLift.whileHover}
-              whileTap={hoverLift.whileTap}
-              transition={hoverLift.transition}
-              className={cn(
-                "grid aspect-square cursor-pointer place-items-center rounded-full bg-tint-bg transition-shadow duration-300 ease-spring",
-                value.tint === tint && "ring-2 ring-tint ring-offset-2 ring-offset-bg",
-              )}
-            >
-              <span className="grid size-[44%] place-items-center rounded-full bg-tint">
-                {value.tint === tint && (
-                  <CheckIn className="grid place-items-center">
-                    <Icon name="check" size={10} strokeWidth={4} className="text-white" />
-                  </CheckIn>
-                )}
-              </span>
-            </motion.button>
-          ))}
-        </div>
-      </div>
+      <BuddyPicker
+        name={value.displayName || first}
+        buddy={value.buddy}
+        tint={value.tint}
+        onPick={pick}
+        labels={{ buddy: copy.buddy, colour: copy.colour }}
+      />
 
       <Button size="lg" fullWidth loading={pending} onClick={onNext} className="gap-2">
         {copy.next}

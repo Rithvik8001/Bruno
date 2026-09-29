@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cents } from "@/lib/money";
 import { notFound } from "next/navigation";
 import { Icon } from "@/components/icons/icon";
 import { PressLink } from "@/components/motion/motion-link";
@@ -118,6 +119,9 @@ export default async function GroupPage({ params, searchParams }: PageProps<"/gr
       {tab === "members" && (
         <MembersSection
           groupId={group.id}
+          groupName={group.name}
+          currency={group.currency}
+          you={person.id}
           canManage={canManage}
           inviteUrl={inviteUrl}
           inviteLabel={inviteUrl.replace(/^https?:\/\//, "")}
@@ -126,6 +130,9 @@ export default async function GroupPage({ params, searchParams }: PageProps<"/gr
             role: m.role,
             joined: joinedFormat.format(m.joinedAt),
             isYou: m.person.id === person.id,
+            guest: m.guest,
+            addedBy: m.addedBy,
+            net: group.balances.find((b) => b.person.id === m.person.id)?.net ?? cents(0),
           }))}
         />
       )}

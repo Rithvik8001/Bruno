@@ -152,6 +152,8 @@ model Person {
   guestTokens        GuestToken[]
   groupsCreated      Group[]           @relation("GroupCreator")
   memberships        GroupMember[]
+  membersAdded       GroupMember[]     @relation("MemberAddedBy")
+  guestTokensIssued  GuestToken[]      @relation("GuestTokenCreator")
   billsPaid          Bill[]            @relation("BillPayer")
   billsCreated       Bill[]            @relation("BillCreator")
   billParticipations BillParticipant[]
@@ -166,15 +168,30 @@ model Person {
 }
 
 model GuestToken {
-  id         String   @id @default(cuid())
-  tokenHash  String   @unique
-  personId   String
-  person     Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
-  createdAt  DateTime @default(now())
-  lastSeenAt DateTime @default(now())
+  id          String    @id @default(cuid())
+  tokenHash   String    @unique
+  personId    String
+  person      Person    @relation(fields: [personId], references: [id], onDelete: Cascade)
+  groupId     String
+  group       Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  createdById String
+  createdBy   Person    @relation("GuestTokenCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime
+  usedAt      DateTime?
 
-  @@index([personId])
+  @@index([personId, usedAt])
+  @@index([groupId])
   @@map("guest_token")
+}
+
+model AppRateLimit {
+  key         String   @id
+  count       Int
+  windowStart DateTime
+
+  @@index([windowStart])
+  @@map("app_rate_limit")
 }
 
 model Group {
@@ -191,6 +208,7 @@ model Group {
   deletedAt   DateTime?
 
   members     GroupMember[]
+  guestTokens GuestToken[]
   bills       Bill[]
   settlements Settlement[]
   activity    ActivityEvent[]
@@ -200,17 +218,20 @@ model Group {
 }
 
 model GroupMember {
-  id       String    @id @default(cuid())
-  groupId  String
-  group    Group     @relation(fields: [groupId], references: [id], onDelete: Restrict)
-  personId String
-  person   Person    @relation(fields: [personId], references: [id], onDelete: Restrict)
-  role     GroupRole @default(MEMBER)
-  joinedAt DateTime  @default(now())
-  leftAt   DateTime?
+  id        String    @id @default(cuid())
+  groupId   String
+  group     Group     @relation(fields: [groupId], references: [id], onDelete: Restrict)
+  personId  String
+  person    Person    @relation(fields: [personId], references: [id], onDelete: Restrict)
+  role      GroupRole @default(MEMBER)
+  joinedAt  DateTime  @default(now())
+  leftAt    DateTime?
+  addedById String?
+  addedBy   Person?   @relation("MemberAddedBy", fields: [addedById], references: [id], onDelete: Restrict)
 
   @@unique([groupId, personId])
   @@index([personId])
+  @@index([addedById])
   @@map("group_member")
 }
 

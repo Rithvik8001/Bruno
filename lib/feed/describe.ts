@@ -8,7 +8,7 @@ import type { PaletteTint } from "@/lib/design-system/tokens";
 import { personId, type PersonId } from "@/lib/domain/ids";
 import type { Cents } from "@/lib/money";
 import type { PersonView } from "@/lib/people/person";
-import type { FeedAmount, FeedEvent, FeedItem, FeedKind } from "./types";
+import type { FeedAmount, FeedEvent, FeedItem, FeedKind, MemberJoinVia } from "./types";
 
 export interface FeedRow {
   readonly id: string;
@@ -45,6 +45,22 @@ const look = {
   memberJoined: { moment: "link", tint: "cyan" },
   memberLeft: { moment: "people", tint: "indigo" },
 } as const satisfies Record<FeedKind, { moment: MomentIconId; tint: PaletteTint }>;
+
+const joinVia = {
+  invite: "joined",
+  created: "started",
+  added: "added",
+  guest: "guest",
+  claim: "claimed",
+} as const satisfies Record<string, MemberJoinVia>;
+
+const joinLook = {
+  joined: look.memberJoined,
+  started: { moment: "people", tint: "indigo" },
+  added: { moment: "people", tint: "indigo" },
+  guest: { moment: "people", tint: "indigo" },
+  claimed: { moment: "link", tint: "cyan" },
+} as const satisfies Record<MemberJoinVia, { moment: MomentIconId; tint: PaletteTint }>;
 
 const groupTab = (group: BillGroupRef, tab: "bills" | "balances" | "members") => routes.groupTab(group.id, tab);
 
@@ -112,7 +128,12 @@ function eventOf(row: FeedRow, ctx: FeedContext): { event: FeedEvent; href: stri
       const p = parseActivityPayload("MEMBER_JOINED", row.payload);
       if (!p) return null;
       return {
-        event: { kind: "memberJoined", person: person(p.personId), started: p.via === "created" },
+        event: {
+          kind: "memberJoined",
+          person: person(p.personId),
+          via: joinVia[p.via],
+          fromGuest: p.fromGuestId ? person(p.fromGuestId) : null,
+        },
         href: groupTab(row.group, "members"),
         amount: null,
       };
@@ -137,8 +158,7 @@ export function describeEvent(row: FeedRow, ctx: FeedContext): FeedItem | null {
   const described = eventOf(row, ctx);
   if (!described) return null;
   const { event, href, amount } = described;
-  const style =
-    event.kind === "memberJoined" && event.started ? { moment: "people" as const, tint: "indigo" as const } : look[event.kind];
+  const style = event.kind === "memberJoined" ? joinLook[event.via] : look[event.kind];
   return { id: row.id, at: row.at, group: row.group, actor: row.actor, href, amount, ...style, ...event };
 }
 
@@ -148,9 +168,12 @@ export function payloadPeople(type: ActivityType, payload: unknown): readonly st
       const p = parseActivityPayload("SETTLEMENT_RECORDED", payload);
       return p ? [p.fromId, p.toId] : [];
     }
-    case "MEMBER_JOINED":
+    case "MEMBER_JOINED": {
+      const p = parseActivityPayload("MEMBER_JOINED", payload);
+      return p ? [p.personId, ...(p.fromGuestId ? [p.fromGuestId] : [])] : [];
+    }
     case "MEMBER_LEFT": {
-      const p = parseActivityPayload(type, payload);
+      const p = parseActivityPayload("MEMBER_LEFT", payload);
       return p ? [p.personId] : [];
     }
     default:

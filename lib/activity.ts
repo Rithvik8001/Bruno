@@ -12,7 +12,11 @@ export const activityPayloadSchemas = {
   BILL_DELETED: z.object({ title: z.string() }),
   ITEM_CLAIMED: z.object({ lineItemId: id, name: z.string(), personId: id }),
   ITEM_UNCLAIMED: z.object({ lineItemId: id, name: z.string(), personId: id }),
-  MEMBER_JOINED: z.object({ personId: id, via: z.enum(["invite", "claim", "created"]) }),
+  MEMBER_JOINED: z.object({
+    personId: id,
+    via: z.enum(["invite", "claim", "created", "added", "guest"]),
+    fromGuestId: id.optional(),
+  }),
   MEMBER_LEFT: z.object({ personId: id }),
   SETTLEMENT_RECORDED: z.object({
     settlementId: id,

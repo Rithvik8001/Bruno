@@ -25,9 +25,10 @@ export function initialSettlement(
   from: PersonId,
   to: PersonId,
   now: Date,
+  recipientCanConfirm = true,
 ): Result<InitialSettlement, SettlementRecorderError> {
   if (from === to) return err({ kind: "samePerson" });
-  if (recordedBy === to) {
+  if (recordedBy === to || (recordedBy === from && !recipientCanConfirm)) {
     return ok({
       status: "CONFIRMED",
       confirmedAt: now,

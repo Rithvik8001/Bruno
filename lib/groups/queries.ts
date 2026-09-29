@@ -30,6 +30,8 @@ export interface GroupMemberView {
   readonly person: PersonView;
   readonly role: GroupRole;
   readonly joinedAt: Date;
+  readonly guest: boolean;
+  readonly addedBy: PersonView | null;
 }
 
 export interface GroupSummary {
@@ -47,6 +49,7 @@ export interface GroupSummary {
 
 export interface MemberBalance {
   readonly person: PersonView;
+  readonly guest: boolean;
   readonly net: Cents;
   readonly paid: number;
   readonly involved: number;
@@ -89,7 +92,13 @@ export interface GroupInvite {
 const activeMembers = {
   where: { leftAt: null },
   orderBy: { joinedAt: "asc" },
-  select: { role: true, joinedAt: true, leftAt: true, person: { select: personSelect } },
+  select: {
+    role: true,
+    joinedAt: true,
+    leftAt: true,
+    person: { select: { ...personSelect, userId: true } },
+    addedBy: { select: personSelect },
+  },
 } as const;
 
 const groupSelect = {
@@ -151,7 +160,7 @@ export async function listGroupsFor(you: PersonId): Promise<GroupSummary[]> {
 }
 
 function memberBalances(
-  roster: readonly PersonView[],
+  roster: readonly { readonly person: PersonView; readonly guest: boolean }[],
   ledger: Ledger,
   view: LedgerView,
   net: ReadonlyMap<PersonId, Cents>,
@@ -163,11 +172,12 @@ function memberBalances(
   const debts = inScope(ledger.debts, scope).filter((d) => d.currency === currency);
   const open = debts.filter((d) => (view.remaining.get(debtKey(d)) ?? ZERO_CENTS) > 0);
   return roster
-    .map((person) => {
+    .map(({ person, guest }) => {
       const balance = net.get(person.id) ?? ZERO_CENTS;
       const related = balance < 0 ? open.filter((d) => d.from === person.id) : open.filter((d) => d.to === person.id);
       return {
         person,
+        guest,
         net: balance,
         paid: bills.filter((b) => b.payerId === person.id).length,
         involved: bills.filter((b) => b.payerId === person.id || (b.shares.get(person.id) ?? 0) > 0).length,
@@ -192,7 +202,15 @@ export async function getGroupForMember(id: string, you: PersonId): Promise<Grou
   const now = new Date();
   const view = ledgerView(ledger, now);
   const summary = toSummary(row, you, ledger, view, now);
-  const roster = row.members.map((m) => ({ person: toPersonView(m.person), role: m.role, joinedAt: m.joinedAt }));
+  const roster = row.members.map(
+    (m): GroupMemberView => ({
+      person: toPersonView(m.person),
+      role: m.role,
+      joinedAt: m.joinedAt,
+      guest: m.person.userId === null,
+      addedBy: m.addedBy ? toPersonView(m.addedBy) : null,
+    }),
+  );
   const entries = inScope(ledger.bills, summary.id);
   const bills = entries.filter((b) => b.currency === summary.currency);
   const net = balancesIn(ledger, summary.id, now).get(summary.currency) ?? new Map<PersonId, Cents>();
@@ -212,7 +230,7 @@ export async function getGroupForMember(id: string, you: PersonId): Promise<Grou
     everyoneSquare: [...net.values()].every((v) => v === 0),
     bills: summarizeBills(entries, view, people, new Map([[groupRef.id, groupRef]]), you, now),
     balances: memberBalances(
-      roster.map((m) => m.person),
+      roster,
       ledger,
       view,
       net,

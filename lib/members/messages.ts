@@ -1,0 +1,15 @@
+export const memberMessages = {
+  queryEmpty: "Type a username or email.",
+  queryInvalid: "That doesn't look like a username or email.",
+  nameMissing: "Add their name.",
+  nameTooLong: (max: number) => `Keep it under ${max} characters.`,
+  rateLimited: "That's a lot of lookups. Give it a minute and try again.",
+  tooManyGuests: "That's a lot of guests at once. Give it a minute and try again.",
+  tooManyInvites: "That's a lot of links at once. Give it a minute and try again.",
+  groupFull: (max: number) => `A group can have up to ${max} people.`,
+  ticketExpired: "That search expired. Look them up again.",
+  notGuest: "Only guests can be changed here.",
+  claimDead: "This link doesn't work any more. Ask for a new one.",
+  claimSelf: "That's already you.",
+  claimAlreadyMember: "You've been in this group before, so this spot can't be merged. Ask a member to remove the guest instead.",
+} as const;

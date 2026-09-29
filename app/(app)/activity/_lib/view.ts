@@ -54,10 +54,18 @@ export function feedLine(item: FeedItem, you: PersonId): FeedLine {
             : line.cancelledFrom(possessive(item.from, you)),
       };
     case "memberJoined":
-      return {
-        who: subject(item.person, you),
-        what: item.started ? line.started(item.group.name) : line.joined(item.group.name),
-      };
+      switch (item.via) {
+        case "started":
+          return { who: subject(item.person, you), what: line.started(item.group.name) };
+        case "joined":
+          return { who: subject(item.person, you), what: line.joined(item.group.name) };
+        case "added":
+          return { who: actor, what: line.added(object(item.person, you), item.group.name) };
+        case "guest":
+          return { who: actor, what: line.addedGuest(object(item.person, you)) };
+        case "claimed":
+          return { who: subject(item.person, you), what: line.claimed };
+      }
     case "memberLeft":
       return item.removed
         ? { who: actor, what: line.removed(object(item.person, you), item.group.name) }

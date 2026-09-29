@@ -8,4 +8,6 @@ export const groupMessages = {
   onlyMember: "You're the only one here. Delete the group instead.",
   deadLink: "This invite link doesn't work anymore.",
   slugTaken: "Couldn't create a link. Try again.",
+  cantRemoveGuest: "Only an admin or whoever added them can remove a guest.",
+  guestAdmin: "Guests can't be admins until they join Bruno.",
 } as const;

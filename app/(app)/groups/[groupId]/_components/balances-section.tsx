@@ -66,7 +66,9 @@ export function BalancesSection({ groupId, balances, payments, settlements, curr
                 <span className="truncate font-medium">
                   {row.person.id === you ? groupDetailCopy.youName : row.person.displayName}
                 </span>
-                <span className="truncate text-small text-text-2">{caption}</span>
+                <span className="truncate text-small text-text-2">
+                  {row.guest ? `${groupDetailCopy.members.guest.toLowerCase()} · ${caption}` : caption}
+                </span>
               </span>
               <Chip tint={balanceTint[direction]} size="sm" className="h-7.5 px-2.5 text-small">
                 {signed(row.net)}

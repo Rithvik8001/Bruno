@@ -49,7 +49,7 @@ export function SheetContent({
           {description}
         </p>
       )}
-      {children && <div className="mb-5 grid gap-5">{children}</div>}
+      {children && <div className={cn("mb-5 grid gap-5", !description && "mt-4")}>{children}</div>}
       {actions && <div className="grid gap-1">{actions}</div>}
     </>
   );

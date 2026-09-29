@@ -1,9 +1,12 @@
-import { authParams, guestOnlyRoutes, routes, signedInRoutePrefixes } from "./rules";
+import { authParams, guestOnlyRoutes, publicRoutePrefixes, routes, signedInRoutePrefixes } from "./rules";
 
 const ORIGIN = "http://bruno.invalid";
 
+const underPrefix = (pathname: string, prefix: string) => pathname === prefix || pathname.startsWith(`${prefix}/`);
+
 export function isSignedInRoute(pathname: string): boolean {
-  return signedInRoutePrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+  if (publicRoutePrefixes.some((prefix) => underPrefix(pathname, prefix))) return false;
+  return signedInRoutePrefixes.some((prefix) => underPrefix(pathname, prefix));
 }
 
 export function isGuestOnlyRoute(pathname: string): boolean {

@@ -21,7 +21,7 @@ import type { GroupFormValue } from "../../../(app)/groups/_data";
 import { GroupFormFields, type GroupFormErrors } from "../../../(app)/groups/_components/group-form-fields";
 import { CREW_MODES, crewModes, welcomeCopy, type CrewMode, type CrewModeOption } from "../_data";
 import { inviteSlugFrom } from "../_lib/invite";
-import { ChoiceButton } from "./choice-button";
+import { ChoiceButton } from "@/components/patterns/choice-button";
 import type { ProfileValue } from "./profile-step";
 
 export interface CrewStepProps {

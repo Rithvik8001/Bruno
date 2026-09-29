@@ -31,12 +31,17 @@ export const recordSettlement = defineAction(recordSettlementSchema, async (inpu
   if (input.personId === you) return actionFail("invalid", settlementMessages.samePerson);
   const group = await db.group.findFirst({
     where: { id: input.groupId, deletedAt: null },
-    select: { currency: true, members: { where: { personId: { in: [you, input.personId] } }, select: { personId: true, leftAt: true } } },
+    select: { currency: true, members: {
+        where: { personId: { in: [you, input.personId] } },
+        select: { personId: true, leftAt: true, person: { select: { userId: true } } },
+      },
+    },
   });
   if (!group) return actionFail("notFound", settlementMessages.notMember);
   const me = group.members.find((m) => m.personId === you);
   if (!me || me.leftAt !== null) return actionFail("forbidden", settlementMessages.notMember);
-  if (!group.members.some((m) => m.personId === input.personId)) return actionFail("forbidden", settlementMessages.unknownPerson);
+  const counterpart = group.members.find((m) => m.personId === input.personId);
+  if (!counterpart) return actionFail("forbidden", settlementMessages.unknownPerson);
   if (!isCurrencyCode(group.currency)) return actionFail("conflict");
 
   const now = new Date();
@@ -55,7 +60,8 @@ export const recordSettlement = defineAction(recordSettlementSchema, async (inpu
 
   const from = input.direction === "received" ? them : you;
   const to = input.direction === "received" ? you : them;
-  const initial = initialSettlement(you, from, to, now);
+  const recipientCanConfirm = to === you || counterpart.person.userId !== null;
+  const initial = initialSettlement(you, from, to, now, recipientCanConfirm);
   if (!initial.ok) return actionFail("forbidden", settlementMessages.unknownPerson);
 
   const created = await db.$transaction(async (tx) => {
