@@ -12,6 +12,7 @@ export const iconRegistry = {
   close: { node: <path d="M6 6l12 12M18 6L6 18" /> },
   "chevron-left": { node: <path d="M15 5l-7 7 7 7" /> },
   "chevron-down": { node: <path d="M6 9l6 6 6-6" /> },
+  "arrow-right": { node: <path d="M5 12h14M13 6l6 6-6 6" /> },
   search: {
     node: (
       <>
@@ -135,6 +136,20 @@ export const iconRegistry = {
     ),
   },
   activity: { node: <path d="M3 12h3.5l3-7 4 14 3-7H21" /> },
+  link: {
+    node: (
+      <path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1" />
+    ),
+  },
+  settings: {
+    node: (
+      <>
+        <path d="M4 7h10M18 7h2M4 17h2M10 17h10" />
+        <circle cx="16" cy="7" r="2" />
+        <circle cx="8" cy="17" r="2" />
+      </>
+    ),
+  },
   card: {
     node: (
       <>

@@ -23,10 +23,14 @@ export function safeNextPath(value: unknown): string {
   }
 }
 
+export function withNext(path: string, next: string): string {
+  const target = safeNextPath(next);
+  if (target === routes.app) return path;
+  return `${path}?${new URLSearchParams({ [authParams.next]: target })}`;
+}
+
 export function signInPath(next?: string): string {
-  const target = next === undefined ? undefined : safeNextPath(next);
-  if (!target || target === routes.app) return routes.signIn;
-  return `${routes.signIn}?${new URLSearchParams({ [authParams.next]: target })}`;
+  return next === undefined ? routes.signIn : withNext(routes.signIn, next);
 }
 
 export function resetPasswordPath(email?: string): string {

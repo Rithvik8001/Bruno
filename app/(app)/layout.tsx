@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { signInPath } from "@/lib/auth/redirect";
+import { routes } from "@/lib/auth/rules";
 import { getAppContext } from "@/lib/auth/session";
 import { AppHeader } from "./_components/app-header";
 import { TabBar } from "./_components/nav-links";
@@ -7,6 +8,7 @@ import { TabBar } from "./_components/nav-links";
 export default async function AppLayout({ children }: LayoutProps<"/">) {
   const context = await getAppContext();
   if (!context) redirect(signInPath());
+  if (!context.person.onboarded) redirect(routes.welcome);
 
   return (
     <div className="flex min-h-dvh flex-col">

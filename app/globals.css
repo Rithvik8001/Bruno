@@ -100,6 +100,9 @@
   --animate-twinkle: twinkle 1.8s var(--motion-ease-standard) infinite;
   --animate-check-in: check-in 420ms var(--motion-ease-spring) both;
   --animate-shake: shake 380ms ease-out;
+  --animate-squish: squish 560ms ease-out;
+  --animate-wave: wave 1.6s ease-in-out 2;
+  --animate-pop-spring: pop-spring 480ms var(--motion-ease-spring) both;
   --animate-buddy-blink: buddy-blink var(--buddy-blink-duration, 4s) linear var(--buddy-blink-delay, 0s) infinite;
 
   --breakpoint-nav: 47.5rem;
@@ -168,6 +171,35 @@
   }
   96.5% {
     transform: scaleY(0.1);
+  }
+}
+@keyframes squish {
+  25% {
+    transform: scale(1.16, 0.86);
+  }
+  50% {
+    transform: scale(0.92, 1.1);
+  }
+  75% {
+    transform: scale(1.04, 0.97);
+  }
+}
+@keyframes wave {
+  30% {
+    transform: translateY(-10px) rotate(-8deg);
+  }
+  60% {
+    transform: translateY(-4px) rotate(6deg);
+  }
+}
+@keyframes pop-spring {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.12);
   }
 }
 @keyframes shake {

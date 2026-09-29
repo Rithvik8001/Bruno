@@ -40,3 +40,16 @@ export function canClaim(bill: BillAccess): boolean {
 export function canLeaveGroup(balances: ReadonlyMap<CurrencyCode, Cents>): boolean {
   return isAllSquare(balances);
 }
+
+export function isActiveMember(membership: Membership | null): membership is Membership {
+  return membership !== null && membership.leftAt === null;
+}
+
+export function canManageGroup(membership: Membership | null): boolean {
+  return isActiveMember(membership) && membership.role === "ADMIN";
+}
+
+export function isLastAdmin(members: readonly Membership[], personId: PersonId): boolean {
+  const admins = members.filter((m) => m.leftAt === null && m.role === "ADMIN");
+  return admins.length === 1 && admins[0]?.personId === personId;
+}

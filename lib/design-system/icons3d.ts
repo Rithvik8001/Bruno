@@ -164,3 +164,7 @@ export function groupArtFor(name: string, chosen?: GroupArtId | null): GroupArtI
   if (chosen) return chosen;
   return matchGroupArt(name) ?? FALLBACK[buddyHash(name) % FALLBACK.length] ?? "cheers";
 }
+
+export function isGroupArtId(value: string): value is GroupArtId {
+  return value in groupArt;
+}

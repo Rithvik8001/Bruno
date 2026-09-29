@@ -13,6 +13,7 @@ export interface SheetContentProps {
   icon?: IconName | { readonly moment: MomentIconId };
   tint?: Tint;
   actions?: ReactNode;
+  children?: ReactNode;
   titleId?: string;
   descriptionId?: string;
 }
@@ -23,6 +24,7 @@ export function SheetContent({
   icon,
   tint = "green",
   actions,
+  children,
   titleId,
   descriptionId,
 }: SheetContentProps) {
@@ -45,6 +47,7 @@ export function SheetContent({
           {description}
         </p>
       )}
+      {children && <div className="mb-5 grid gap-5">{children}</div>}
       {actions && <div className="grid gap-1">{actions}</div>}
     </>
   );

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { withNext } from "@/lib/auth/redirect";
 import { routes } from "@/lib/auth/rules";
 import { AuthHeader } from "../../_components/auth-header";
 import { GoogleButton } from "../../_components/google-button";
@@ -75,7 +76,7 @@ export function SignInFlow({ next }: SignInFlowProps) {
       {state.step === "form" && (
         <p className="m-0 text-center text-small text-text-2">
           {signInCopy.switchPrompt}{" "}
-          <Link href={routes.signUp} className="font-semibold">
+          <Link href={withNext(routes.signUp, next)} className="font-semibold">
             {signInCopy.switchCta}
           </Link>
         </p>

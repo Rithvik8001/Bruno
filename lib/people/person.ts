@@ -10,6 +10,7 @@ export interface PersonView {
   readonly displayName: string;
   readonly tint: PaletteTint;
   readonly buddy: BuddyShape | null;
+  readonly onboarded: boolean;
 }
 
 export interface PersonOwner {
@@ -18,9 +19,9 @@ export interface PersonOwner {
   readonly email: string;
 }
 
-const personSelect = { id: true, displayName: true, tint: true, buddy: true } as const;
+export const personSelect = { id: true, displayName: true, tint: true, buddy: true, onboardedAt: true } as const;
 
-type PersonRow = { id: string; displayName: string; tint: string; buddy: string | null };
+export type PersonRow = { id: string; displayName: string; tint: string; buddy: string | null; onboardedAt: Date | null };
 
 export function toPersonView(row: PersonRow): PersonView {
   return {
@@ -28,6 +29,7 @@ export function toPersonView(row: PersonRow): PersonView {
     displayName: row.displayName,
     tint: parseTint(row.tint, row.displayName),
     buddy: parseBuddy(row.buddy),
+    onboarded: row.onboardedAt !== null,
   };
 }
 

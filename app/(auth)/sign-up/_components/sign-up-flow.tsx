@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { withNext } from "@/lib/auth/redirect";
 import { routes } from "@/lib/auth/rules";
 import { AuthHeader } from "../../_components/auth-header";
 import { GoogleButton } from "../../_components/google-button";
@@ -32,7 +33,7 @@ function headerFor(state: Step) {
   }
 }
 
-export function SignUpFlow() {
+export function SignUpFlow({ next }: { next: string }) {
   const [state, setState] = useState<Step>({ step: "form" });
   const [values, setValues] = useState<SignUpValues>(emptySignUpValues);
   const header = headerFor(state);
@@ -43,7 +44,7 @@ export function SignUpFlow() {
 
       {state.step === "form" && (
         <div className="grid gap-5">
-          <GoogleButton callbackURL={routes.app} errorCallbackURL={routes.signUp} />
+          <GoogleButton callbackURL={next} errorCallbackURL={routes.signUp} />
           <div className="flex items-center gap-3 text-footnote text-muted">
             <span aria-hidden className="h-px flex-1 bg-line" />
             {authCopy.divider}
@@ -66,12 +67,12 @@ export function SignUpFlow() {
         />
       )}
 
-      {state.step === "done" && <DoneStep />}
+      {state.step === "done" && <DoneStep href={next} />}
 
       {state.step === "form" && (
         <p className="m-0 text-center text-small text-text-2">
           {signUpCopy.switchPrompt}{" "}
-          <Link href={routes.signIn} className="font-semibold">
+          <Link href={withNext(routes.signIn, next)} className="font-semibold">
             {signUpCopy.switchCta}
           </Link>
         </p>

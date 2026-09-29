@@ -16,7 +16,11 @@ export const routes = {
   newBill: "/bills/new",
   bills: "/bills",
   settings: "/settings",
+  welcome: "/welcome",
+  join: "/j",
   authApi: "/api/auth",
+  group: (id: string) => `/groups/${encodeURIComponent(id)}`,
+  invite: (slug: string) => `/j/${encodeURIComponent(slug)}`,
 } as const;
 
 export const authParams = {
@@ -32,6 +36,8 @@ export const signedInRoutePrefixes: readonly string[] = [
   routes.activity,
   routes.bills,
   routes.settings,
+  routes.welcome,
+  routes.join,
 ];
 
 export const otpExpiresInMinutes = authRules.otp.expiresInSeconds / 60;
