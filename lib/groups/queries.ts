@@ -19,6 +19,8 @@ import { loadGroupLedgers, type Ledger } from "@/lib/ledger/load";
 import { minimumPayments, type Payment } from "@/lib/ledger/settle-up";
 import { cents, sumCents, ZERO_CENTS, type Cents } from "@/lib/money";
 import { parseTint } from "@/lib/people/defaults";
+import { listGroupSettlements } from "@/lib/settlements/queries";
+import type { SettlementCard } from "@/lib/settlements/rows";
 import { personSelect, toPersonView, type PersonView } from "@/lib/people/person";
 
 const PREVIEW_MEMBERS = 4;
@@ -61,6 +63,7 @@ export interface GroupDetail extends GroupSummary {
   readonly bills: readonly BillSummary[];
   readonly balances: readonly MemberBalance[];
   readonly payments: readonly Payment[];
+  readonly settlements: readonly SettlementCard[];
 }
 
 export interface BillComposer {
@@ -193,7 +196,10 @@ export async function getGroupForMember(id: string, you: PersonId): Promise<Grou
   const entries = inScope(ledger.bills, summary.id);
   const bills = entries.filter((b) => b.currency === summary.currency);
   const net = balancesIn(ledger, summary.id, now).get(summary.currency) ?? new Map<PersonId, Cents>();
-  const people = await loadPeople(entries.map((b) => b.payerId));
+  const [people, settlements] = await Promise.all([
+    loadPeople(entries.map((b) => b.payerId)),
+    listGroupSettlements(summary.id, you),
+  ]);
   const groupRef = toGroupRef(row);
 
   return {
@@ -214,6 +220,7 @@ export async function getGroupForMember(id: string, you: PersonId): Promise<Grou
       summary.currency,
     ),
     payments: minimumPayments(net),
+    settlements,
   };
 }
 

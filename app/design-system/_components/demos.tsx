@@ -14,6 +14,8 @@ import { SegmentedControl, Tabs, type SegmentOption } from "@/components/ui/segm
 import { Sheet, SheetContent, sheetBodyClassName, sheetPanelClassName } from "@/components/ui/sheet";
 import { Stepper } from "@/components/ui/stepper";
 import { ToastView, useToast } from "@/components/ui/toast";
+import { Icon } from "@/components/icons/icon";
+import { formatMoney } from "@/lib/currency";
 import { useTimeline } from "@/lib/hooks/use-timeline";
 import { cents, formatCents, sumCents, type Cents } from "@/lib/money";
 import { cn } from "@/lib/utils/cn";
@@ -37,7 +39,7 @@ export function LoadingButtonDemo() {
 
 export function MoneyInputDemo() {
   const [value, setValue] = useState<Cents | null>(null);
-  return <MoneyInput aria-label="Amount" value={value} onValueChange={setValue} />;
+  return <MoneyInput aria-label="Amount" currency="USD" value={value} onValueChange={setValue} />;
 }
 
 type SplitMode = "amount" | "percent" | "shares";
@@ -240,12 +242,29 @@ export function TearOffDemo() {
   const [settled, setSettled] = useState(false);
   return (
     <TearOffStub
-      title="Sam pays you"
-      amount={cents(5240)}
-      settled={settled}
-      onSettle={() => setSettled(true)}
-      onUndo={() => setSettled(false)}
-      confirmation="Settled with Sam"
-    />
+      className="max-w-75"
+      torn={settled}
+      tearOff={
+        <Button fullWidth size="md" className="h-11" onClick={() => setSettled(true)}>
+          Mark as paid
+        </Button>
+      }
+      done={
+        <div className="flex items-center gap-2.5">
+          <span data-tint="green" className="grid size-8 place-items-center rounded-control bg-tint-bg text-tint">
+            <Icon name="check" size={18} strokeWidth={2.4} />
+          </span>
+          <span className="flex-1 font-semibold">Settled with Sam</span>
+          <Button variant="secondary" size="sm" className="font-semibold" onClick={() => setSettled(false)}>
+            Undo
+          </Button>
+        </div>
+      }
+    >
+      <div className="flex items-center justify-between">
+        <span className="font-semibold">Sam pays you</span>
+        <span className="text-title">{formatMoney(cents(5240), "USD")}</span>
+      </div>
+    </TearOffStub>
   );
 }

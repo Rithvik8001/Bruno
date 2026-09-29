@@ -1,15 +1,14 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { activity } from "@/lib/activity";
 import { defineAction } from "@/lib/actions/action";
 import { actionFail, actionInvalid, actionOk, type ActionResult } from "@/lib/actions/errors";
-import { routes } from "@/lib/auth/rules";
 import { isCurrencyCode, type CurrencyCode } from "@/lib/currency";
 import { db } from "@/lib/db";
 import { groupId as toGroupId, personId as toPersonId, type PersonId } from "@/lib/domain/ids";
 import { canAddBill, canEditBill, type Membership } from "@/lib/domain/permissions";
 import type { Cents } from "@/lib/money";
+import { refreshGroup } from "@/lib/revalidate";
 import { uniqueSlug } from "@/lib/slug";
 import { changedFields } from "./diff";
 import { toBillInput } from "./input";
@@ -83,13 +82,6 @@ function billColumns(values: BillValues, total: Cents) {
   };
 }
 
-function refresh(groupId: string, slug?: string): void {
-  revalidatePath(routes.group(groupId));
-  revalidatePath(routes.groups);
-  revalidatePath(routes.app);
-  if (slug) revalidatePath(routes.bill(slug));
-}
-
 export const createBill = defineAction(createBillSchema, async (input, { person }) => {
   const group = await loadGroup(input.groupId);
   if (!group) return actionFail("notFound", billMessages.groupGone);
@@ -136,7 +128,7 @@ export const createBill = defineAction(createBillSchema, async (input, { person 
     return created;
   });
 
-  refresh(input.groupId);
+  refreshGroup(input.groupId);
   return actionOk<CreatedBill>({ id: bill.id, slug: bill.slug, groupId: input.groupId, title: input.title, total: total.data });
 });
 
@@ -230,7 +222,7 @@ export const updateBill = defineAction(updateBillSchema, async ({ billId, ...inp
     });
   });
 
-  refresh(groupId, bill.slug);
+  refreshGroup(groupId);
   return actionOk<UpdatedBill>({ slug: bill.slug, groupId, title: input.title });
 });
 
@@ -248,6 +240,6 @@ export const deleteBill = defineAction(billRefSchema, async ({ billId }, { perso
     });
   });
 
-  refresh(groupId, bill.slug);
+  refreshGroup(groupId);
   return actionOk<DeletedBill>({ groupId, title: bill.title });
 });

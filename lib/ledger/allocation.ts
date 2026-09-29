@@ -23,21 +23,34 @@ export function remainingByDebt(
   settlements: readonly SettlementEntry[],
   now: Date,
 ): ReadonlyMap<DebtKey, Cents> {
-  const coverage = new Map<string, number>();
-  const add = (key: string, amount: number) => coverage.set(key, (coverage.get(key) ?? 0) + amount);
+  const owed = new Map<string, number>();
+  const paid = new Map<string, number>();
+  const add = (map: Map<string, number>, key: string, amount: number) => map.set(key, (map.get(key) ?? 0) + amount);
 
-  for (const s of settlements) {
-    if (countsTowardBalance(s, now)) add(directionKey(s), s.amount);
+  const sample = new Map<string, Debt>();
+  for (const d of debts) {
+    add(owed, directionKey(d), d.amount);
+    sample.set(directionKey(d), d);
   }
-  for (const d of debts) add(reverseKey(d), d.amount);
+  for (const s of settlements) {
+    if (countsTowardBalance(s, now)) add(paid, directionKey(s), s.amount);
+  }
+
+  const coverage = new Map<string, number>();
+  for (const [key, debt] of sample) {
+    const back = reverseKey(debt);
+    const mine = Math.max(0, (owed.get(key) ?? 0) - (paid.get(key) ?? 0));
+    const theirs = Math.max(0, (owed.get(back) ?? 0) - (paid.get(back) ?? 0));
+    coverage.set(key, (paid.get(key) ?? 0) + Math.min(mine, theirs));
+  }
 
   const remaining = new Map<DebtKey, Cents>();
   for (const debt of [...debts].sort(oldestFirst)) {
     const key = directionKey(debt);
     const available = coverage.get(key) ?? 0;
-    const paid = Math.min(debt.amount, available);
-    coverage.set(key, available - paid);
-    remaining.set(debtKey(debt), cents(debt.amount - paid));
+    const covered = Math.min(debt.amount, available);
+    coverage.set(key, available - covered);
+    remaining.set(debtKey(debt), cents(debt.amount - covered));
   }
   return remaining;
 }

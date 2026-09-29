@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { Icon } from "@/components/icons/icon";
+import { buttonVariants } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { Chip } from "@/components/ui/chip";
 import { balanceTint } from "@/lib/design-system/semantics";
@@ -9,17 +11,26 @@ import type { Payment } from "@/lib/ledger/settle-up";
 import { cents } from "@/lib/money";
 import { firstNameOf } from "@/lib/people/defaults";
 import type { PersonView } from "@/lib/people/person";
+import { routes } from "@/lib/auth/rules";
+import type { SettlementCard } from "@/lib/settlements/rows";
+import { cn } from "@/lib/utils/cn";
 import { groupDetailCopy } from "../_data";
+import { PaymentsList } from "./payments-list";
 
 export interface BalancesSectionProps {
+  groupId: string;
   balances: readonly MemberBalance[];
   payments: readonly Payment[];
+  settlements: readonly SettlementCard[];
   currency: CurrencyCode;
   you: PersonId;
 }
 
-export function BalancesSection({ balances, payments, currency, you }: BalancesSectionProps) {
+export function BalancesSection({ groupId, balances, payments, settlements, currency, you }: BalancesSectionProps) {
   const copy = groupDetailCopy.balanceList;
+  const back = `${routes.group(groupId)}?tab=balances`;
+  const mine = payments.find((p) => p.from === you || p.to === you);
+  const toConfirm = settlements.filter((s) => s.actions.confirm);
   const people = new Map<PersonId, PersonView>(balances.map((b) => [b.person.id, b.person]));
   const nameOf = (id: PersonId) => (id === you ? groupDetailCopy.youName : firstNameOf(people.get(id)?.displayName ?? ""));
   const signed = (value: number) =>
@@ -27,6 +38,21 @@ export function BalancesSection({ balances, payments, currency, you }: BalancesS
 
   return (
     <div className="grid gap-6">
+      {toConfirm.map((s) => (
+        <div key={s.id} data-tint="blue" className="flex items-center gap-3 rounded-tile bg-tint-bg py-3 pr-2 pl-3.5 text-small text-tint">
+          <Icon name="clock" size={18} strokeWidth={2} className="shrink-0" />
+          <span className="min-w-0 flex-1">
+            <span className="font-semibold">{copy.pendingTitle(firstNameOf(s.from.displayName), formatMoney(s.amount, s.currency))}</span>{" "}
+            {copy.pendingBody}
+          </span>
+          <Link
+            href={routes.settle(groupId, s.from.id, back)}
+            className="inline-flex h-8 shrink-0 items-center rounded-sm bg-bg px-2.5 text-footnote font-semibold whitespace-nowrap text-text no-underline hover:text-text"
+          >
+            {copy.pendingCta}
+          </Link>
+        </div>
+      ))}
       <ul aria-label={copy.label} className="m-0 grid list-none p-0 [&>li+li]:border-t [&>li+li]:border-line">
         {balances.map((row) => {
           const direction = row.net > 0 ? "owed" : row.net < 0 ? "owes" : "settled";
@@ -74,8 +100,17 @@ export function BalancesSection({ balances, payments, currency, you }: BalancesS
               );
             })}
           </ul>
+          {mine && (
+            <Link
+              href={routes.settle(groupId, mine.from === you ? mine.to : mine.from, back)}
+              className={cn(buttonVariants({ size: "md" }), "h-11 text-small font-semibold")}
+            >
+              {copy.settleUp}
+            </Link>
+          )}
         </section>
       )}
+      {settlements.length > 0 && <PaymentsList settlements={settlements} you={you} />}
     </div>
   );
 }

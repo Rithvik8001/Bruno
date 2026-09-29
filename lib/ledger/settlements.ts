@@ -64,6 +64,10 @@ export function canConfirm(settlement: SettlementState, actor: PersonId, now: Da
   return settlement.status === "PENDING" && actor === settlement.to && !countsTowardBalance(settlement, now);
 }
 
+export function canDecline(settlement: SettlementState, actor: PersonId, now: Date): boolean {
+  return settlement.status === "PENDING" && actor === settlement.to && !countsTowardBalance(settlement, now);
+}
+
 export function canUndo(settlement: SettlementState, actor: PersonId, now: Date): boolean {
   if (actor !== settlement.recordedBy) return false;
   switch (settlement.status) {

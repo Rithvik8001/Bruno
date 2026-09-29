@@ -15,6 +15,7 @@ import { balancesWith, inScope } from "@/lib/ledger/balances";
 import { loadGroupLedgers } from "@/lib/ledger/load";
 import { cents, ZERO_CENTS, type Cents } from "@/lib/money";
 import type { PersonView } from "@/lib/people/person";
+import { pendingForYou, type PendingForYou } from "@/lib/settlements/queries";
 
 const OPEN_BILLS = 5;
 const PEOPLE_MAX = 8;
@@ -30,12 +31,10 @@ export interface HomePersonBalance {
   readonly groupId: GroupId | null;
 }
 
-export interface HomeNextUp {
-  readonly person: PersonView;
-  readonly amount: Cents;
-  readonly bill: BillSummary;
-  readonly titles: readonly string[];
-}
+export type HomeNextUp =
+  | { readonly kind: "confirm"; readonly person: PersonView; readonly amount: Cents; readonly currency: CurrencyCode; readonly groupId: GroupId; readonly at: Date }
+  | { readonly kind: "owe"; readonly person: PersonView; readonly amount: Cents; readonly currency: CurrencyCode; readonly groupId: GroupId; readonly titles: readonly string[] }
+  | { readonly kind: "owed"; readonly person: PersonView; readonly amount: Cents; readonly bill: BillSummary; readonly titles: readonly string[] };
 
 export interface HomeSummaryData {
   readonly primaryCurrency: CurrencyCode;
@@ -60,6 +59,29 @@ function primaryOf(
     if (weight > 0 && (!best || weight > best.weight)) best = { currency, weight };
   }
   return best?.currency ?? fallback;
+}
+
+function nextUpOf(
+  toConfirm: PendingForYou | undefined,
+  lead: HomePersonBalance | undefined,
+  leadBill: BillSummary | undefined,
+  currency: CurrencyCode,
+): HomeNextUp | null {
+  if (toConfirm) {
+    return {
+      kind: "confirm",
+      person: toConfirm.card.from,
+      amount: toConfirm.card.amount,
+      currency: toConfirm.card.currency,
+      groupId: toConfirm.groupId,
+      at: toConfirm.card.createdAt,
+    };
+  }
+  if (!lead) return null;
+  if (lead.primary < 0 && lead.groupId) {
+    return { kind: "owe", person: lead.person, amount: lead.primary, currency, groupId: lead.groupId, titles: lead.openTitles };
+  }
+  return leadBill ? { kind: "owed", person: lead.person, amount: lead.primary, bill: leadBill, titles: lead.openTitles } : null;
 }
 
 export async function getHomeSummary(you: PersonId): Promise<HomeSummaryData> {
@@ -130,6 +152,7 @@ export async function getHomeSummary(you: PersonId): Promise<HomeSummaryData> {
   const openBills = summaries.filter((b) => b.yourBalance !== 0).slice(0, OPEN_BILLS);
 
   const lead = personRows.find((p) => p.primary !== 0);
+  const toConfirm = (await pendingForYou(you))[0];
   const leadBill = lead
     ? summaries.find(
         (b) =>
@@ -144,7 +167,7 @@ export async function getHomeSummary(you: PersonId): Promise<HomeSummaryData> {
     primaryCurrency,
     net: sumByCurrency(balances),
     people: personRows,
-    nextUp: lead && leadBill ? { person: lead.person, amount: lead.primary, bill: leadBill, titles: lead.openTitles } : null,
+    nextUp: nextUpOf(toConfirm, lead, leadBill, primaryCurrency),
     openBills,
     hasAnyBills: ledger.bills.length > 0,
   };

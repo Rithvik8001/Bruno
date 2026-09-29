@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
+import { buttonVariants } from "@/components/ui/button";
 import { Chip, Tag } from "@/components/ui/chip";
 import { routes } from "@/lib/auth/rules";
 import { requireAppContext } from "@/lib/auth/session";
@@ -7,6 +9,7 @@ import { getBillDetail } from "@/lib/bills/queries";
 import { formatMoney } from "@/lib/currency";
 import { longDay } from "@/lib/dates";
 import type { PersonId } from "@/lib/domain/ids";
+import { cn } from "@/lib/utils/cn";
 import { BackLink } from "@/components/patterns/back-link";
 import { billDetailCopy, personStatusTint } from "./_data";
 import { BillActions } from "./_components/bill-actions";
@@ -30,6 +33,13 @@ export default async function BillPage({ params }: PageProps<"/bills/[slug]">) {
   const chip = statusChip(detail, you);
   const names = new Map<PersonId, string>(detail.people.map((row) => [row.person.id, nameOf(row.person, you)]));
   const splitStep = detail.method === "ITEMS" ? "claim" : "split";
+  const debtor = detail.payer.id === you ? detail.people.find((row) => row.status === "owes") : undefined;
+  const youOwe = detail.people.some((row) => row.person.id === you && row.status === "owes");
+  const settle = debtor
+    ? { href: routes.settle(detail.group.id, debtor.person.id, routes.bill(detail.slug)), label: copy.settle.with(nameOf(debtor.person, you)) }
+    : youOwe
+      ? { href: routes.settle(detail.group.id, detail.payer.id, routes.bill(detail.slug)), label: copy.settle.payBack(nameOf(detail.payer, you)) }
+      : null;
 
   const items: PersonShareItem[] = detail.people.map((row) => {
     const name = nameOf(row.person, you);
@@ -78,6 +88,11 @@ export default async function BillPage({ params }: PageProps<"/bills/[slug]">) {
       <PersonShareList title={copy.people.title} items={items} />
       <BillReceipt detail={detail} you={you} />
       <BillActivity rows={detail.activity} you={you} now={now} />
+      {settle && (
+        <Link href={settle.href} className={cn(buttonVariants({ size: "lg" }), "justify-self-start")}>
+          {settle.label}
+        </Link>
+      )}
     </div>
   );
 }

@@ -7,7 +7,7 @@ const dayMonthYear = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "
 const weekdayDayMonth = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short" });
 const clock = new Intl.DateTimeFormat("en-GB", { hour: "numeric", minute: "2-digit", hour12: true });
 
-export const dayWords = { today: "Today", yesterday: "Yesterday" } as const;
+export const dayWords = { today: "Today", yesterday: "Yesterday", tomorrow: "Tomorrow" } as const;
 
 function startOfDay(date: Date): number {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
@@ -44,4 +44,18 @@ export function momentLabel(date: Date, now: Date): string {
   if (ago === 1) return dayWords.yesterday;
   if (ago > 1 && ago <= WEEK_DAYS) return weekday.format(date);
   return date.getFullYear() === now.getFullYear() ? dayMonth.format(date) : dayMonthYear.format(date);
+}
+
+export function relativeDay(date: Date, now: Date): string {
+  const diff = daysAgo(date, now);
+  if (diff === 0) return dayWords.today;
+  if (diff === 1) return dayWords.yesterday;
+  if (diff === -1) return dayWords.tomorrow;
+  if (Math.abs(diff) <= WEEK_DAYS) return weekday.format(date);
+  return date.getFullYear() === now.getFullYear() ? dayMonth.format(date) : dayMonthYear.format(date);
+}
+
+export function inlineDay(date: Date, now: Date): string {
+  const label = relativeDay(date, now);
+  return (Object.values(dayWords) as string[]).includes(label) ? label.toLowerCase() : `on ${label}`;
 }

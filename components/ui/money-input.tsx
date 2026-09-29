@@ -1,7 +1,8 @@
 "use client";
 
-import type { InputHTMLAttributes } from "react";
-import { formatCents, parseDigitsToCents, type Cents } from "@/lib/money";
+import type { InputHTMLAttributes, ReactNode } from "react";
+import { currencySymbol, formatAmount, minorUnitsOf, type CurrencyCode } from "@/lib/currency";
+import { parseDigitsToCents, ZERO_CENTS, type Cents } from "@/lib/money";
 import { cn } from "@/lib/utils/cn";
 
 export interface MoneyInputProps
@@ -11,16 +12,18 @@ export interface MoneyInputProps
   > {
   value: Cents | null;
   onValueChange: (value: Cents | null) => void;
-  currencySymbol?: string;
+  currency: CurrencyCode;
+  trailing?: ReactNode;
   "aria-label": string;
 }
 
 export function MoneyInput({
   value,
   onValueChange,
-  currencySymbol = "$",
+  currency,
+  trailing,
   className,
-  placeholder = "0.00",
+  placeholder,
   ...rest
 }: MoneyInputProps) {
   return (
@@ -31,18 +34,19 @@ export function MoneyInput({
       )}
     >
       <span aria-hidden className="text-[2rem] leading-10 font-semibold text-muted">
-        {currencySymbol}
+        {currencySymbol(currency)}
       </span>
       <input
         {...rest}
         type="text"
         inputMode="numeric"
         autoComplete="off"
-        placeholder={placeholder}
-        value={value === null ? "" : formatCents(value, "never")}
-        onChange={(e) => onValueChange(parseDigitsToCents(e.target.value))}
-        className="min-w-0 flex-1 border-0 bg-transparent p-0 text-display outline-none focus-visible:outline-none"
+        placeholder={placeholder ?? formatAmount(ZERO_CENTS, currency, "never")}
+        value={value === null ? "" : formatAmount(value, currency, "never")}
+        onChange={(e) => onValueChange(parseDigitsToCents(e.target.value, minorUnitsOf(currency) + 7))}
+        className="min-w-0 flex-1 border-0 bg-transparent p-0 text-display outline-none focus-visible:outline-none disabled:text-text"
       />
+      {trailing}
     </div>
   );
 }

@@ -36,7 +36,13 @@ export function PeopleSection({ people, meta }: PeopleSectionProps) {
         {people.map((row) => (
           <ListRow
             key={row.person.id}
-            href={row.groupId ? `${routes.group(row.groupId)}?tab=balances` : routes.groups}
+            href={
+              row.groupId
+                ? row.balances.size > 0
+                  ? routes.settle(row.groupId, row.person.id, routes.app)
+                  : `${routes.group(row.groupId)}?tab=balances`
+                : routes.groups
+            }
             leading={<Avatar name={row.person.displayName} tint={row.person.tint} buddy={row.person.buddy} size="xl" />}
             title={row.person.displayName}
             caption={personCaption(row)}

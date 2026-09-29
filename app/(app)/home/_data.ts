@@ -36,6 +36,10 @@ export const homeCopy = {
     subtitle: (titles: readonly string[], age: string) => [titles.join(" and "), age].filter(Boolean).join(" · "),
     age: (days: number) => (days <= 0 ? "today" : days === 1 ? "since yesterday" : `${plural(days, "day", "days")} old`),
     cta: "View bill",
+    confirmTitle: (first: string, amount: string) => `${first} says they paid you ${amount}`,
+    confirmSub: "Check it landed, then confirm",
+    confirmCta: "Confirm",
+    oweCta: "Settle up",
   },
   empty: {
     title: "Nothing owed, nothing owing.",

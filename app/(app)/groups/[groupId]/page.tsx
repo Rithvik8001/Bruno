@@ -105,10 +105,17 @@ export default async function GroupPage({ params, searchParams }: PageProps<"/gr
         />
       )}
       {tab === "balances" &&
-        (group.everyoneSquare && group.payments.length === 0 ? (
+        (group.everyoneSquare && group.payments.length === 0 && group.settlements.length === 0 ? (
           <TabEmpty moment="moneywings" tint="green" title={copy.balances.title} body={copy.balances.body} />
         ) : (
-          <BalancesSection balances={group.balances} payments={group.payments} currency={group.currency} you={person.id} />
+          <BalancesSection
+            groupId={group.id}
+            balances={group.balances}
+            payments={group.payments}
+            settlements={group.settlements}
+            currency={group.currency}
+            you={person.id}
+          />
         ))}
       {tab === "members" && (
         <MembersSection

@@ -26,6 +26,8 @@ export const routes = {
   editBill: (slug: string, step?: "items" | "claim" | "split") =>
     `/bills/${encodeURIComponent(slug)}/edit${step ? `?step=${step}` : ""}`,
   invite: (slug: string) => `/j/${encodeURIComponent(slug)}`,
+  settle: (groupId: string, personId: string, back?: string) =>
+    `/groups/${encodeURIComponent(groupId)}/settle/${encodeURIComponent(personId)}${back ? `?back=${encodeURIComponent(back)}` : ""}`,
 } as const;
 
 export const authParams = {

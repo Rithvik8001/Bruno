@@ -1,13 +1,17 @@
-import { Icon, type IconName } from "@/components/icons/icon";
+import { Avatar } from "@/components/ui/avatar";
+import { Icon3d } from "@/components/ui/icon-3d";
 import type { BillActivityRow, BillEvent } from "@/lib/bills/queries";
 import { momentLabel } from "@/lib/dates";
+import type { MomentIconId } from "@/lib/design-system/icons3d";
 import type { PersonId } from "@/lib/domain/ids";
-import { billDetailCopy, eventTint } from "../_data";
+import { billDetailCopy } from "../_data";
 import { nameOf } from "../_lib/view";
 
 type ShownEvent = Exclude<BillEvent, { kind: "finalized" }>;
 
-const eventIcon = { created: "receipt", updated: "pencil" } as const satisfies Record<ShownEvent["kind"], IconName>;
+const eventMoment = { created: "receipt", updated: "memo" } as const satisfies Record<ShownEvent["kind"], MomentIconId>;
+
+const BADGE_PX = 22;
 
 function describe(event: ShownEvent): string {
   const copy = billDetailCopy.activity;
@@ -31,12 +35,16 @@ export function BillActivity({ rows, you, now }: { rows: readonly BillActivityRo
       <h2 className="m-0 text-body font-semibold">{copy.title}</h2>
       <ul className="m-0 grid list-none p-0">
         {events.map((row) => (
-          <li key={row.id} className="grid min-h-11 grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-3 text-small">
-            <span
-              data-tint={eventTint[row.event.kind]}
-              className="grid size-7 place-items-center rounded-sm bg-tint-bg text-tint"
-            >
-              <Icon name={eventIcon[row.event.kind]} size={14} strokeWidth={2.2} />
+          <li key={row.id} className="grid min-h-14 grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3.5 text-small">
+            <span className="relative size-10">
+              {row.actor ? (
+                <Avatar name={row.actor.displayName} tint={row.actor.tint} buddy={row.actor.buddy} size="xl" />
+              ) : (
+                <span className="block size-10 rounded-full bg-surface-2" />
+              )}
+              <span className="absolute -right-3 -bottom-1.5 grid size-6 place-items-center rounded-full bg-bg shadow-[0_0_0_2px_var(--bg),0_1px_3px_rgba(26,25,23,0.12)]">
+                <Icon3d icon={eventMoment[row.event.kind]} size={BADGE_PX} />
+              </span>
             </span>
             <span className="truncate text-text-2">
               <span className="font-medium text-text">{row.actor ? nameOf(row.actor, you) : copy.someone}</span>{" "}

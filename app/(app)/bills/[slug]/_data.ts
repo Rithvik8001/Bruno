@@ -1,6 +1,6 @@
 import type { BillChangeField } from "@/lib/bills/diff";
 import type { PersonBillStatus } from "@/lib/ledger/allocation";
-import type { PaletteTint, Tint } from "@/lib/design-system/tokens";
+import type { Tint } from "@/lib/design-system/tokens";
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
@@ -10,11 +10,6 @@ export const personStatusTint = {
   owes: "orange",
   out: "muted",
 } as const satisfies Record<PersonBillStatus, Tint>;
-
-export const eventTint = {
-  created: "violet",
-  updated: "blue",
-} as const satisfies Record<"created" | "updated", PaletteTint>;
 
 export const billDetailCopy = {
   metaTitle: "Bill",
@@ -89,6 +84,10 @@ export const billDetailCopy = {
     created: (items: number) => `added the bill · ${plural(items, "item", "items")}`,
     updated: (fields: readonly BillChangeField[]) => `changed the ${fields.map((f) => fieldWords[f]).join(", ")}`,
     someone: "Someone",
+  },
+  settle: {
+    with: (name: string) => `Settle with ${name}`,
+    payBack: (name: string) => `Pay ${name} back`,
   },
   summary: {
     head: (title: string, group: string, total: string) => `${title} · ${group} · ${total}`,
