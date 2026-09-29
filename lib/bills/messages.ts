@@ -1,0 +1,41 @@
+import { formatMoney, type CurrencyCode } from "@/lib/currency";
+import { negateCents } from "@/lib/money";
+import { FULL_PERCENT_BPS, type SplitError } from "./types";
+
+export const billMessages = {
+  titleMissing: "Say where this was.",
+  titleTooLong: (max: number) => `Keep it under ${max} characters.`,
+  itemNameMissing: "Name this item.",
+  itemNameTooLong: (max: number) => `Keep item names under ${max} characters.`,
+  dateInvalid: "Pick a date.",
+  noItems: "Add at least one item.",
+  tooManyItems: (max: number) => `A bill can have up to ${max} items.`,
+  duplicatePerson: "Someone is listed twice.",
+  groupGone: "This group doesn't exist any more.",
+  notMember: "You're not in this group any more.",
+  payerNotMember: "Whoever paid has to be in the group.",
+  unknownPerson: "Everyone on the bill has to be in the group.",
+} as const;
+
+const plural = (n: number, one: string, many: string) => (n === 1 ? one : many);
+
+export function splitErrorMessage(error: SplitError, currency: CurrencyCode): string {
+  switch (error.kind) {
+    case "noParticipants":
+      return "Add at least one person to the split.";
+    case "discountExceedsSubtotal":
+      return `The discount is more than the ${formatMoney(error.subtotal, currency)} of items.`;
+    case "invalidParticipantInput":
+      return "Some of the shares aren't valid.";
+    case "unclaimedItems": {
+      const n = error.lineItemIds.length;
+      return `${n} ${plural(n, "item has", "items have")} no one on ${plural(n, "it", "them")} yet.`;
+    }
+    case "percentMismatch":
+      return `Percentages add up to ${error.assignedBps / (FULL_PERCENT_BPS / 100)}%, not 100%.`;
+    case "amountMismatch":
+      return error.difference > 0
+        ? `${formatMoney(error.difference, currency)} still unassigned.`
+        : `${formatMoney(negateCents(error.difference), currency)} more than the bill.`;
+  }
+}

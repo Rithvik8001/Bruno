@@ -21,6 +21,13 @@ export function actionOk<T>(data: T): ActionResult<T> {
   return { ok: true, data };
 }
 
+export function actionInvalid(
+  fields: Readonly<Record<string, string>>,
+  message: string = actionErrors.invalid,
+): ActionResult<never> {
+  return { ok: false, error: { code: "invalid", message, fields } };
+}
+
 export function actionFail(code: ActionErrorCode, message: string = actionErrors[code]): ActionResult<never> {
   return { ok: false, error: { code, message } };
 }

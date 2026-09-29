@@ -20,12 +20,18 @@ export const routes = {
   join: "/j",
   authApi: "/api/auth",
   group: (id: string) => `/groups/${encodeURIComponent(id)}`,
+  newBillFor: (groupId: string) => `/bills/new?group=${encodeURIComponent(groupId)}`,
+  manualBill: (groupId: string) => `/bills/new/manual?group=${encodeURIComponent(groupId)}`,
   invite: (slug: string) => `/j/${encodeURIComponent(slug)}`,
 } as const;
 
 export const authParams = {
   next: "next",
   email: "email",
+} as const;
+
+export const billParams = {
+  group: "group",
 } as const;
 
 export const guestOnlyRoutes: readonly string[] = [routes.signUp, routes.signIn, routes.resetPassword];

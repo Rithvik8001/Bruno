@@ -45,6 +45,10 @@ export function isActiveMember(membership: Membership | null): membership is Mem
   return membership !== null && membership.leftAt === null;
 }
 
+export function canAddBill(membership: Membership | null): membership is Membership {
+  return isActiveMember(membership);
+}
+
 export function canManageGroup(membership: Membership | null): boolean {
   return isActiveMember(membership) && membership.role === "ADMIN";
 }

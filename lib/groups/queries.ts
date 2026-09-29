@@ -41,6 +41,15 @@ export interface GroupDetail extends GroupSummary {
   readonly everyoneSquare: boolean;
 }
 
+export interface BillComposer {
+  readonly id: GroupId;
+  readonly name: string;
+  readonly tint: PaletteTint;
+  readonly art: GroupArtId | null;
+  readonly currency: CurrencyCode;
+  readonly members: readonly PersonView[];
+}
+
 export interface GroupInvite {
   readonly id: GroupId;
   readonly slug: string;
@@ -165,6 +174,22 @@ export async function getGroupInvite(slug: string): Promise<GroupInvite | null> 
     memberCount: people.length,
     members: people.slice(0, PREVIEW_MEMBERS),
     invitedBy: row.createdBy.displayName,
+  };
+}
+
+export async function getBillComposer(id: string, you: PersonId): Promise<BillComposer | null> {
+  const row = await db.group.findFirst({
+    where: { id, deletedAt: null, members: { some: { personId: you, leftAt: null } } },
+    select: { id: true, name: true, tint: true, art: true, currency: true, members: activeMembers },
+  });
+  if (!row) return null;
+  return {
+    id: groupId(row.id),
+    name: row.name,
+    tint: parseTint(row.tint, row.name),
+    art: row.art !== null && isGroupArtId(row.art) ? row.art : null,
+    currency: isCurrencyCode(row.currency) ? row.currency : DEFAULT_CURRENCY,
+    members: row.members.map((m) => toPersonView(m.person)),
   };
 }
 

@@ -1,3 +1,4 @@
+export * from "./amount-input";
 export * from "./avatar";
 export * from "./buddy";
 export * from "./button";
