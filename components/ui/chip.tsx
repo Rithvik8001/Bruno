@@ -9,6 +9,7 @@ import {
   type BillStatus,
 } from "@/lib/design-system/semantics";
 import type { Tint } from "@/lib/design-system/tokens";
+import { formatMoney, type CurrencyCode } from "@/lib/currency";
 import { cents, formatCents, type Cents } from "@/lib/money";
 import { cn } from "@/lib/utils/cn";
 import { Icon3d } from "./icon-3d";
@@ -79,9 +80,16 @@ export interface AmountChipProps extends Omit<HTMLAttributes<HTMLSpanElement>, "
   amount: Cents;
   direction?: BalanceDirection;
   settledLabel?: string;
+  currency?: CurrencyCode;
 }
 
-export function AmountChip({ amount, direction, settledLabel, className, ...rest }: AmountChipProps) {
+function signedMoney(value: Cents, currency: CurrencyCode, settled: boolean): string {
+  const body = formatMoney(cents(Math.abs(value)), currency);
+  if (settled || value === 0) return body;
+  return `${value > 0 ? "+" : "−"}${body}`;
+}
+
+export function AmountChip({ amount, direction, settledLabel, currency, className, ...rest }: AmountChipProps) {
   const dir: BalanceDirection =
     direction ?? (amount > 0 ? "owed" : amount < 0 ? "owes" : "settled");
   const signed =
@@ -95,7 +103,11 @@ export function AmountChip({ amount, direction, settledLabel, className, ...rest
       )}
       {...rest}
     >
-      {dir === "settled" && settledLabel ? settledLabel : formatCents(signed, dir === "settled" ? "never" : "always")}
+      {dir === "settled" && settledLabel
+        ? settledLabel
+        : currency
+          ? signedMoney(signed, currency, dir === "settled")
+          : formatCents(signed, dir === "settled" ? "never" : "always")}
     </span>
   );
 }

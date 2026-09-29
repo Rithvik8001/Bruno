@@ -1,12 +1,19 @@
 import Link from "next/link";
-import { StatusChip, Tag } from "@/components/ui/chip";
+import { BillRow } from "@/components/patterns/bill-row";
 import { routes } from "@/lib/auth/rules";
-import { groupArtFor } from "@/lib/design-system/icons3d";
-import { homeCopy, type HomeBill } from "../_data";
+import type { BillSummary } from "@/lib/bills/queries";
+import { formatMoney } from "@/lib/currency";
+import { shortDay } from "@/lib/dates";
+import { homeCopy } from "../_data";
 import { money } from "../_lib/summary";
 import { SectionHeader } from "./section-header";
 
-export function OpenBillsSection({ bills }: { bills: readonly HomeBill[] }) {
+function metaOf(bill: BillSummary): string {
+  const copy = homeCopy.bills;
+  return bill.yourBalance > 0 ? copy.owedToYou(bill.owingCount) : copy.youOwe(money(bill.yourBalance, bill.currency));
+}
+
+export function OpenBillsSection({ bills, now }: { bills: readonly BillSummary[]; now: Date }) {
   return (
     <section className="grid gap-2">
       <SectionHeader
@@ -20,27 +27,15 @@ export function OpenBillsSection({ bills }: { bills: readonly HomeBill[] }) {
       <ul className="m-0 grid list-none gap-2.5 p-0">
         {bills.map((bill) => (
           <li key={bill.id}>
-            <Link
-              href={routes.activity}
-              className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-tile bg-surface px-4 py-3.5 text-text no-underline transition-colors hover:bg-surface-2 hover:text-text"
-            >
-              <span className="grid min-w-0 gap-1.5">
-                <span className="flex min-w-0 items-center gap-2">
-                  <span className="truncate font-semibold">{bill.name}</span>
-                  <Tag tint={bill.group.tint} art={groupArtFor(bill.group.name)}>
-                    {bill.group.name}
-                  </Tag>
-                </span>
-                <span className="flex min-w-0 items-center gap-2 text-footnote text-text-2">
-                  <StatusChip status={bill.status} size="sm" />
-                  <span className="truncate">{bill.meta}</span>
-                </span>
-              </span>
-              <span className="grid justify-items-end gap-0.5">
-                <span className="font-semibold">{money(bill.total)}</span>
-                <span className="text-caption font-normal text-muted">{bill.when}</span>
-              </span>
-            </Link>
+            <BillRow
+              href={routes.bill(bill.slug)}
+              title={bill.title}
+              group={bill.group}
+              status={bill.status}
+              meta={metaOf(bill)}
+              total={formatMoney(bill.total, bill.currency)}
+              when={shortDay(bill.occurredAt, now)}
+            />
           </li>
         ))}
       </ul>

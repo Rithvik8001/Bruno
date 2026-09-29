@@ -12,6 +12,7 @@ export interface LedgerScope {
 
 export interface Debt extends LedgerScope {
   readonly billId: BillId;
+  readonly occurredAt: Date;
   readonly from: PersonId;
   readonly to: PersonId;
   readonly amount: Cents;
@@ -29,6 +30,7 @@ export interface SettlementEntry extends LedgerScope {
 export interface BillLedgerSource extends LedgerScope {
   readonly id: BillId;
   readonly payerId: PersonId;
+  readonly occurredAt: Date;
 }
 
 export type BalancesByCurrency = ReadonlyMap<CurrencyCode, ReadonlyMap<PersonId, Cents>>;
@@ -38,6 +40,7 @@ export function billDebts(bill: BillLedgerSource, split: BillSplit): Debt[] {
     .filter(([personId, share]) => personId !== bill.payerId && share.total > 0)
     .map(([personId, share]) => ({
       billId: bill.id,
+      occurredAt: bill.occurredAt,
       groupId: bill.groupId,
       currency: bill.currency,
       from: personId,

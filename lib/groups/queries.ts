@@ -1,17 +1,28 @@
 import "server-only";
+import {
+  ledgerView,
+  loadPeople,
+  summarizeBills,
+  toGroupRef,
+  type BillSummary,
+  type LedgerView,
+} from "@/lib/bills/queries";
 import { DEFAULT_CURRENCY, isCurrencyCode, type CurrencyCode } from "@/lib/currency";
 import { isGroupArtId, type GroupArtId } from "@/lib/design-system/icons3d";
 import type { PaletteTint } from "@/lib/design-system/tokens";
 import { db } from "@/lib/db";
 import { groupId, type GroupId, type PersonId } from "@/lib/domain/ids";
 import type { GroupRole, Membership } from "@/lib/domain/permissions";
+import { debtKey } from "@/lib/ledger/allocation";
 import { balanceOf, inScope, netBalances } from "@/lib/ledger/balances";
 import { loadGroupLedgers, type Ledger } from "@/lib/ledger/load";
+import { minimumPayments, type Payment } from "@/lib/ledger/settle-up";
 import { cents, sumCents, ZERO_CENTS, type Cents } from "@/lib/money";
 import { parseTint } from "@/lib/people/defaults";
 import { personSelect, toPersonView, type PersonView } from "@/lib/people/person";
 
 const PREVIEW_MEMBERS = 4;
+const CAPTION_TITLES = 2;
 
 export interface GroupMemberView {
   readonly person: PersonView;
@@ -32,6 +43,14 @@ export interface GroupSummary {
   readonly yourBalance: Cents;
 }
 
+export interface MemberBalance {
+  readonly person: PersonView;
+  readonly net: Cents;
+  readonly paid: number;
+  readonly involved: number;
+  readonly openTitles: readonly string[];
+}
+
 export interface GroupDetail extends GroupSummary {
   readonly roster: readonly GroupMemberView[];
   readonly you: Membership;
@@ -39,6 +58,9 @@ export interface GroupDetail extends GroupSummary {
   readonly spent: Cents;
   readonly yourShare: Cents;
   readonly everyoneSquare: boolean;
+  readonly bills: readonly BillSummary[];
+  readonly balances: readonly MemberBalance[];
+  readonly payments: readonly Payment[];
 }
 
 export interface BillComposer {
@@ -75,7 +97,6 @@ const groupSelect = {
   art: true,
   currency: true,
   members: activeMembers,
-  _count: { select: { bills: { where: { deletedAt: null, status: { not: "FINALIZED" } } } } },
 } as const;
 
 type GroupRow = {
@@ -86,14 +107,17 @@ type GroupRow = {
   art: string | null;
   currency: string;
   members: readonly { role: GroupRole; joinedAt: Date; leftAt: Date | null; person: Parameters<typeof toPersonView>[0] }[];
-  _count: { bills: number };
 };
 
 function balancesIn(ledger: Ledger, id: GroupId, now: Date) {
   return netBalances(inScope(ledger.debts, id), inScope(ledger.settlements, id), now);
 }
 
-function toSummary(row: GroupRow, you: PersonId, ledger: Ledger, now: Date): GroupSummary {
+function openBillCount(ledger: Ledger, view: LedgerView, id: GroupId): number {
+  return inScope(ledger.bills, id).filter((b) => (view.outstanding.get(b.billId) ?? ZERO_CENTS) > 0).length;
+}
+
+function toSummary(row: GroupRow, you: PersonId, ledger: Ledger, view: LedgerView, now: Date): GroupSummary {
   const id = groupId(row.id);
   const currency = isCurrencyCode(row.currency) ? row.currency : DEFAULT_CURRENCY;
   const people = row.members.map((m) => toPersonView(m.person));
@@ -106,7 +130,7 @@ function toSummary(row: GroupRow, you: PersonId, ledger: Ledger, now: Date): Gro
     currency,
     memberCount: people.length,
     members: people.slice(0, PREVIEW_MEMBERS),
-    openBills: row._count.bills,
+    openBills: openBillCount(ledger, view, id),
     yourBalance: balanceOf(balancesIn(ledger, id, now), you).get(currency) ?? ZERO_CENTS,
   };
 }
@@ -119,7 +143,35 @@ export async function listGroupsFor(you: PersonId): Promise<GroupSummary[]> {
   });
   const ledger = await loadGroupLedgers(rows.map((r) => r.id));
   const now = new Date();
-  return rows.map((row) => toSummary(row, you, ledger, now));
+  const view = ledgerView(ledger, now);
+  return rows.map((row) => toSummary(row, you, ledger, view, now));
+}
+
+function memberBalances(
+  roster: readonly PersonView[],
+  ledger: Ledger,
+  view: LedgerView,
+  net: ReadonlyMap<PersonId, Cents>,
+  scope: GroupId,
+  currency: CurrencyCode,
+): MemberBalance[] {
+  const bills = inScope(ledger.bills, scope).filter((b) => b.currency === currency);
+  const titleOf = new Map(bills.map((b) => [b.billId, b.title]));
+  const debts = inScope(ledger.debts, scope).filter((d) => d.currency === currency);
+  const open = debts.filter((d) => (view.remaining.get(debtKey(d)) ?? ZERO_CENTS) > 0);
+  return roster
+    .map((person) => {
+      const balance = net.get(person.id) ?? ZERO_CENTS;
+      const related = balance < 0 ? open.filter((d) => d.from === person.id) : open.filter((d) => d.to === person.id);
+      return {
+        person,
+        net: balance,
+        paid: bills.filter((b) => b.payerId === person.id).length,
+        involved: bills.filter((b) => b.payerId === person.id || (b.shares.get(person.id) ?? 0) > 0).length,
+        openTitles: [...new Set(related.map((d) => titleOf.get(d.billId) ?? ""))].filter(Boolean).slice(0, CAPTION_TITLES),
+      };
+    })
+    .sort((a, b) => Math.abs(b.net) - Math.abs(a.net));
 }
 
 export async function getGroupForMember(id: string, you: PersonId): Promise<GroupDetail | null> {
@@ -128,17 +180,22 @@ export async function getGroupForMember(id: string, you: PersonId): Promise<Grou
     select: groupSelect,
   });
   if (!row) return null;
+  const mine = row.members.find((m) => m.person.id === you);
+  if (!mine) return null;
   const [ledger, billCount] = await Promise.all([
     loadGroupLedgers([row.id]),
     db.bill.count({ where: { groupId: row.id, deletedAt: null } }),
   ]);
   const now = new Date();
-  const summary = toSummary(row, you, ledger, now);
+  const view = ledgerView(ledger, now);
+  const summary = toSummary(row, you, ledger, view, now);
   const roster = row.members.map((m) => ({ person: toPersonView(m.person), role: m.role, joinedAt: m.joinedAt }));
-  const mine = row.members.find((m) => m.person.id === you);
-  if (!mine) return null;
-  const bills = inScope(ledger.bills, summary.id).filter((b) => b.currency === summary.currency);
-  const balances = balancesIn(ledger, summary.id, now).get(summary.currency);
+  const entries = inScope(ledger.bills, summary.id);
+  const bills = entries.filter((b) => b.currency === summary.currency);
+  const net = balancesIn(ledger, summary.id, now).get(summary.currency) ?? new Map<PersonId, Cents>();
+  const people = await loadPeople(entries.map((b) => b.payerId));
+  const groupRef = toGroupRef(row);
+
   return {
     ...summary,
     roster,
@@ -146,7 +203,17 @@ export async function getGroupForMember(id: string, you: PersonId): Promise<Grou
     billCount,
     spent: sumCents(bills.map((b) => b.total)),
     yourShare: sumCents(bills.map((b) => b.shares.get(you) ?? cents(0))),
-    everyoneSquare: [...(balances?.values() ?? [])].every((v) => v === 0),
+    everyoneSquare: [...net.values()].every((v) => v === 0),
+    bills: summarizeBills(entries, view, people, new Map([[groupRef.id, groupRef]]), you, now),
+    balances: memberBalances(
+      roster.map((m) => m.person),
+      ledger,
+      view,
+      net,
+      summary.id,
+      summary.currency,
+    ),
+    payments: minimumPayments(net),
   };
 }
 

@@ -15,6 +15,8 @@ export const billMessages = {
   notMember: "You're not in this group any more.",
   payerNotMember: "Whoever paid has to be in the group.",
   unknownPerson: "Everyone on the bill has to be in the group.",
+  billGone: "This bill doesn't exist any more.",
+  cantEdit: "Only whoever added the bill or a group admin can change it.",
 } as const;
 
 const plural = (n: number, one: string, many: string) => (n === 1 ? one : many);

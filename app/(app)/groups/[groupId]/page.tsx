@@ -20,6 +20,8 @@ import { GroupTabs } from "./_components/group-tabs";
 import { MembersSection } from "./_components/members-section";
 import { SummaryTiles } from "./_components/summary-tiles";
 import { TabEmpty } from "./_components/tab-empty";
+import { BalancesSection } from "./_components/balances-section";
+import { BillsSection } from "./_components/bills-section";
 
 export const metadata: Metadata = { title: groupDetailCopy.metaTitle };
 
@@ -40,6 +42,7 @@ export default async function GroupPage({ params, searchParams }: PageProps<"/gr
   const invitePath = routes.invite(group.slug);
   const inviteUrl = new URL(invitePath, serverEnv().BETTER_AUTH_URL).toString();
   const copy = groupDetailCopy;
+  const now = new Date();
   const names = group.roster.map((m) => (m.person.id === person.id ? copy.youName : firstNameOf(m.person.displayName)));
 
   return (
@@ -87,7 +90,8 @@ export default async function GroupPage({ params, searchParams }: PageProps<"/gr
       <SummaryTiles group={group} />
       <GroupTabs value={tab} />
 
-      {tab === "bills" && (
+      {tab === "bills" && group.bills.length > 0 && <BillsSection bills={group.bills} you={person.id} now={now} />}
+      {tab === "bills" && group.bills.length === 0 && (
         <TabEmpty
           moment="receipt"
           tint="violet"
@@ -100,7 +104,12 @@ export default async function GroupPage({ params, searchParams }: PageProps<"/gr
           }
         />
       )}
-      {tab === "balances" && <TabEmpty moment="moneywings" tint="green" title={copy.balances.title} body={copy.balances.body} />}
+      {tab === "balances" &&
+        (group.everyoneSquare && group.payments.length === 0 ? (
+          <TabEmpty moment="moneywings" tint="green" title={copy.balances.title} body={copy.balances.body} />
+        ) : (
+          <BalancesSection balances={group.balances} payments={group.payments} currency={group.currency} you={person.id} />
+        ))}
       {tab === "members" && (
         <MembersSection
           groupId={group.id}

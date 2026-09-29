@@ -1,8 +1,8 @@
 import { balanceTint } from "@/lib/design-system/semantics";
 import type { Tint } from "@/lib/design-system/tokens";
 import type { GroupDetail } from "@/lib/groups/queries";
-import { cents, formatCents, type Cents } from "@/lib/money";
-import { currencies } from "@/lib/currency";
+import { formatMoney } from "@/lib/currency";
+import { cents, type Cents } from "@/lib/money";
 import { groupDetailCopy } from "../_data";
 
 function Tile({ label, value, tint }: { label: string; value: string; tint?: Tint }) {
@@ -17,9 +17,8 @@ function Tile({ label, value, tint }: { label: string; value: string; tint?: Tin
 }
 
 export function SummaryTiles({ group }: { group: GroupDetail }) {
-  const symbol = currencies[group.currency].symbol;
   const money = (value: Cents, signed = false) =>
-    `${signed && value > 0 ? "+" : signed && value < 0 ? "−" : ""}${symbol}${formatCents(cents(Math.abs(value)))}`;
+    `${signed && value > 0 ? "+" : signed && value < 0 ? "−" : ""}${formatMoney(cents(Math.abs(value)), group.currency)}`;
   const direction = group.yourBalance > 0 ? "owed" : group.yourBalance < 0 ? "owes" : "settled";
   const copy = groupDetailCopy.summary;
   const label = direction === "owed" ? copy.owed : direction === "owes" ? copy.owe : copy.square;

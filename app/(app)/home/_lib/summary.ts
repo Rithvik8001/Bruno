@@ -1,8 +1,9 @@
-import { currencies, DEFAULT_CURRENCY } from "@/lib/currency";
+import { formatMoney, type CurrencyCode } from "@/lib/currency";
 import type { BalanceDirection } from "@/lib/design-system/semantics";
+import type { HomePersonBalance, HomeSummaryData } from "@/lib/home/queries";
+import { cents, ZERO_CENTS, type Cents } from "@/lib/money";
 import { firstNameOf } from "@/lib/people/defaults";
-import { cents, formatCents, sumCents, type Cents } from "@/lib/money";
-import { homeCopy, type HomePerson } from "../_data";
+import { homeCopy } from "../_data";
 
 export interface HomeSummary {
   readonly net: Cents;
@@ -11,33 +12,46 @@ export interface HomeSummary {
   readonly amount: string;
   readonly breakdown: string;
   readonly peopleMeta: string;
+  readonly others: string | null;
 }
 
-const symbol = currencies[DEFAULT_CURRENCY].symbol;
-
-export function money(value: Cents): string {
-  return `${symbol}${formatCents(cents(Math.abs(value)))}`;
+export function money(value: Cents, currency: CurrencyCode): string {
+  return formatMoney(cents(Math.abs(value)), currency);
 }
 
-export function directionOf(value: Cents): BalanceDirection {
+export function directionOf(value: number): BalanceDirection {
   return value > 0 ? "owed" : value < 0 ? "owes" : "settled";
 }
 
-export function homeSummary(people: readonly HomePerson[]): HomeSummary {
-  const net = sumCents(people.map((p) => p.balance));
+export function personCaption(row: HomePersonBalance): string {
+  const copy = homeCopy.people;
+  const direction = directionOf(row.primary !== 0 ? row.primary : ([...row.balances.values()][0] ?? 0));
+  return direction === "owed"
+    ? copy.captionOwed(row.openTitles)
+    : direction === "owes"
+      ? copy.captionOwes(row.openTitles)
+      : copy.captionSquare;
+}
+
+export function homeSummary(data: HomeSummaryData): HomeSummary {
+  const currency = data.primaryCurrency;
+  const net = data.net.get(currency) ?? ZERO_CENTS;
   const direction = directionOf(net);
-  const owed = people.filter((p) => p.balance > 0);
-  const owes = people.filter((p) => p.balance < 0);
+  const owed = data.people.filter((p) => p.primary > 0);
+  const owes = data.people.filter((p) => p.primary < 0);
   const { breakdown, people: peopleCopy } = homeCopy;
+  const others = [...data.net]
+    .filter(([code, amount]) => code !== currency && amount !== 0)
+    .map(([code, amount]) => `${amount < 0 ? "−" : "+"}${money(amount, code)}`);
 
   return {
     net,
     direction,
     headline: homeCopy.headline[direction],
-    amount: money(net),
+    amount: money(net, currency),
     breakdown: [
-      ...owed.map((p) => breakdown.owed(firstNameOf(p.name), money(p.balance))),
-      ...owes.map((p) => breakdown.owes(firstNameOf(p.name), money(p.balance))),
+      ...owed.map((p) => breakdown.owed(firstNameOf(p.person.displayName), money(p.primary, currency))),
+      ...owes.map((p) => breakdown.owes(firstNameOf(p.person.displayName), money(p.primary, currency))),
     ].join(" · "),
     peopleMeta: [
       owed.length > 0 ? peopleCopy.owesYou(owed.length) : null,
@@ -45,5 +59,6 @@ export function homeSummary(people: readonly HomePerson[]): HomeSummary {
     ]
       .filter((part): part is string => part !== null)
       .join(" · "),
+    others: others.length > 0 ? homeCopy.others(others) : null,
   };
 }

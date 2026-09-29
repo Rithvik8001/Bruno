@@ -39,31 +39,40 @@ export const billParticipantSchema = z.object({
   amountCents: centsSchema.nullable(),
 });
 
-export const createBillSchema = z
-  .object({
-    groupId: idSchema,
-    title: billTitleSchema,
-    occurredOn: z.iso.date(billMessages.dateInvalid),
-    payerId: idSchema,
-    items: z.array(billItemSchema).min(1, billMessages.noItems).max(BILL_ITEMS_MAX, billMessages.tooManyItems(BILL_ITEMS_MAX)),
-    taxCents: centsSchema,
-    tip: billTipSchema,
-    discountCents: centsSchema,
-    method: z.enum(SPLIT_METHODS),
-    participants: z.array(billParticipantSchema),
-  })
-  .superRefine((value, ctx) => {
-    const ids = value.participants.map((p) => p.personId);
-    if (new Set(ids).size !== ids.length) {
-      ctx.addIssue({ code: "custom", path: ["participants"], message: billMessages.duplicatePerson });
+const billFieldsSchema = z.object({
+  title: billTitleSchema,
+  occurredOn: z.iso.date(billMessages.dateInvalid),
+  payerId: idSchema,
+  items: z.array(billItemSchema).min(1, billMessages.noItems).max(BILL_ITEMS_MAX, billMessages.tooManyItems(BILL_ITEMS_MAX)),
+  taxCents: centsSchema,
+  tip: billTipSchema,
+  discountCents: centsSchema,
+  method: z.enum(SPLIT_METHODS),
+  participants: z.array(billParticipantSchema),
+});
+
+type BillFields = z.output<typeof billFieldsSchema>;
+
+function refineBill(value: BillFields, ctx: z.RefinementCtx): void {
+  const ids = value.participants.map((p) => p.personId);
+  if (new Set(ids).size !== ids.length) {
+    ctx.addIssue({ code: "custom", path: ["participants"], message: billMessages.duplicatePerson });
+  }
+  value.items.forEach((item, index) => {
+    if (new Set(item.claimedBy).size !== item.claimedBy.length) {
+      ctx.addIssue({ code: "custom", path: ["items", index, "claimedBy"], message: billMessages.duplicatePerson });
     }
-    value.items.forEach((item, index) => {
-      if (new Set(item.claimedBy).size !== item.claimedBy.length) {
-        ctx.addIssue({ code: "custom", path: ["items", index, "claimedBy"], message: billMessages.duplicatePerson });
-      }
-    });
   });
+}
+
+export const createBillSchema = billFieldsSchema.extend({ groupId: idSchema }).superRefine(refineBill);
+
+export const updateBillSchema = billFieldsSchema.extend({ billId: idSchema }).superRefine(refineBill);
+
+export const billRefSchema = z.object({ billId: idSchema });
 
 export type BillTipValue = z.output<typeof billTipSchema>;
 export type CreateBillInput = z.input<typeof createBillSchema>;
 export type CreateBillValues = z.output<typeof createBillSchema>;
+export type BillValues = BillFields;
+export type UpdateBillInput = z.input<typeof updateBillSchema>;

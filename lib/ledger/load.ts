@@ -1,13 +1,19 @@
 import "server-only";
+import { billInputFromRow, billSplitSelect } from "@/lib/bills/rows";
 import { computeShares } from "@/lib/bills/split";
-import type { BillInput, SplitMethod, Tip } from "@/lib/bills/types";
 import { isCurrencyCode, type CurrencyCode } from "@/lib/currency";
 import { db } from "@/lib/db";
-import { billId, groupId, lineItemId, personId, settlementId, type GroupId, type PersonId } from "@/lib/domain/ids";
+import { billId, groupId, personId, settlementId, type BillId, type GroupId, type PersonId } from "@/lib/domain/ids";
 import { cents, type Cents } from "@/lib/money";
 import { billDebts, type Debt, type SettlementEntry } from "./balances";
 
 export interface BillTotalsEntry {
+  readonly billId: BillId;
+  readonly slug: string;
+  readonly title: string;
+  readonly occurredAt: Date;
+  readonly finalizedAt: Date | null;
+  readonly payerId: PersonId;
   readonly groupId: GroupId | null;
   readonly currency: CurrencyCode;
   readonly total: Cents;
@@ -18,22 +24,6 @@ export interface Ledger {
   readonly debts: readonly Debt[];
   readonly settlements: readonly SettlementEntry[];
   readonly bills: readonly BillTotalsEntry[];
-}
-
-interface TipRow {
-  readonly tipKind: "NONE" | "PERCENT" | "AMOUNT";
-  readonly tipValue: number;
-}
-
-function toTip({ tipKind, tipValue }: TipRow): Tip {
-  switch (tipKind) {
-    case "NONE":
-      return { kind: "NONE" };
-    case "PERCENT":
-      return { kind: "PERCENT", bps: tipValue };
-    case "AMOUNT":
-      return { kind: "AMOUNT", amount: cents(tipValue) };
-  }
 }
 
 function currencyOf(value: string): CurrencyCode | null {
@@ -47,18 +37,17 @@ export async function loadGroupLedgers(groupIds: readonly string[]): Promise<Led
   const [bills, settlements] = await Promise.all([
     db.bill.findMany({
       where: { groupId: { in: ids }, deletedAt: null, status: "FINALIZED" },
+      orderBy: [{ occurredAt: "desc" }, { createdAt: "desc" }],
       select: {
         id: true,
+        slug: true,
+        title: true,
+        occurredAt: true,
+        finalizedAt: true,
         groupId: true,
         currency: true,
         payerId: true,
-        splitMethod: true,
-        taxCents: true,
-        tipKind: true,
-        tipValue: true,
-        discountCents: true,
-        items: { select: { id: true, priceCents: true, claims: { select: { personId: true } } } },
-        participants: { select: { personId: true, shares: true, percentBps: true, amountCents: true } },
+        ...billSplitSelect,
       },
     }),
     db.settlement.findMany({
@@ -79,34 +68,25 @@ export async function loadGroupLedgers(groupIds: readonly string[]): Promise<Led
   const computed = bills.flatMap((bill) => {
     const currency = currencyOf(bill.currency);
     if (!currency) return [];
-    const input: BillInput = {
-      method: bill.splitMethod satisfies SplitMethod,
-      taxCents: cents(bill.taxCents),
-      tip: toTip(bill),
-      discountCents: cents(bill.discountCents),
-      items: bill.items.map((item) => ({
-        id: lineItemId(item.id),
-        priceCents: cents(item.priceCents),
-        claimedBy: item.claims.map((c) => personId(c.personId)),
-      })),
-      participants: bill.participants.map((p) => ({
-        personId: personId(p.personId),
-        shares: p.shares,
-        percentBps: p.percentBps,
-        amountCents: p.amountCents === null ? null : cents(p.amountCents),
-      })),
-    };
-    const split = computeShares(input);
+    const split = computeShares(billInputFromRow(bill));
     if (!split.ok) return [];
     const scope: GroupId | null = bill.groupId ? groupId(bill.groupId) : null;
+    const id = billId(bill.id);
+    const payer = personId(bill.payerId);
     return [
       {
-        debts: billDebts({ id: billId(bill.id), payerId: personId(bill.payerId), groupId: scope, currency }, split.value),
+        debts: billDebts({ id, payerId: payer, groupId: scope, currency, occurredAt: bill.occurredAt }, split.value),
         totals: {
+          billId: id,
+          slug: bill.slug,
+          title: bill.title,
+          occurredAt: bill.occurredAt,
+          finalizedAt: bill.finalizedAt,
+          payerId: payer,
           groupId: scope,
           currency,
           total: split.value.totals.total,
-          shares: new Map([...split.value.shares].map(([id, share]) => [id, share.total])),
+          shares: new Map([...split.value.shares].map(([pid, share]) => [pid, share.total])),
         } satisfies BillTotalsEntry,
       },
     ];

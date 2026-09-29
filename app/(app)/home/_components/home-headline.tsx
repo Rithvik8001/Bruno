@@ -26,6 +26,7 @@ export function HomeHeadline({ firstName, headline, summary }: HomeHeadlineProps
           </span>
         )}
       </h1>
+      {summary?.others && <span className="text-footnote text-muted">{summary.others}</span>}
     </div>
   );
 }

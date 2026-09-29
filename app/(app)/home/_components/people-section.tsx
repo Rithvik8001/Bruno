@@ -2,12 +2,27 @@ import { Avatar } from "@/components/ui/avatar";
 import { AmountChip } from "@/components/ui/chip";
 import { ListRow } from "@/components/ui/list-row";
 import { routes } from "@/lib/auth/rules";
-import { homeCopy, type HomePerson } from "../_data";
+import type { HomePersonBalance } from "@/lib/home/queries";
+import { cents } from "@/lib/money";
+import { homeCopy } from "../_data";
+import { personCaption } from "../_lib/summary";
 import { SectionHeader } from "./section-header";
 
 export interface PeopleSectionProps {
-  people: readonly HomePerson[];
+  people: readonly HomePersonBalance[];
   meta: string;
+}
+
+function Balances({ row }: { row: HomePersonBalance }) {
+  const entries = [...row.balances];
+  if (entries.length === 0) return <AmountChip amount={cents(0)} settledLabel={homeCopy.people.allSquare} />;
+  return (
+    <span className="grid justify-items-end gap-1">
+      {entries.map(([currency, amount]) => (
+        <AmountChip key={currency} amount={amount} currency={currency} settledLabel={homeCopy.people.allSquare} />
+      ))}
+    </span>
+  );
 }
 
 export function PeopleSection({ people, meta }: PeopleSectionProps) {
@@ -15,17 +30,17 @@ export function PeopleSection({ people, meta }: PeopleSectionProps) {
     <section className="grid gap-2">
       <SectionHeader
         title={homeCopy.people.title}
-        aside={<span className="text-footnote font-medium text-muted">{meta}</span>}
+        aside={meta ? <span className="text-footnote font-medium text-muted">{meta}</span> : undefined}
       />
       <div className="grid">
-        {people.map((p) => (
+        {people.map((row) => (
           <ListRow
-            key={p.id}
-            href={routes.activity}
-            leading={<Avatar name={p.name} tint={p.tint} buddy={p.buddy} size="xl" />}
-            title={p.name}
-            caption={p.caption}
-            trailing={<AmountChip amount={p.balance} settledLabel={homeCopy.people.allSquare} />}
+            key={row.person.id}
+            href={row.groupId ? `${routes.group(row.groupId)}?tab=balances` : routes.groups}
+            leading={<Avatar name={row.person.displayName} tint={row.person.tint} buddy={row.person.buddy} size="xl" />}
+            title={row.person.displayName}
+            caption={personCaption(row)}
+            trailing={<Balances row={row} />}
           />
         ))}
       </div>

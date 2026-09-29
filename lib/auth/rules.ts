@@ -22,6 +22,9 @@ export const routes = {
   group: (id: string) => `/groups/${encodeURIComponent(id)}`,
   newBillFor: (groupId: string) => `/bills/new?group=${encodeURIComponent(groupId)}`,
   manualBill: (groupId: string) => `/bills/new/manual?group=${encodeURIComponent(groupId)}`,
+  bill: (slug: string) => `/bills/${encodeURIComponent(slug)}`,
+  editBill: (slug: string, step?: "items" | "claim" | "split") =>
+    `/bills/${encodeURIComponent(slug)}/edit${step ? `?step=${step}` : ""}`,
   invite: (slug: string) => `/j/${encodeURIComponent(slug)}`,
 } as const;
 

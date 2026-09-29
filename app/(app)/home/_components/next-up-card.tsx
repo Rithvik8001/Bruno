@@ -1,63 +1,34 @@
-"use client";
-
-import { useState } from "react";
+import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
-import { useToast } from "@/components/ui/toast";
-import { cents, formatCents } from "@/lib/money";
+import { routes } from "@/lib/auth/rules";
+import { daysAgo } from "@/lib/dates";
+import type { HomeNextUp } from "@/lib/home/queries";
 import { firstNameOf } from "@/lib/people/defaults";
-import { cn } from "@/lib/utils/cn";
-import { homeCopy, type HomePerson, type NextUp } from "../_data";
+import { homeCopy } from "../_data";
+import { money } from "../_lib/summary";
 
-export interface NextUpCardProps {
-  person: HomePerson;
-  nextUp: NextUp;
-}
-
-const MAX_NUDGES = 3;
-
-export function NextUpCard({ person, nextUp }: NextUpCardProps) {
-  const [nudges, setNudges] = useState(0);
-  const [shaking, setShaking] = useState(false);
-  const { toast } = useToast();
+export function NextUpCard({ nextUp, now }: { nextUp: HomeNextUp; now: Date }) {
   const copy = homeCopy.nextUp;
-  const first = firstNameOf(person.name);
-
-  const nudge = () => {
-    if (nudges >= MAX_NUDGES) {
-      toast({ message: copy.enough(first) });
-      return;
-    }
-    const message = copy.toasts[nudges]?.(first) ?? copy.enough(first);
-    toast({
-      message,
-      icon: "check",
-      tint: "green",
-      action: nudges === 0 ? { label: copy.undo, onAction: () => setNudges(0) } : undefined,
-    });
-    if (nudges === MAX_NUDGES - 1) setShaking(true);
-    setNudges(nudges + 1);
-  };
-
-  const caption = `${nextUp.subject} · ${nudges > 0 ? copy.nudged(nudges) : nextUp.age}`;
+  const first = firstNameOf(nextUp.person.displayName);
+  const amount = money(nextUp.amount, nextUp.bill.currency);
+  const title = nextUp.amount > 0 ? copy.owesYou(first, amount) : copy.youOwe(first, amount);
+  const titles = nextUp.titles.length > 0 ? nextUp.titles : [nextUp.bill.title];
 
   return (
-    <button
-      type="button"
-      onClick={nudge}
-      onAnimationEnd={() => setShaking(false)}
-      className={cn(
-        "grid w-full cursor-pointer grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-3.5 rounded-card bg-surface px-4.5 py-4 text-left transition-colors hover:bg-surface-2",
-        shaking && "animate-shake",
-      )}
+    <Link
+      href={routes.bill(nextUp.bill.slug)}
+      className="grid w-full grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-3.5 rounded-card bg-surface px-4.5 py-4 text-text no-underline transition-colors hover:bg-surface-2 hover:text-text"
     >
-      <Avatar name={person.name} tint={person.tint} buddy={person.buddy} size="xl" className="size-11" />
+      <Avatar name={nextUp.person.displayName} tint={nextUp.person.tint} buddy={nextUp.person.buddy} size="xl" className="size-11" />
       <span className="grid min-w-0">
-        <span className="font-semibold">{copy.owesYou(first, formatCents(cents(Math.abs(person.balance))))}</span>
-        <span className="truncate text-small text-text-2">{caption}</span>
+        <span className="font-semibold">{title}</span>
+        <span className="truncate text-small text-text-2">
+          {copy.subtitle(titles, copy.age(daysAgo(nextUp.bill.occurredAt, now)))}
+        </span>
       </span>
       <span className="inline-flex h-9 items-center rounded-control bg-bg px-3.5 text-small font-semibold whitespace-nowrap shadow-float">
-        {copy.labels[Math.min(nudges, copy.labels.length - 1)]}
+        {copy.cta}
       </span>
-    </button>
+    </Link>
   );
 }

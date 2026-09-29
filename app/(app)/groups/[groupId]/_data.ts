@@ -21,6 +21,20 @@ export const groupDetailCopy = {
     square: "All square",
   },
   bills: { title: "No bills yet.", body: "Add the first one and Bruno will keep the running tab." },
+  billList: {
+    label: "Bills in this group",
+    paidBy: (name: string) => `Paid by ${name}`,
+  },
+  balanceList: {
+    label: "Balances",
+    owes: (titles: readonly string[]) => (titles.length > 0 ? `owes · ${titles.join(", ")}` : "owes"),
+    owed: (paid: number, involved: number) => `is owed · paid ${paid} of ${involved} ${involved === 1 ? "bill" : "bills"}`,
+    square: "all square",
+    settleTitle: "Smart settlement",
+    settleBody: (n: number) => (n === 1 ? "One payment clears the whole group." : `${n} payments clear the whole group.`),
+    payments: (n: number) => `${n} ${n === 1 ? "payment" : "payments"}`,
+    pays: (from: string, to: string) => `${from} ${from === "You" ? "pay" : "pays"} ${to === "You" ? "you" : to}`,
+  },
   balances: { title: "Everyone's square.", body: "Balances show up here once there are bills." },
   members: {
     you: "(you)",

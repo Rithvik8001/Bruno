@@ -15,6 +15,7 @@ export const iconRegistry = {
   "chevron-right": { node: <path d="M9 6l6 6-6 6" /> },
   "arrow-right": { node: <path d="M5 12h14M13 6l6 6-6 6" /> },
   "align-left": { node: <path d="M4 7h16M4 12h10M4 17h6" /> },
+  pencil: { node: <path d="M4 20h4L19 9l-4-4L4 16v4zM13 7l4 4" /> },
   search: {
     node: (
       <>

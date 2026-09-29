@@ -18,7 +18,7 @@ export function HomeEmpty() {
         </div>
         <div className="flex flex-wrap justify-center gap-2">
           <Link href={routes.newBill} className={cn(buttonVariants({ size: "md" }), "h-11 text-small")}>
-            {copy.upload}
+            {copy.add}
           </Link>
           <Link href={routes.groups} className={cn(buttonVariants({ variant: "elevated", size: "md" }), "h-11 text-small")}>
             {copy.group}
