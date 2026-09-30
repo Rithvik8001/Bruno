@@ -145,7 +145,7 @@ function GuestSheetBody({ groupId, groupName, currency, target, onClose }: Guest
     : null;
 
   return (
-    <Sheet open onOpenChange={(open) => (open ? undefined : close())} title={person.displayName} className="max-w-105">
+    <Sheet open onOpenChange={(open) => (open ? undefined : close())} title={person.displayName} className="sm:max-w-105">
       <div className="-mt-2 grid grid-cols-[56px_minmax(0,1fr)] items-center gap-3.5">
         <span ref={avatar} className="block origin-bottom">
           <Avatar name={person.displayName} tint={person.tint} buddy={person.buddy} size="2xl" />

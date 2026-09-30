@@ -43,7 +43,7 @@ export function NewGroupSheet({ open, onOpenChange }: NewGroupSheetProps) {
       open={open}
       onOpenChange={onOpenChange}
       size="full"
-      className="max-w-110"
+      className="sm:max-w-110"
       title={copy.title}
       description={copy.description}
       actions={

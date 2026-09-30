@@ -173,7 +173,7 @@ function AddPeopleBody({ groupId, groupName, inviteUrl, inviteLabel, onOpenChang
   const rateLimited = cooldown.active;
 
   return (
-    <Sheet open onOpenChange={(next) => (next ? undefined : close())} title={copy.title(groupName)} className="max-w-105">
+    <Sheet open onOpenChange={(next) => (next ? undefined : close())} title={copy.title(groupName)} className="sm:max-w-105">
       {mode === "name" && (
         <motion.button
           type="button"

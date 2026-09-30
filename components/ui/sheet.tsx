@@ -85,7 +85,7 @@ export function SheetContent({
 }
 
 export const sheetPanelClassName =
-  "w-full max-w-90 rounded-t-card bg-bg shadow-float sm:rounded-card";
+  "w-full rounded-t-card bg-bg shadow-float sm:max-w-90 sm:rounded-card";
 export const sheetBodyClassName = "px-5 pt-3 pb-5 sm:pt-5";
 
 export interface SheetProps extends Omit<
@@ -108,6 +108,7 @@ export function Sheet({
   ...header
 }: SheetProps) {
   const ref = useRef<HTMLDialogElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
   const titleId = useId();
   const descriptionId = useId();
   const reduce = useReducedMotion();
@@ -118,7 +119,10 @@ export function Sheet({
   useEffect(() => {
     const d = ref.current;
     if (!d || !open) return undefined;
-    if (!d.open) d.showModal();
+    if (!d.open) {
+      d.showModal();
+      panel.current?.focus({ preventScroll: true });
+    }
     return attachToastHost(d);
   }, [open]);
 
@@ -187,37 +191,43 @@ export function Sheet({
               dragTransition={{ bounceStiffness: 320, bounceDamping: 26 }}
               onDragEnd={onDragEnd}
               style={{ maxHeight }}
+              ref={panel}
+              tabIndex={-1}
               className={cn(
                 sheetPanelClassName,
-                "flex min-h-0 flex-col sm:max-h-[calc(100dvh-48px)]",
+                "flex min-h-0 flex-col outline-none sm:max-h-[calc(100dvh-48px)]",
                 size === "full" && "h-[calc(100dvh-24px)] sm:h-auto",
                 className,
               )}
             >
-              <div className="shrink-0 px-5 pt-3 sm:pt-5">
+              <div className="shrink-0 pt-3 pb-1 sm:hidden">
                 <div
                   aria-hidden
-                  className="mx-auto mb-4 h-1 w-9 cursor-grab touch-none rounded-full bg-border sm:hidden"
+                  className="mx-auto h-1 w-9 cursor-grab touch-none rounded-full bg-border"
                 />
+              </div>
+              <div
+                className={cn(
+                  "min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pt-3 sm:pt-5",
+                  actions
+                    ? "pb-5"
+                    : "pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:pb-5",
+                )}
+              >
                 <SheetHeader
                   {...header}
                   titleId={titleId}
                   descriptionId={descriptionId}
                 />
-              </div>
-              <div
-                className={cn(
-                  "min-h-0 flex-1 overflow-y-auto overscroll-contain px-5",
-                  children ? "pt-5" : "pt-2",
-                  actions
-                    ? "pb-4"
-                    : "pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:pb-5",
-                )}
-              >
-                {children && <div className="grid gap-5">{children}</div>}
+                {children && <div className="mt-5 grid gap-5">{children}</div>}
               </div>
               {actions && (
-                <div className="shrink-0 grid gap-1 border-t border-line bg-bg px-5 pt-3 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:rounded-b-card sm:pb-5">
+                <div
+                  className={cn(
+                    "grid shrink-0 gap-1 bg-bg px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:rounded-b-card sm:pb-5",
+                    children ? "border-t border-line pt-3" : "pt-0",
+                  )}
+                >
                   {actions}
                 </div>
               )}

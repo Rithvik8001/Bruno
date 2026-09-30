@@ -96,7 +96,7 @@ export function GroupSettings({ groupId, initial, currencyLocked, canDelete }: G
         open={open}
         onOpenChange={setOpen}
         size={view === "form" ? "full" : "auto"}
-        className="max-w-110"
+        className="sm:max-w-110"
         title={view === "reset" ? copy.reset : view === "delete" ? copy.delete : copy.title}
         description={view === "reset" ? copy.resetBody : view === "delete" ? copy.deleteBody : copy.description}
         actions={

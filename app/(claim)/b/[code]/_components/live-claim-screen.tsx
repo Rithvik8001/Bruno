@@ -11,7 +11,6 @@ import { pressMotion } from "@/components/motion/press";
 import { Rise } from "@/components/motion/rise";
 import { BackLink } from "@/components/patterns/back-link";
 import { ClaimRow } from "@/components/patterns/claim-row";
-import { StickyBar } from "@/components/patterns/sticky-bar";
 import { Avatar } from "@/components/ui/avatar";
 import { AvatarStack } from "@/components/ui/avatar-stack";
 import { Button } from "@/components/ui/button";
@@ -429,7 +428,6 @@ export function LiveClaimScreen({ bill, dayLabel }: LiveClaimScreenProps) {
       )}
 
       <div className="grid gap-3 pt-2">
-        <StickyBar>
         <div className="flex items-center gap-3">
           <span className="grid min-w-0 flex-1">
             <span className="text-footnote text-text-2">{copy.footer.share}</span>
@@ -461,7 +459,6 @@ export function LiveClaimScreen({ bill, dayLabel }: LiveClaimScreenProps) {
             </PressLink>
           )}
         </div>
-        </StickyBar>
         <AnimatePresence initial={false}>
           {guestDone && (
             <Rise key="waiting" delay={0.06} className="flex items-center gap-3 rounded-tile bg-surface px-3.5 py-3">

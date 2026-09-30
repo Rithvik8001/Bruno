@@ -64,7 +64,7 @@ export function WhoAreYouSheet({
       description={copy.body(groupName)}
       icon={{ moment: "people" }}
       tint="violet"
-      className="max-w-110"
+      className="sm:max-w-110"
     >
       <AnimatePresence initial={false}>
         {error && (
