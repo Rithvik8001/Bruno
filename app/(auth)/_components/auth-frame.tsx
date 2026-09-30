@@ -12,7 +12,7 @@ export interface AuthFrameProps {
 
 export function AuthFrame({ back, footer, children }: AuthFrameProps) {
   return (
-    <div className="grid min-h-dvh grid-rows-[auto_1fr_auto]">
+    <div className="grid min-h-dvh grid-rows-[auto_1fr_auto] pb-safe">
       <header className="flex items-center justify-between px-5 py-4">
         <PressLink
           href={back.href}

@@ -15,7 +15,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <div className="flex min-h-dvh flex-col">
       <AppHeader person={context.person} unread={unread} />
-      <main className="min-w-0 flex-1 pb-26 nav:pb-0">
+      <main className="min-w-0 flex-1 pb-[calc(6.5rem+env(safe-area-inset-bottom))] nav:pb-0">
         <div className="mx-auto max-w-app">{children}</div>
       </main>
       <TabBar unread={unread} />

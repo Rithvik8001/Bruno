@@ -66,7 +66,7 @@ export function GroupFormFields({
         <div
           role="radiogroup"
           aria-label={copy.icon.label}
-          className="-m-0.75 grid max-h-40.5 grid-cols-[repeat(auto-fill,minmax(48px,1fr))] gap-1.5 overflow-auto p-0.75"
+          className="-m-0.75 grid max-h-40.5 grid-cols-5 gap-2 overflow-y-auto p-0.75 scrollbar-none sm:grid-cols-[repeat(auto-fill,minmax(48px,1fr))] sm:gap-1.5"
         >
           {GROUP_ART_IDS.map((art) => {
             const on = chosen === art;
@@ -93,7 +93,7 @@ export function GroupFormFields({
         </div>
       </div>
 
-      <div role="radiogroup" aria-label={copy.colour.label} className="flex flex-wrap gap-2">
+      <div role="radiogroup" aria-label={copy.colour.label} className="grid grid-cols-9 gap-1.5 sm:flex sm:flex-wrap sm:gap-2">
         {PALETTE_TINTS.map((tint) => (
           <motion.button
             key={tint}
@@ -105,7 +105,7 @@ export function GroupFormFields({
             onClick={() => set("tint", tint)}
             {...hoverLift}
             className={cn(
-              "size-8 cursor-pointer rounded-full bg-tint transition-shadow",
+              "relative size-8 cursor-pointer justify-self-center rounded-full bg-tint transition-shadow before:absolute before:-inset-1.5 before:content-['']",
               value.tint === tint && "ring-2 ring-tint ring-offset-2 ring-offset-bg",
             )}
           />

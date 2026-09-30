@@ -9,7 +9,7 @@ export default async function FlowLayout({ children }: LayoutProps<"/">) {
   if (!context.person.onboarded) redirect(routes.welcome);
 
   return (
-    <main className="min-h-dvh min-w-0">
+    <main className="min-h-dvh min-w-0 pb-safe">
       <div className="mx-auto max-w-app">{children}</div>
     </main>
   );

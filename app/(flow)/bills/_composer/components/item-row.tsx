@@ -17,7 +17,9 @@ import { composerCopy } from "../data";
 import type { DraftItem } from "../lib/draft";
 import { isFlagged } from "../lib/scan";
 
-export const itemGridClassName = "grid grid-cols-[minmax(0,1fr)_48px_96px_36px] items-center gap-1.5";
+export const itemGridClassName = "hidden sm:grid sm:grid-cols-[minmax(0,1fr)_48px_96px_36px] sm:items-center sm:gap-1.5";
+
+const rowGridClassName = "grid gap-1 sm:grid-cols-[minmax(0,1fr)_48px_96px_36px] sm:items-center sm:gap-1.5";
 
 const collapse: Variants = {
   hidden: { height: 0, opacity: 0 },
@@ -57,7 +59,7 @@ function QuantityInput({ value, onValueChange }: { value: number; onValueChange:
         if (n >= 1 && n <= ITEM_QUANTITY_MAX) onValueChange(n);
       }}
       onBlur={() => setText(null)}
-      className={cn(ghostInputClassName, "px-0 text-center text-text-2 focus:text-text")}
+      className={cn(ghostInputClassName, "px-0 text-center text-text-2 focus:text-text pointer-coarse:h-11")}
     />
   );
 }
@@ -88,7 +90,8 @@ function CategoryChips({ name, picked, options, onPick }: CategoryChipsProps) {
             }}
             {...pressMotion()}
             className={cn(
-              "inline-flex h-5.5 cursor-pointer items-center rounded-xs px-1.75 text-[11px] font-semibold leading-none",
+              "relative inline-flex h-5.5 cursor-pointer items-center rounded-xs px-1.75 text-[11px] font-semibold leading-none",
+              "before:absolute before:inset-x-0 before:-inset-y-2.5 before:content-['']",
               "transition-[background-color,color] duration-150 ease-standard",
               on ? "bg-tint-bg text-tint" : "bg-transparent text-muted hover:bg-surface-2",
             )}
@@ -107,13 +110,7 @@ export function ItemRow({ item, currency, onChange, onRemove }: ItemRowProps) {
   const categories = item.hints?.categories ?? [];
   const showCategories = categories.length > 1 || (categories.length === 1 && item.category === null);
   return (
-    <motion.div
-      variants={collapse}
-      initial="hidden"
-      animate="shown"
-      exit="gone"
-      className="-mx-1 overflow-hidden px-1"
-    >
+    <motion.div variants={collapse} initial="hidden" animate="shown" exit="gone" className="-mx-1 overflow-hidden px-1">
       <motion.div
         variants={arrive}
         data-tint="amber"
@@ -122,7 +119,7 @@ export function ItemRow({ item, currency, onChange, onRemove }: ItemRowProps) {
           flagged ? "-mx-2.5 my-1 rounded-[12px] border-transparent bg-tint-bg px-2.5" : "border-line",
         )}
       >
-        <div className={itemGridClassName}>
+        <div className={rowGridClassName}>
           <input
             type="text"
             value={item.name}
@@ -130,31 +127,29 @@ export function ItemRow({ item, currency, onChange, onRemove }: ItemRowProps) {
             placeholder={copy.itemPlaceholder}
             aria-label={copy.itemName}
             onChange={(e) => onChange({ name: e.target.value })}
-            className={ghostInputClassName}
+            className={cn(ghostInputClassName, "pointer-coarse:h-11")}
           />
-          <QuantityInput value={item.quantity} onValueChange={(quantity) => onChange({ quantity })} />
-          <AmountInput
-            value={item.price}
-            onValueChange={(price) => onChange({ price })}
-            currency={currency}
-            aria-label={copy.price}
-            flagged={flagged}
-            placeholder={flagged ? copy.noTotal : undefined}
-          />
-          <IconButton
-            icon="close"
-            label={copy.remove(item.name.trim())}
-            onClick={onRemove}
-            className="size-9 rounded-sm text-muted hover:bg-red-bg hover:text-red"
-          />
+          <div className="grid grid-cols-[56px_minmax(0,1fr)_44px] items-center gap-1.5 sm:contents">
+            <QuantityInput value={item.quantity} onValueChange={(quantity) => onChange({ quantity })} />
+            <AmountInput
+              value={item.price}
+              onValueChange={(price) => onChange({ price })}
+              currency={currency}
+              aria-label={copy.price}
+              flagged={flagged}
+              placeholder={flagged ? copy.noTotal : undefined}
+              className="pointer-coarse:h-11"
+            />
+            <IconButton
+              icon="close"
+              label={copy.remove(item.name.trim())}
+              onClick={onRemove}
+              className="size-9 justify-self-end rounded-sm text-muted hover:bg-red-bg hover:text-red pointer-coarse:size-11"
+            />
+          </div>
         </div>
         {showCategories && (
-          <CategoryChips
-            name={item.name.trim()}
-            picked={item.category}
-            options={categories}
-            onPick={(category) => onChange({ category })}
-          />
+          <CategoryChips name={item.name.trim()} picked={item.category} options={categories} onPick={(category) => onChange({ category })} />
         )}
         <AnimatePresence initial={false}>
           {flagged && item.hints && (

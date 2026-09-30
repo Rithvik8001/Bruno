@@ -69,9 +69,9 @@ export default async function GroupPage({ params, searchParams }: PageProps<"/gr
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
           <CopyLinkButton url={inviteUrl} label={copy.inviteLink} copiedLabel={copy.copied} />
-          <PressLink href={routes.newBillFor(group.id)} className={cn(buttonVariants({ size: "md" }), "gap-1.5 pr-3.5 pl-2.5 text-small")}>
+          <PressLink href={routes.newBillFor(group.id)} className={cn(buttonVariants({ size: "md" }), "order-first w-full gap-1.5 pr-3.5 pl-2.5 text-small sm:order-none sm:w-auto")}>
             <Icon name="plus" size={18} strokeWidth={2} />
             {copy.addBill}
           </PressLink>

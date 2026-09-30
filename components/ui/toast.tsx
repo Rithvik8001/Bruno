@@ -1,9 +1,41 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { createContext, use, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  createContext,
+  use,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
+import { createPortal } from "react-dom";
 import { EASE, SPRING } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils/cn";
+
+const hostListeners = new Set<() => void>();
+let toastHost: HTMLElement | null = null;
+
+export function attachToastHost(host: HTMLElement): () => void {
+  toastHost = host;
+  hostListeners.forEach((l) => l());
+  return () => {
+    if (toastHost !== host) return;
+    toastHost = null;
+    hostListeners.forEach((l) => l());
+  };
+}
+
+function subscribeHost(listener: () => void): () => void {
+  hostListeners.add(listener);
+  return () => hostListeners.delete(listener);
+}
+
+const readHost = () => toastHost;
+const readServerHost = () => null;
 
 const DEFAULT_MS = 2800;
 const WITH_ACTION_MS = 6000;
@@ -25,7 +57,12 @@ export interface ToastViewProps extends Omit<ToastOptions, "duration"> {
   className?: string;
 }
 
-export function ToastView({ message, action, onDismiss, className }: ToastViewProps) {
+export function ToastView({
+  message,
+  action,
+  onDismiss,
+  className,
+}: ToastViewProps) {
   return (
     <div
       className={cn(
@@ -42,7 +79,7 @@ export function ToastView({ message, action, onDismiss, className }: ToastViewPr
             action.onAction();
             onDismiss?.();
           }}
-          className="h-7.5 cursor-pointer rounded-sm border-0 bg-transparent px-2.5 text-footnote font-semibold text-brand-tint"
+          className="h-7.5 cursor-pointer rounded-sm border-0 bg-transparent px-2.5 text-footnote font-semibold text-brand-tint pointer-coarse:h-9"
         >
           {action.label}
         </button>
@@ -92,7 +129,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       setToasts((list) => [...list, { ...options, id }].slice(-MAX_VISIBLE));
       timers.current.set(
         id,
-        setTimeout(() => remove(id), options.duration ?? (options.action ? WITH_ACTION_MS : DEFAULT_MS)),
+        setTimeout(
+          () => remove(id),
+          options.duration ?? (options.action ? WITH_ACTION_MS : DEFAULT_MS),
+        ),
       );
     },
     [remove],
@@ -113,30 +153,44 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(() => ({ toast, dismiss }), [toast, dismiss]);
+  const host = useSyncExternalStore(subscribeHost, readHost, readServerHost);
+
+  const stack = (
+    <div
+      aria-live="polite"
+      className="pointer-events-none fixed inset-x-0 bottom-[calc(24px+env(safe-area-inset-bottom))] z-[1000] grid justify-items-center gap-2 px-4 nav:bottom-8 [html[data-dock]_&]:bottom-[calc(112px+env(safe-area-inset-bottom))]"
+    >
+      <AnimatePresence mode="popLayout">
+        {toasts.map((t) => (
+          <motion.div
+            key={t.id}
+            layout
+            initial={{ opacity: 0, y: 14, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{
+              opacity: 0,
+              y: 6,
+              scale: 0.98,
+              transition: { duration: 0.2, ease: EASE },
+            }}
+            transition={SPRING}
+            className="pointer-events-auto"
+          >
+            <ToastView
+              message={t.message}
+              action={t.action}
+              onDismiss={() => remove(t.id)}
+            />
+          </motion.div>
+        ))}
+      </AnimatePresence>
+    </div>
+  );
 
   return (
     <ToastContext value={value}>
       {children}
-      <div
-        aria-live="polite"
-        className="pointer-events-none fixed inset-x-0 bottom-[calc(112px+env(safe-area-inset-bottom))] z-[1000] grid justify-items-center gap-2 px-4 nav:bottom-8"
-      >
-        <AnimatePresence mode="popLayout">
-          {toasts.map((t) => (
-            <motion.div
-              key={t.id}
-              layout
-              initial={{ opacity: 0, y: 14, scale: 0.96 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 6, scale: 0.98, transition: { duration: 0.2, ease: EASE } }}
-              transition={SPRING}
-              className="pointer-events-auto"
-            >
-              <ToastView message={t.message} action={t.action} onDismiss={() => remove(t.id)} />
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
+      {host ? createPortal(stack, host) : stack}
     </ToastContext>
   );
 }

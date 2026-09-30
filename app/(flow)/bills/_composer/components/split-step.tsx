@@ -75,7 +75,7 @@ function checkText(check: SplitCheck, included: number, total: string, currency:
 
 function PercentField({ value, label, onValueChange }: { value: number | null; label: string; onValueChange: (value: number | null) => void }) {
   return (
-    <span className="inline-flex h-9 items-center rounded-sm bg-bg pr-2.5 pl-1">
+    <span className="inline-flex h-9 items-center rounded-sm bg-bg pr-2.5 pl-1 pointer-coarse:h-11">
       <input
         type="text"
         inputMode="numeric"
@@ -86,7 +86,7 @@ function PercentField({ value, label, onValueChange }: { value: number | null; l
           const digits = e.target.value.replace(/\D/g, "").slice(0, 3);
           onValueChange(digits === "" ? null : Math.min(PERCENT_MAX, Number(digits)));
         }}
-        className="h-8 w-11 border-0 bg-transparent p-0 text-right text-small font-semibold outline-none"
+        className="h-8 w-12 border-0 bg-transparent p-0 text-right text-small font-semibold outline-none pointer-coarse:h-10"
       />
       <span className="text-footnote font-semibold text-muted">%</span>
     </span>
@@ -191,9 +191,9 @@ export function SplitStep({ draft, onDraft, composer, roster, memberIds, you, er
         }
       >
         <span className="text-footnote text-text-2">{copy.assigned}</span>
-        <span className="text-title font-semibold">
-          <RollingNumber speed="live" value={formatMoney(view.assigned, currency)} />{" "}
-          <span className="text-small font-medium text-muted">{copy.of(total)}</span>
+        <span className="flex items-baseline gap-1.5 truncate text-title font-semibold tabular-nums">
+          <RollingNumber speed="live" value={formatMoney(view.assigned, currency)} />
+          <span className="truncate text-footnote font-medium text-muted">{copy.of(total)}</span>
         </span>
       </FlowFooter>
     </div>

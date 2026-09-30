@@ -44,7 +44,7 @@ export function FlaggedGuesses({ guesses, onPick, format = formatCents, prompt =
           type="button"
           onClick={() => onPick(g)}
           {...pressMotion()}
-          className="h-7 cursor-pointer rounded-[7px] bg-bg px-2.5 text-footnote font-semibold text-text shadow-float"
+          className="h-7 cursor-pointer rounded-[7px] bg-bg px-2.5 text-footnote font-semibold text-text shadow-float pointer-coarse:h-9"
         >
           {format(g)}
         </motion.button>

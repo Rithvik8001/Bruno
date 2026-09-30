@@ -86,8 +86,9 @@ export function BillActions({ billId, title, shareText, editHref, splitHref, can
         type="button"
         onClick={share}
         {...pressMotion()}
+        aria-label={shared.active ? copy.actions.shared : copy.actions.share}
         className={cn(
-          "inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-sm bg-transparent pr-3 pl-2.5 text-small font-semibold transition-colors duration-150 ease-standard hover:bg-surface",
+          "inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-sm bg-transparent px-2.5 text-small font-semibold transition-colors duration-150 ease-standard hover:bg-surface sm:pr-3 pointer-coarse:h-11 pointer-coarse:min-w-11 pointer-coarse:justify-center",
           shared.active ? "text-green" : "text-text-2",
         )}
       >
@@ -98,13 +99,13 @@ export function BillActions({ billId, title, shareText, editHref, splitHref, can
         ) : (
           <Icon name="upload" size={16} strokeWidth={2} />
         )}
-        {shared.active ? copy.actions.shared : copy.actions.share}
+        <span className="hidden sm:inline">{shared.active ? copy.actions.shared : copy.actions.share}</span>
       </motion.button>
       {editHref && (
         <PressLink
           href={editHref}
           aria-label={copy.actions.edit}
-          className="grid size-9 place-items-center rounded-sm text-text-2 hover:bg-surface hover:text-text"
+          className="grid size-9 place-items-center rounded-sm text-text-2 hover:bg-surface hover:text-text pointer-coarse:size-11"
         >
           <Icon name="pencil" size={16} strokeWidth={2} />
         </PressLink>

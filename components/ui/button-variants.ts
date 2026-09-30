@@ -19,9 +19,9 @@ export const buttonVariants = cva(
         link: "h-auto bg-transparent px-0 font-semibold text-brand hover:bg-brand-tint",
       },
       size: {
-        sm: "h-8 rounded-sm px-3 text-small",
-        md: "h-10 px-4 text-body",
-        lg: "h-12 min-w-35 px-5.5 text-body",
+        sm: "h-8 rounded-sm px-3 text-small pointer-coarse:h-9",
+        md: "h-10 px-4 text-body pointer-coarse:h-11",
+        lg: "h-12 px-5.5 text-body",
       },
       fullWidth: { true: "w-full" },
     },

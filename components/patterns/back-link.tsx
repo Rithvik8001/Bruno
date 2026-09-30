@@ -15,8 +15,8 @@ type BackLinkProps = { label: string; className?: string } & (
 export function BackLink({ label, className, href, onClick }: BackLinkProps) {
   const content = (
     <>
-      <Icon name="chevron-left" size={18} />
-      {label}
+      <Icon name="chevron-left" size={18} className="shrink-0" />
+      <span className="min-w-0 truncate">{label}</span>
     </>
   );
   if (href !== undefined) {

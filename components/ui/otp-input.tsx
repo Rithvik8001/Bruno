@@ -95,7 +95,7 @@ export function OtpInput({
   };
 
   return (
-    <div ref={scope} role="group" aria-label={label} className={cn("flex justify-center gap-2.5", className)}>
+    <div ref={scope} role="group" aria-label={label} className={cn("flex justify-center gap-2 sm:gap-2.5", className)}>
       {slots.map((digit, i) => (
         <motion.input
           key={i}
@@ -117,7 +117,7 @@ export function OtpInput({
           aria-label={`Digit ${i + 1}`}
           aria-invalid={invalid || undefined}
           className={cn(
-            "h-14 w-12 rounded-[12px] border p-0 text-center text-[1.5rem] font-semibold outline-none",
+            "h-13 w-11 rounded-[12px] border p-0 text-center text-[1.5rem] font-semibold outline-none sm:h-14 sm:w-12",
             "transition-[background-color,border-color,box-shadow] duration-150 ease-standard",
             "focus:border-brand focus:bg-bg focus:shadow-[0_0_0_3px_var(--brand-tint)]",
             "disabled:cursor-not-allowed disabled:text-muted",

@@ -5,6 +5,7 @@ import {
   palettes,
   radii,
   typeScale,
+  layout,
   type ThemeName,
   type ThemePalette,
   type Tint,
@@ -36,6 +37,8 @@ function paletteDecls(p: ThemePalette): Declarations {
 function staticDecls(): Declarations {
   const out: Record<`--${string}`, string> = {};
   for (const [k, v] of Object.entries(radii)) out[`--r-${k}`] = `${v}px`;
+  out["--hit-target"] = `${layout.minHitTarget}px`;
+  out["--gutter"] = `${layout.mobileGutter}px`;
   for (const [k, v] of Object.entries(durations)) out[`--motion-${k}`] = `${v}ms`;
   for (const [k, v] of Object.entries(easings)) out[`--motion-ease-${k}`] = v;
   for (const [k, s] of Object.entries(typeScale)) {

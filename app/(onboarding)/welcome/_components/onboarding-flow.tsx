@@ -102,7 +102,7 @@ export function OnboardingFlow({ person, defaultBuddy }: OnboardingFlowProps) {
     });
 
   return (
-    <div className="grid min-h-dvh grid-rows-[auto_1fr]">
+    <div className="grid min-h-dvh grid-rows-[auto_1fr] pb-safe">
       <header className="flex items-center justify-between gap-4 px-5 py-4">
         <span className="flex w-22 text-text">
           <LiveMark size={28} />

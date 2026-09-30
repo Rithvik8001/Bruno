@@ -2,7 +2,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 export const iconButtonVariants = cva(
   [
-    "inline-grid size-10 shrink-0 cursor-pointer place-items-center rounded-control",
+    "inline-grid size-10 shrink-0 cursor-pointer place-items-center rounded-control pointer-coarse:size-11",
     "transition-[background-color,color] duration-150 ease-standard",
     "disabled:cursor-not-allowed disabled:text-muted",
   ],

@@ -18,12 +18,12 @@ type StepperSize = "sm" | "md";
 
 const trackSize = {
   md: "h-12 gap-0.5 rounded-control bg-surface p-0.75",
-  sm: "h-9 gap-0 rounded-sm bg-bg p-0.5",
+  sm: "h-9 gap-0 rounded-sm bg-bg p-0.5 pointer-coarse:h-11",
 } as const satisfies Record<StepperSize, string>;
 
 const buttonSize = {
   md: "h-10.5 w-11 rounded-sm hover:bg-surface-2",
-  sm: "size-8 rounded-xs text-text-2 hover:bg-surface",
+  sm: "size-8 rounded-xs text-text-2 hover:bg-surface pointer-coarse:size-10",
 } as const satisfies Record<StepperSize, string>;
 
 const valueSize = {

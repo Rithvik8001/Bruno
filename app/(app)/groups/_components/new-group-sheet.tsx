@@ -42,6 +42,7 @@ export function NewGroupSheet({ open, onOpenChange }: NewGroupSheetProps) {
     <Sheet
       open={open}
       onOpenChange={onOpenChange}
+      size="full"
       className="max-w-110"
       title={copy.title}
       description={copy.description}

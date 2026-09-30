@@ -117,7 +117,7 @@ export function CrewStep(props: CrewStepProps) {
         type="button"
         onClick={onBack}
         {...pressMotion()}
-        className="-mt-2 cursor-pointer justify-self-center bg-transparent p-0 text-footnote text-muted hover:text-text"
+        className="-mt-2 inline-flex min-h-11 cursor-pointer items-center justify-self-center bg-transparent px-2 text-footnote text-muted hover:text-text"
       >
         {copy.back}
       </motion.button>
@@ -194,7 +194,7 @@ function JoinByLink({ invite, onInvite }: { invite: GroupInvite | null; onInvite
         type="button"
         onClick={paste}
         {...pressMotion()}
-        className="-mt-1.5 cursor-pointer justify-self-start bg-transparent p-0 text-footnote font-semibold text-brand"
+        className="-mt-1.5 inline-flex min-h-11 cursor-pointer items-center justify-self-start bg-transparent px-2 text-footnote font-semibold text-brand"
       >
         {copy.paste}
       </motion.button>

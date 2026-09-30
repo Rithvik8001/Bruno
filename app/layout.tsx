@@ -1,9 +1,10 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { MotionProvider } from "@/components/motion/motion-provider";
 import { ThemeHead } from "@/components/theme/theme-head";
 import { ThemeSync } from "@/components/theme/theme-sync";
 import { ToastProvider } from "@/components/ui/toast";
+import { palettes } from "@/lib/design-system/tokens";
 import "./globals.css";
 
 const inter = Inter({
@@ -14,6 +15,17 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: { default: "Bruno", template: "%s · Bruno" },
   description: "Split the bill, not friendships.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  interactiveWidget: "resizes-content",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: palettes.light.neutral.bg },
+    { media: "(prefers-color-scheme: dark)", color: palettes.dark.neutral.bg },
+  ],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

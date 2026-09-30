@@ -64,7 +64,7 @@ export default async function BillPage({ params }: PageProps<"/bills/[slug]">) {
   return (
     <div className="grid gap-6 px-5 pt-5 pb-10">
       <div className="flex items-center justify-between gap-3">
-        <BackLink href={routes.group(detail.group.id)} label={detail.group.name} />
+        <BackLink href={routes.group(detail.group.id)} label={detail.group.name} className="min-w-0 flex-1" />
         <BillActions
           billId={detail.id}
           title={detail.title}

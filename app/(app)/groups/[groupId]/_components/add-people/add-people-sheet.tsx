@@ -287,7 +287,8 @@ function AddPeopleBody({ groupId, groupName, inviteUrl, inviteLabel, onOpenChang
                 <Icon name="user" size={18} />
               </span>
               <span className="text-small">
-                <span className="text-text-2">{copy.notOnBruno}</span> <span className="font-semibold">{copy.addByName}</span>
+                <span className="block font-semibold">{copy.addByName}</span>
+                <span className="block text-small text-text-2">{copy.notOnBruno}</span>
               </span>
               <Icon name="chevron-right" size={18} className="text-muted" />
             </motion.button>

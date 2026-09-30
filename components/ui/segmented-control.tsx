@@ -30,8 +30,8 @@ const trackClass = {
 } as const satisfies Record<Size, string>;
 
 const itemClass = {
-  sm: "h-7.5 px-3 text-footnote",
-  md: "h-9 px-3.5 text-small",
+  sm: "h-7.5 px-3 text-footnote pointer-coarse:h-9",
+  md: "h-9 px-3.5 text-small pointer-coarse:h-10",
   lg: "flex-1 text-small",
 } as const satisfies Record<Size, string>;
 

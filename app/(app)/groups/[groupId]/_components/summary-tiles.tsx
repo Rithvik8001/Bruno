@@ -24,7 +24,7 @@ export function SummaryTiles({ group }: { group: GroupDetail }) {
   const label = direction === "owed" ? copy.owed : direction === "owes" ? copy.owe : copy.square;
 
   return (
-    <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-2.5">
+    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 [&>*:last-child]:col-span-2 sm:[&>*:last-child]:col-span-1">
       <Tile label={copy.spent} value={money(group.spent)} />
       <Tile label={copy.share} value={money(group.yourShare)} />
       <Tile label={label} value={money(group.yourBalance, true)} tint={balanceTint[direction]} />

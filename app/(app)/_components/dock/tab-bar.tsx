@@ -45,6 +45,13 @@ export function TabBar({ unread }: { unread: boolean }) {
   const [hovered, setHovered] = useState<string | null>(null);
   const rest = tucked ? TUCKED : SHOWN;
 
+  useEffect(() => {
+    document.documentElement.dataset.dock = "true";
+    return () => {
+      delete document.documentElement.dataset.dock;
+    };
+  }, []);
+
   return (
     <nav
       aria-label={shellCopy.mainNav}

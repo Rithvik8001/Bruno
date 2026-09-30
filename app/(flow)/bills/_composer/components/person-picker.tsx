@@ -29,7 +29,7 @@ export function PersonPicker({ members, roster, you, value, onValueChange }: Per
   return (
     <div className="grid gap-2">
       <span className="text-footnote font-medium text-text-2">{copy.assigning}</span>
-      <div role="radiogroup" aria-label={copy.assigning} onKeyDown={onKeyDown} className="flex flex-wrap gap-2">
+      <div role="radiogroup" aria-label={copy.assigning} onKeyDown={onKeyDown} className="-mx-5 flex gap-2 overflow-x-auto px-5 scrollbar-none [scroll-snap-type:x_proximity] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
         {members.map((m) => {
           const selected = m.id === value;
           return (
@@ -43,7 +43,7 @@ export function PersonPicker({ members, roster, you, value, onValueChange }: Per
               onClick={() => onValueChange(m.id)}
               {...pressMotion()}
               className={cn(
-                "inline-flex h-10 cursor-pointer items-center gap-2 rounded-full pr-3.5 pl-1 text-small font-medium",
+                "inline-flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-full pr-3.5 pl-1 text-small font-medium [scroll-snap-align:start] pointer-coarse:h-11",
                 "transition-[background-color,color,box-shadow] duration-150 ease-standard",
                 selected
                   ? "bg-brand-tint text-brand shadow-[inset_0_0_0_1.5px_var(--brand)]"

@@ -23,7 +23,7 @@ export interface ChargesProps {
 
 function ChargeRow({ label, children }: { label: ReactNode; children: ReactNode }) {
   return (
-    <div className="grid min-h-10 grid-cols-[minmax(0,1fr)_120px] items-center gap-2">
+    <div className="grid min-h-10 grid-cols-[minmax(0,1fr)_112px] items-center gap-2 pointer-coarse:min-h-11">
       <span className="flex items-center gap-2 text-small text-text-2">{label}</span>
       {children}
     </div>
@@ -44,7 +44,8 @@ function TipPresets({ tip, onTip }: { tip: DraftTip; onTip: (tip: DraftTip) => v
             onClick={() => onTip(selected ? { mode: "none" } : { mode: "percent", percent })}
             {...pressMotion()}
             className={cn(
-              "h-5.5 cursor-pointer rounded-xs px-1.75 text-[11px] font-semibold transition-[background-color,color] duration-150 ease-standard",
+              "relative h-5.5 cursor-pointer rounded-xs px-1.75 text-[11px] font-semibold transition-[background-color,color] duration-150 ease-standard",
+              "before:absolute before:inset-x-0 before:-inset-y-2.5 before:content-['']",
               selected ? "bg-bg text-text shadow-thumb" : "bg-transparent text-muted hover:text-text",
             )}
           >

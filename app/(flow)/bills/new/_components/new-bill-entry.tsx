@@ -26,7 +26,7 @@ export function NewBillEntry({ groups, selectedId, currency, configured, quota: 
   const [quota, setQuota] = useState(initialQuota);
   return (
     <div className="grid gap-6 px-5 pt-5 pb-10">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex min-w-0 items-center justify-between gap-3">
         <BackLink href={routes.app} label={copy.back} />
         {configured && (
           <PopIn popKey={quota.left}>

@@ -27,7 +27,7 @@ export function SiteNav() {
         </nav>
         <div className="flex items-center gap-2">
           <ThemeSwitch />
-          <NavLink href={routes.signIn} className="hidden min-[720px]:inline-flex">
+          <NavLink href={routes.signIn}>
             Sign in
           </NavLink>
           <PressLink href={routes.signUp} className={cn(buttonVariants({ size: "sm" }), "h-9 px-3.5")}>
