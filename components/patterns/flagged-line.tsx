@@ -16,15 +16,45 @@ export interface FlaggedLineProps {
   prompt?: string;
 }
 
-const FADE = { duration: T.t3, ease: EASE } as const;
+export interface FlaggedGuessesProps {
+  guesses: readonly Cents[];
+  onPick: (value: Cents) => void;
+  format?: (value: Cents) => string;
+  prompt?: string;
+  trailing?: string;
+  className?: string;
+}
 
-export function FlaggedLine({
-  name,
-  guesses,
-  value,
-  onResolve,
-  prompt = "Hard to read — was it",
-}: FlaggedLineProps) {
+const FADE = { duration: T.t3, ease: EASE } as const;
+const DEFAULT_PROMPT = "Hard to read — was it";
+
+export function FlaggedGuesses({ guesses, onPick, format = formatCents, prompt = DEFAULT_PROMPT, trailing, className }: FlaggedGuessesProps) {
+  return (
+    <div
+      role="group"
+      aria-label={`${prompt}…`}
+      data-tint="amber"
+      className={cn("flex flex-wrap items-center gap-2 text-footnote font-semibold text-tint", className)}
+    >
+      <Icon name="alert" size={14} strokeWidth={2.2} />
+      {prompt}
+      {guesses.map((g) => (
+        <motion.button
+          key={g}
+          type="button"
+          onClick={() => onPick(g)}
+          {...pressMotion()}
+          className="h-7 cursor-pointer rounded-[7px] bg-bg px-2.5 text-footnote font-semibold text-text shadow-float"
+        >
+          {format(g)}
+        </motion.button>
+      ))}
+      {trailing && <span className="font-normal text-text-2">{trailing}</span>}
+    </div>
+  );
+}
+
+export function FlaggedLine({ name, guesses, value, onResolve, prompt = DEFAULT_PROMPT }: FlaggedLineProps) {
   const open = value === null;
 
   return (
@@ -64,25 +94,7 @@ export function FlaggedLine({
             exit={{ height: 0, opacity: 0, overflow: "hidden" }}
             transition={FADE}
           >
-            <div
-              role="group"
-              aria-label={`${prompt}…`}
-              className="flex flex-wrap items-center gap-2 pt-2 text-footnote font-semibold text-tint"
-            >
-              <Icon name="alert" size={14} strokeWidth={2.2} />
-              {prompt}
-              {guesses.map((g) => (
-                <motion.button
-                  key={g}
-                  type="button"
-                  onClick={() => onResolve(g)}
-                  {...pressMotion()}
-                  className="h-7 cursor-pointer rounded-[7px] bg-bg px-2.5 text-footnote font-semibold text-text shadow-float"
-                >
-                  {formatCents(g)}
-                </motion.button>
-              ))}
-            </div>
+            <FlaggedGuesses guesses={guesses} onPick={onResolve} prompt={prompt} className="pt-2" />
           </motion.div>
         )}
       </AnimatePresence>

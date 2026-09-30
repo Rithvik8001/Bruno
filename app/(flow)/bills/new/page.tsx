@@ -1,39 +1,45 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { PressLink } from "@/components/motion/motion-link";
+import { BackLink } from "@/components/patterns/back-link";
+import { TIME_ZONE_COOKIE, TimeZoneCookie } from "@/components/patterns/time-zone-cookie";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { EmptyState } from "@/components/ui/empty-state";
 import { firstParam } from "@/lib/auth/redirect";
 import { billParams, routes } from "@/lib/auth/rules";
 import { requireAppContext } from "@/lib/auth/session";
 import { listGroupsFor } from "@/lib/groups/queries";
+import { getScanAvailability } from "@/lib/scans/queries";
+import { timeZoneSchema } from "@/lib/scans/schema";
 import { cn } from "@/lib/utils/cn";
 import { newBillCopy } from "./_data";
-import { BackLink } from "@/components/patterns/back-link";
-import { GroupChips } from "./_components/group-chips";
-import { TypeItInCard } from "./_components/type-it-in-card";
+import { NewBillEntry } from "./_components/new-bill-entry";
 
 export const metadata: Metadata = { title: newBillCopy.metaTitle };
+export const maxDuration = 60;
+
+async function cookieTimeZone(): Promise<string | null> {
+  const raw = (await cookies()).get(TIME_ZONE_COOKIE)?.value;
+  if (!raw) return null;
+  const parsed = timeZoneSchema.safeParse(decodeURIComponent(raw));
+  return parsed.success ? parsed.data : null;
+}
 
 export default async function NewBillPage({ searchParams }: PageProps<"/bills/new">) {
   const requested = firstParam((await searchParams)[billParams.group]);
   const { person } = await requireAppContext(requested ? routes.newBillFor(requested) : routes.newBill);
-  const groups = await listGroupsFor(person.id);
+  const [groups, timeZone] = await Promise.all([listGroupsFor(person.id), cookieTimeZone()]);
   const selected = groups.find((g) => g.id === requested) ?? groups[0] ?? null;
   const copy = newBillCopy.entry;
 
-  return (
-    <div className="grid gap-6 px-5 pt-5 pb-10">
-      <BackLink href={routes.app} label={copy.back} />
-      <div className="grid gap-1.5">
-        <h1 className="m-0 text-heading">{copy.title}</h1>
-        <p className="m-0 text-text-2">{copy.body}</p>
-      </div>
-      {selected ? (
-        <>
-          <GroupChips groups={groups} selectedId={selected.id} />
-          <TypeItInCard href={routes.manualBill(selected.id)} />
-        </>
-      ) : (
+  if (!selected) {
+    return (
+      <div className="grid gap-6 px-5 pt-5 pb-10">
+        <BackLink href={routes.app} label={copy.back} />
+        <div className="grid gap-1.5">
+          <h1 className="m-0 text-heading">{copy.title}</h1>
+          <p className="m-0 text-text-2">{copy.body}</p>
+        </div>
         <EmptyState
           icon={{ moment: "people" }}
           tint="violet"
@@ -45,7 +51,22 @@ export default async function NewBillPage({ searchParams }: PageProps<"/bills/ne
             </PressLink>
           }
         />
-      )}
-    </div>
+      </div>
+    );
+  }
+
+  const availability = await getScanAvailability(person.id, timeZone ?? "UTC");
+
+  return (
+    <>
+      <TimeZoneCookie serverTimeZone={timeZone} />
+      <NewBillEntry
+        groups={groups}
+        selectedId={selected.id}
+        currency={selected.currency}
+        configured={availability.configured}
+        quota={availability.quota}
+      />
+    </>
   );
 }

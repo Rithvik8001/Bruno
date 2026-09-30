@@ -18,8 +18,19 @@ export function resolveTheme(pref: ThemePreference, systemDark: boolean): ThemeN
   return pref;
 }
 
-export const themeInitScript = `(function(){try{var p=localStorage.getItem(${JSON.stringify(
-  THEME_STORAGE_KEY,
-)});if(p!=="light"&&p!=="dark")p=matchMedia(${JSON.stringify(
+export function encodeOverride(theme: ThemeName, systemDark: boolean): string {
+  return `${theme}@${systemDark ? "dark" : "light"}`;
+}
+
+export function decodeOverride(raw: string | null, systemDark: boolean): ThemePreference {
+  if (!raw) return "system";
+  const [theme, under] = raw.split("@");
+  if ((theme !== "light" && theme !== "dark") || under !== (systemDark ? "dark" : "light")) return "system";
+  return theme;
+}
+
+export const themeInitScript = `(function(){try{var d=matchMedia(${JSON.stringify(
   DARK_QUERY,
-)}).matches?"dark":"light";document.documentElement.setAttribute("data-theme",p)}catch(e){}})()`;
+)}).matches,s=d?"dark":"light",k=${JSON.stringify(
+  THEME_STORAGE_KEY,
+)},r=localStorage.getItem(k),x=r?r.split("@"):[],o=(x[0]==="light"||x[0]==="dark")&&x[1]===s;if(r&&!o)localStorage.removeItem(k);document.documentElement.setAttribute("data-theme",o?x[0]:s)}catch(e){}})()`;

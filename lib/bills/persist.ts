@@ -106,7 +106,7 @@ export async function writeItems(
   const kept = values.items.flatMap((item) => (item.id !== undefined && existingIds.has(item.id) ? [item.id] : []));
   await tx.lineItem.deleteMany({ where: { billId, id: { notIn: kept } } });
   for (const [position, item] of values.items.entries()) {
-    const fields = { name: item.name, quantity: item.quantity, priceCents: item.priceCents, position };
+    const fields = { name: item.name, quantity: item.quantity, priceCents: item.priceCents, category: item.category, position };
     if (item.id !== undefined && existingIds.has(item.id)) {
       await tx.lineItem.update({
         where: { id: item.id },

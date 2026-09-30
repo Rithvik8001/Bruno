@@ -27,7 +27,7 @@ import { buzz, HAPTICS } from "@/lib/motion/haptics";
 import { SQUISH } from "@/lib/motion/keyframes";
 import { cents, formatCents, sumCents, type Cents } from "@/lib/money";
 import { cn } from "@/lib/utils/cn";
-import { buddyPickName, buddyPicks, codeDemo, receiptItems, scanLines, type BuddyPick } from "../_data";
+import { buddyPickName, buddyPicks, codeDemo, receiptItems, scanCaptions, scanLines, type BuddyPick } from "../_data";
 
 export function LoadingButtonDemo() {
   const [loading, setLoading] = useState(false);
@@ -218,7 +218,7 @@ export function ReceiptScanDemo() {
   const { progress, start } = useTimeline({ steps: 34, stepMs: 110, delayMs: 250 });
   return (
     <div className="flex flex-wrap items-start gap-5">
-      <ReceiptScan merchant="Lupa" lines={scanLines} total={cents(9538)} progress={progress} />
+      <ReceiptScan merchant="Lupa" lines={scanLines} total={cents(9538)} currency="USD" captions={scanCaptions} progress={progress} />
       <Button variant="secondary" onClick={start}>
         {progress === null ? "Run" : "Run again"}
       </Button>

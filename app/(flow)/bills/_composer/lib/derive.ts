@@ -87,6 +87,7 @@ export function toBillValues(draft: BillDraft, members: readonly PersonId[], mod
       quantity: item.quantity,
       priceCents: item.price ?? ZERO_CENTS,
       claimedBy: byItems ? [...claimantsOf(draft, item.key)] : [],
+      category: item.category,
     })),
     taxCents: draft.tax ?? ZERO_CENTS,
     tip: tipValue(draft),

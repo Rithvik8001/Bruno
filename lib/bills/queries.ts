@@ -464,7 +464,7 @@ export async function getEditableBill(slug: string, you: PersonId): Promise<Edit
       discountCents: true,
       items: {
         orderBy: { position: "asc" },
-        select: { id: true, name: true, quantity: true, priceCents: true, claims: { select: { personId: true } } },
+        select: { id: true, name: true, quantity: true, priceCents: true, category: true, claims: { select: { personId: true } } },
       },
       participants: { select: { personId: true, shares: true, percentBps: true, amountCents: true } },
       group: {
@@ -527,6 +527,7 @@ export async function getEditableBill(slug: string, you: PersonId): Promise<Edit
         quantity: item.quantity,
         priceCents: item.priceCents,
         claimedBy: item.claims.map((c) => c.personId),
+        category: item.category,
       })),
       taxCents: row.taxCents,
       tip,

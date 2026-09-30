@@ -38,6 +38,8 @@ import { consumeRate } from "@/lib/rate-limit/limiter";
 import { broadcastBill } from "@/lib/realtime/broadcast";
 import type { BillEvent, ClaimSignal } from "@/lib/realtime/topics";
 import { refreshGroup } from "@/lib/revalidate";
+import { consumeScan, keepReceipt, ScanGoneError } from "@/lib/scans/consume";
+import { scanMessages } from "@/lib/scans/messages";
 import { appUrl } from "@/lib/site";
 import { clearGuestSession, readGuestSession, setGuestSession } from "./guest-session";
 import { claimMessages } from "./messages";
@@ -101,7 +103,8 @@ export const startClaiming = defineAction(createBillSchema, async (input, { pers
   if (!total.ok) return total;
 
   const [slug, code] = await Promise.all([freeSlug(values.title), freeClaimCode()]);
-  await db.$transaction(async (tx) => {
+  const bill = await db.$transaction(async (tx) => {
+    const receiptScanId = await consumeScan(tx, input.receiptScanId, person.id, input.groupId);
     const created = await tx.bill.create({
       data: {
         ...billColumns(values, total.data),
@@ -111,6 +114,7 @@ export const startClaiming = defineAction(createBillSchema, async (input, { pers
         status: "CLAIMING",
         slug,
         claimCode: code,
+        receiptScanId,
         items: { create: itemCreates(values) },
       },
       select: { id: true },
@@ -131,8 +135,11 @@ export const startClaiming = defineAction(createBillSchema, async (input, { pers
     const target: ClaimTarget = { id: created.id, title: values.title, groupId: input.groupId, payerId: values.payerId };
     const claimants = new Set(values.items.flatMap((item) => item.claimedBy));
     for (const claimant of claimants) await syncClaimedEvent(tx, target, claimant);
-  });
+    return created;
+  }).catch((error: unknown) => (error instanceof ScanGoneError ? null : Promise.reject(error)));
+  if (!bill) return actionFail("conflict", scanMessages.gone);
 
+  if (input.receiptScanId) after(() => keepReceipt(input.receiptScanId ?? "", bill.id));
   refreshGroup(input.groupId);
   return actionOk<StartedClaiming>({ code, title: values.title });
 });

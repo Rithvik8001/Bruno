@@ -2,21 +2,19 @@
 
 import { useCallback, useLayoutEffect, useSyncExternalStore } from "react";
 import type { ThemeName } from "@/lib/design-system/tokens";
-import {
-  DARK_QUERY,
-  THEME_STORAGE_KEY,
-  isThemePreference,
-  resolveTheme,
-  type ThemePreference,
-} from "./theme";
+import { DARK_QUERY, THEME_STORAGE_KEY, decodeOverride, encodeOverride, resolveTheme, type ThemePreference } from "./theme";
 
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());
 
+const getSystemDark = () => matchMedia(DARK_QUERY).matches;
+
 function readPreference(): ThemePreference {
   try {
-    const v = localStorage.getItem(THEME_STORAGE_KEY);
-    return isThemePreference(v) ? v : "system";
+    const raw = localStorage.getItem(THEME_STORAGE_KEY);
+    const pref = decodeOverride(raw, getSystemDark());
+    if (raw !== null && pref === "system") localStorage.removeItem(THEME_STORAGE_KEY);
+    return pref;
   } catch {
     return "system";
   }
@@ -40,14 +38,12 @@ function subscribe(listener: () => void): () => void {
 function persistPreference(next: ThemePreference): boolean {
   try {
     if (next === "system") localStorage.removeItem(THEME_STORAGE_KEY);
-    else localStorage.setItem(THEME_STORAGE_KEY, next);
+    else localStorage.setItem(THEME_STORAGE_KEY, encodeOverride(next, getSystemDark()));
     return true;
   } catch {
     return false;
   }
 }
-
-const getSystemDark = () => matchMedia(DARK_QUERY).matches;
 
 function applyTheme(theme: ThemeName): void {
   document.documentElement.setAttribute("data-theme", theme);

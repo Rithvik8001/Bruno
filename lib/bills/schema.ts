@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { billMessages } from "./messages";
-import { FULL_PERCENT_BPS, SPLIT_METHODS } from "./types";
+import { FULL_PERCENT_BPS, ITEM_CATEGORIES, SPLIT_METHODS } from "./types";
 
 export const BILL_TITLE_MAX = 60;
 export const ITEM_NAME_MAX = 60;
@@ -31,6 +31,7 @@ export const billItemSchema = z.object({
   quantity: z.number().int().min(1).max(ITEM_QUANTITY_MAX),
   priceCents: centsSchema,
   claimedBy: z.array(idSchema),
+  category: z.enum(ITEM_CATEGORIES).nullable(),
 });
 
 export const billParticipantSchema = z.object({
@@ -66,7 +67,7 @@ function refineBill(value: BillFields, ctx: z.RefinementCtx): void {
   });
 }
 
-export const createBillSchema = billFieldsSchema.extend({ groupId: idSchema }).superRefine(refineBill);
+export const createBillSchema = billFieldsSchema.extend({ groupId: idSchema, receiptScanId: idSchema.optional() }).superRefine(refineBill);
 
 export const updateBillSchema = billFieldsSchema.extend({ billId: idSchema }).superRefine(refineBill);
 

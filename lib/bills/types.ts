@@ -7,6 +7,13 @@ export type SplitMethod = (typeof SPLIT_METHODS)[number];
 export const BILL_STATUSES = ["DRAFT", "CLAIMING", "FINALIZED"] as const;
 export type BillStatus = (typeof BILL_STATUSES)[number];
 
+export const ITEM_CATEGORIES = ["STARTER", "MAIN", "SIDE", "DRINK", "DESSERT", "GROCERY", "TRANSPORT", "HOUSEHOLD", "OTHER"] as const;
+export type ItemCategory = (typeof ITEM_CATEGORIES)[number];
+
+export function isItemCategory(value: string): value is ItemCategory {
+  return (ITEM_CATEGORIES as readonly string[]).includes(value);
+}
+
 export const FULL_PERCENT_BPS = 10_000;
 
 export type Tip =

@@ -57,6 +57,8 @@ export function ManualBillFlow({ composer, you, mode, initialDraft, initialStep 
   const claimCode = mode.kind === "edit" ? mode.claimCode : null;
   const claimHref = claimCode ? routes.claimBill(claimCode) : null;
   const exitHref = claimHref ?? (mode.kind === "edit" ? routes.bill(mode.slug) : routes.newBillFor(composer.id));
+  const scan = mode.kind === "scan" ? mode.receipt : null;
+  const receiptScanId = mode.kind === "scan" ? mode.scanId : undefined;
 
   const go = (next: FlowStep) => {
     setError(null);
@@ -74,7 +76,7 @@ export function ManualBillFlow({ composer, you, mode, initialDraft, initialStep 
       const result = await updateBill({ ...toBillValues(draft, memberIds, flow), billId: mode.billId });
       return result.ok ? { ok: true, data: { href: routes.bill(result.data.slug), title: result.data.title } } : result;
     }
-    const result = await createBill(toCreateInput(draft, composer.id, memberIds, flow));
+    const result = await createBill({ ...toCreateInput(draft, composer.id, memberIds, flow), receiptScanId });
     return result.ok ? { ok: true, data: { href: routes.group(result.data.groupId), title: result.data.title } } : result;
   };
 
@@ -94,7 +96,7 @@ export function ManualBillFlow({ composer, you, mode, initialDraft, initialStep 
   const goLive = () =>
     startTransition(async () => {
       setError(null);
-      const result = await startClaiming(toCreateInput(draft, composer.id, memberIds, "items"));
+      const result = await startClaiming({ ...toCreateInput(draft, composer.id, memberIds, "items"), receiptScanId });
       if (!result.ok) {
         const back = stepForFields(result.error.fields);
         if (back) go(back);
@@ -133,6 +135,8 @@ export function ManualBillFlow({ composer, you, mode, initialDraft, initialStep 
           onRestore={setDraft}
           composer={composer}
           you={you}
+          scan={scan}
+          today={today}
           error={error}
           modeCopy={claimHref ? claimingEditCopy : modeCopy}
           cta={claimHref ? composerCopy.items.claimingCta : composerCopy.items.cta}
@@ -155,7 +159,7 @@ export function ManualBillFlow({ composer, you, mode, initialDraft, initialStep 
           cta={modeCopy.finish}
           onBack={() => go("items")}
           onEditor={() => go("split")}
-          onLive={mode.kind === "create" ? goLive : null}
+          onLive={mode.kind === "edit" ? null : goLive}
           livePending={pending}
           onFinish={() => save("items")}
         />

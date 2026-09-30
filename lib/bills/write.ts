@@ -42,6 +42,7 @@ export function itemCreates(values: Pick<BillValues, "method" | "items">) {
     quantity: item.quantity,
     priceCents: item.priceCents,
     position,
+    category: item.category,
     claims: values.method === "ITEMS" ? { create: item.claimedBy.map((personId) => ({ personId })) } : undefined,
   }));
 }

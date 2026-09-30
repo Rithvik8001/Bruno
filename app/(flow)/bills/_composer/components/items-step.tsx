@@ -1,12 +1,14 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
+import { useEffect, useState } from "react";
 import { Icon } from "@/components/icons/icon";
 import { pressMotion } from "@/components/motion/press";
 import { Button } from "@/components/ui/button";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { Receipt } from "@/components/ui/receipt";
 import { Select } from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
 import { TextField } from "@/components/ui/text-field";
 import { useToast } from "@/components/ui/toast";
 import { BILL_TITLE_MAX } from "@/lib/bills/schema";
@@ -17,11 +19,16 @@ import { cn } from "@/lib/utils/cn";
 import { composerCopy, type CheckTone } from "../data";
 import { draftTotals, filledItems, itemsCheck, subtotalOf, type ItemsIssue } from "../lib/derive";
 import { addItem, removeItem, updateItem, type BillDraft } from "../lib/draft";
+import { dayLabel } from "../lib/format";
+import { flaggedCount, receiptCheck, type ReceiptCheck, type ScanReceipt } from "../lib/scan";
 import { CheckBanner } from "./check-banner";
 import { Charges } from "./charges";
+import { DuplicateBanner } from "./duplicate-banner";
 import { FlowFooter } from "./flow-footer";
 import { itemGridClassName, ItemRow } from "./item-row";
 import { StepHeader } from "./step-header";
+
+const PRINT_STEP_MS = 260;
 
 export interface ItemsStepProps {
   draft: BillDraft;
@@ -29,6 +36,8 @@ export interface ItemsStepProps {
   onRestore: (draft: BillDraft) => void;
   composer: BillComposer;
   you: PersonId;
+  scan: ScanReceipt | null;
+  today: string;
   error: string | null;
   modeCopy: ItemsModeCopy;
   cta: string;
@@ -59,12 +68,40 @@ function checkMessage(issue: ItemsIssue | null, unnamed: number): string {
   }
 }
 
+function receiptMessage(check: ReceiptCheck, currency: BillComposer["currency"]): string | null {
+  const copy = composerCopy.items.check;
+  switch (check.kind) {
+    case "printing":
+      return copy.printing;
+    case "unresolved":
+      return check.printed === null ? copy.unresolved(check.count) : copy.receiptUnresolved(formatMoney(check.printed, currency), check.count);
+    case "match":
+      return copy.receiptMatch(formatMoney(check.total, currency));
+    case "off":
+      return copy.receiptOff(formatMoney(check.total, currency), formatMoney(check.printed, currency), formatMoney(check.diff, currency));
+    case "plain":
+      return null;
+  }
+}
+
+function usePrintIn(total: number, enabled: boolean): number {
+  const [shown, setShown] = useState(enabled ? 0 : Number.POSITIVE_INFINITY);
+  useEffect(() => {
+    if (!enabled || shown >= total) return;
+    const timer = setTimeout(() => setShown((n) => n + 1), PRINT_STEP_MS);
+    return () => clearTimeout(timer);
+  }, [enabled, shown, total]);
+  return shown;
+}
+
 export function ItemsStep({
   draft,
   onDraft,
   onRestore,
   composer,
   you,
+  scan,
+  today,
   error,
   modeCopy,
   cta,
@@ -77,9 +114,26 @@ export function ItemsStep({
   const currency = composer.currency;
   const totals = draftTotals(draft);
   const check = itemsCheck(draft);
-  const ready = check.issue === null;
-  const tone: CheckTone = ready ? "ok" : "neutral";
   const count = filledItems(draft).length;
+  const shown = usePrintIn(draft.items.length, scan !== null);
+  const printing = scan !== null && shown < draft.items.length;
+  const flagged = scan === null ? 0 : flaggedCount(draft);
+  const ready = !printing && flagged === 0 && check.issue === null;
+  const receipt = scan === null ? null : receiptCheck(draft, scan.printedTotal, printing);
+  const receiptText = receipt === null ? null : receiptMessage(receipt, currency);
+  const [duplicateDismissed, setDuplicateDismissed] = useState(false);
+  const duplicate = scan?.duplicate ?? null;
+
+  const status: { label: string; tone: CheckTone } = printing
+    ? { label: copy.status.reading, tone: "reading" }
+    : flagged > 0
+      ? { label: copy.status.toCheck(flagged), tone: "pending" }
+      : ready
+        ? { label: copy.status.ready, tone: "ok" }
+        : { label: copy.status.draft, tone: "neutral" };
+
+  const bannerTone: CheckTone = ready ? "ok" : receipt?.kind === "off" ? "pending" : "neutral";
+  const bannerText = receiptText ?? checkMessage(check.issue, check.unnamed);
 
   const remove = (key: string, name: string) => {
     const snapshot = draft;
@@ -92,12 +146,16 @@ export function ItemsStep({
 
   return (
     <div className="grid gap-6">
-      <StepHeader
-        back={{ label: modeCopy.back, onBack }}
-        status={{ label: ready ? copy.status.ready : copy.status.draft, tone: ready ? "ok" : "neutral" }}
-        title={modeCopy.itemsTitle}
-        body={modeCopy.itemsBody}
-      />
+      <StepHeader back={{ label: modeCopy.back, onBack }} status={status} title={modeCopy.itemsTitle} body={modeCopy.itemsBody} />
+
+      {duplicate && !duplicateDismissed && !printing && (
+        <DuplicateBanner
+          duplicate={duplicate}
+          dayLabel={dayLabel(duplicate.occurredOn, today, composerCopy.today)}
+          onDismiss={() => setDuplicateDismissed(true)}
+        />
+      )}
+      {scan?.currencyMismatch && <InlineAlert tint="amber">{copy.currencyMismatch(composer.name, currency)}</InlineAlert>}
 
       <div className="grid gap-2.5">
         <div className="grid gap-2.5 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
@@ -138,7 +196,7 @@ export function ItemsStep({
           <span />
         </div>
         <AnimatePresence initial={false}>
-          {draft.items.map((item) => (
+          {draft.items.slice(0, shown).map((item) => (
             <ItemRow
               key={item.key}
               item={item}
@@ -148,6 +206,12 @@ export function ItemsStep({
             />
           ))}
         </AnimatePresence>
+        {printing && (
+          <div className="flex min-h-11 items-center gap-2 border-t border-line text-small text-muted">
+            <Spinner className="size-3.5" label={copy.status.reading} />
+            {copy.status.reading}…
+          </div>
+        )}
         <motion.button
           type="button"
           onClick={() => onDraft(addItem)}
@@ -168,7 +232,7 @@ export function ItemsStep({
         />
       </Receipt>
 
-      <CheckBanner tone={tone}>{checkMessage(check.issue, check.unnamed)}</CheckBanner>
+      <CheckBanner tone={bannerTone}>{bannerText}</CheckBanner>
       {error && <InlineAlert>{error}</InlineAlert>}
 
       <FlowFooter

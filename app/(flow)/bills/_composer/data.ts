@@ -9,17 +9,18 @@ export const TIP_PRESETS = [15, 18, 20] as const;
 
 export const SHARES_RANGE = { min: 1, max: 9 } as const;
 
-export type CheckTone = "ok" | "pending" | "neutral";
+export type CheckTone = "ok" | "pending" | "reading" | "neutral";
 
 export const checkTint = {
   ok: "green",
   pending: "amber",
+  reading: "orange",
   neutral: "neutral",
 } as const satisfies Record<CheckTone, PaletteTint | "neutral">;
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
-export const FLOW_MODES = ["create", "edit"] as const;
+export const FLOW_MODES = ["create", "scan", "edit"] as const;
 export type FlowModeKind = (typeof FLOW_MODES)[number];
 
 export const flowModeCopy = {
@@ -27,6 +28,14 @@ export const flowModeCopy = {
     back: "Back",
     itemsTitle: "Type the bill in",
     itemsBody: "Just the items and prices. Tax and tip go below.",
+    finish: "Finish bill",
+    save: "Save split",
+    saved: (title: string, total: string) => `${title} added · ${total}`,
+  },
+  scan: {
+    back: "Back",
+    itemsTitle: "Check what Bruno read",
+    itemsBody: "Fix anything off. Tap a flagged price to pick the right one.",
     finish: "Finish bill",
     save: "Save split",
     saved: (title: string, total: string) => `${title} added · ${total}`,
@@ -70,14 +79,30 @@ export const composerCopy = {
     discount: "Discount",
     total: "Total",
     noTotal: "—",
-    status: { ready: "Ready", draft: "Draft" },
+    status: { ready: "Ready", draft: "Draft", reading: "Reading", toCheck: (n: number) => `${n} to check` },
     check: {
       ok: "Looks good. Split when you're ready.",
       noItems: "Add at least one priced item.",
       noTitle: "Say where this was.",
       unnamed: (n: number) => `Name ${n === 1 ? "the item" : `${n} items`} with a price.`,
       discount: "The discount is more than the items.",
+      printing: "Still reading — totals will check once every line is in.",
+      receiptMatch: (total: string) => `Adds up to ${total}, same as the receipt.`,
+      receiptUnresolved: (printed: string, n: number) => `Receipt says ${printed}. Resolve ${n} flagged ${n === 1 ? "price" : "prices"} to match.`,
+      receiptOff: (total: string, printed: string, diff: string) => `Adds up to ${total}, receipt says ${printed}. Off by ${diff}.`,
+      unresolved: (n: number) => `Pick a price for ${n} flagged ${n === 1 ? "item" : "items"}.`,
     },
+    guessPrompt: "Hard to read — was it",
+    orType: "or type it.",
+    categoryLabel: (name: string) => `Category for ${name || "item"}`,
+    duplicate: {
+      title: (day: string, place: string) => `Looks like ${day}'s ${place} receipt.`,
+      body: "Same place, same total.",
+      view: "View it",
+      keep: "Keep both",
+    },
+    currencyMismatch: (group: string, currency: string) =>
+      `Bruno read this in a different currency, but ${group} uses ${currency}. Check the amounts.`,
     footer: (items: number, group: string) => `${plural(items, "item", "items")} · ${group}`,
     cta: "Split it",
     claimingCta: "Save and back to claiming",

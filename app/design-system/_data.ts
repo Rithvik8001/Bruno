@@ -1,4 +1,4 @@
-import type { ScanLine } from "@/components/patterns/receipt-scan";
+import type { ScanCaptions, ScanLine } from "@/components/patterns/receipt-scan";
 import type { AvatarSize, StackPerson } from "@/components/ui/avatar";
 import type { BuddyShape } from "@/lib/design-system/buddies";
 import { GROUP_ART_IDS, type GroupArtId, type MomentIconId } from "@/lib/design-system/icons3d";
@@ -118,6 +118,16 @@ export const receiptItems: readonly ReceiptItem[] = [
   { id: "tiramisu", name: "Tiramisu", price: cents(900), others: [] },
   { id: "water", name: "Sparkling water", price: cents(600), others: ["Ana"] },
 ];
+
+export const scanCaptions: ScanCaptions = {
+  idle: ["Press run to watch it read.", " "],
+  edges: ["Finding the edges…", "Straightening the photo."],
+  reading: (name, detail) => [`Spotted ${name}`, detail],
+  readingEmpty: ["Reading line by line…", "Looking for items and prices."],
+  totalling: ["Adding it up…", "Checking tax and tip match."],
+  ready: (count, total) => ["Got it all.", `${count} items · adds up to ${total}`],
+  chip: { reading: "Reading", found: (n) => `Found ${n}`, ready: "Ready", idle: "Idle" },
+};
 
 export const scanLines: readonly ScanLine[] = [
   { id: "burrata", name: "Burrata", price: cents(1400), category: "Starter", tint: "green", ghostWidth: "62%" },

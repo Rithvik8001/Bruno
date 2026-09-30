@@ -13,7 +13,7 @@ const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
 const sortedIds = (ids: readonly string[]) => [...ids].sort();
 
 function itemsOf(values: BillValues) {
-  return values.items.map((item) => ({ name: item.name, quantity: item.quantity, priceCents: item.priceCents }));
+  return values.items.map((item) => ({ name: item.name, quantity: item.quantity, priceCents: item.priceCents, category: item.category }));
 }
 
 function splitOf(values: BillValues) {

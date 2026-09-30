@@ -11,6 +11,8 @@ import { canAddBill } from "@/lib/domain/permissions";
 import type { Cents } from "@/lib/money";
 import { broadcastBill } from "@/lib/realtime/broadcast";
 import { refreshGroup } from "@/lib/revalidate";
+import { consumeScan, keepReceipt, ScanGoneError } from "@/lib/scans/consume";
+import { scanMessages } from "@/lib/scans/messages";
 import { changedFields } from "./diff";
 import { billMessages } from "./messages";
 import {
@@ -63,6 +65,7 @@ export const createBill = defineAction(createBillSchema, async (input, { person 
   const slug = await freeSlug(input.title);
   const actor: PersonId = person.id;
   const bill = await db.$transaction(async (tx) => {
+    const receiptScanId = await consumeScan(tx, input.receiptScanId, actor, input.groupId);
     const created = await tx.bill.create({
       data: {
         ...billColumns(input, total.data),
@@ -72,6 +75,7 @@ export const createBill = defineAction(createBillSchema, async (input, { person 
         status: "FINALIZED",
         finalizedAt: new Date(),
         slug,
+        receiptScanId,
         items: { create: itemCreates(input) },
         participants: { create: participantRows(input) },
       },
@@ -91,8 +95,10 @@ export const createBill = defineAction(createBillSchema, async (input, { person 
       })),
     });
     return created;
-  });
+  }).catch((error: unknown) => (error instanceof ScanGoneError ? null : Promise.reject(error)));
+  if (!bill) return actionFail("conflict", scanMessages.gone);
 
+  if (input.receiptScanId) after(() => keepReceipt(input.receiptScanId ?? "", bill.id));
   refreshGroup(input.groupId);
   return actionOk<CreatedBill>({ id: bill.id, slug: bill.slug, groupId: input.groupId, title: input.title, total: total.data });
 });
@@ -119,7 +125,7 @@ async function loadEditable(billId: string, you: PersonId) {
       discountCents: true,
       items: {
         orderBy: { position: "asc" },
-        select: { id: true, name: true, quantity: true, priceCents: true, claims: { select: { personId: true } } },
+        select: { id: true, name: true, quantity: true, priceCents: true, category: true, claims: { select: { personId: true } } },
       },
       participants: { select: { personId: true, shares: true, percentBps: true, amountCents: true } },
     },
@@ -138,6 +144,7 @@ async function loadEditable(billId: string, you: PersonId) {
       quantity: item.quantity,
       priceCents: item.priceCents,
       claimedBy: item.claims.map((c) => c.personId),
+      category: item.category,
     })),
     taxCents: bill.taxCents,
     tip:

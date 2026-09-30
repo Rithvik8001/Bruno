@@ -1,8 +1,13 @@
 import type { BillTipValue, BillValues } from "@/lib/bills/schema";
-import { FULL_PERCENT_BPS } from "@/lib/bills/types";
+import { FULL_PERCENT_BPS, type ItemCategory } from "@/lib/bills/types";
 import { personId, type PersonId } from "@/lib/domain/ids";
 import { cents, sumCents, ZERO_CENTS, type Cents } from "@/lib/money";
 import { SHARES_RANGE, type SplitTab } from "../data";
+
+export interface ItemHints {
+  readonly guesses: readonly Cents[];
+  readonly categories: readonly ItemCategory[];
+}
 
 export interface DraftItem {
   readonly key: string;
@@ -10,6 +15,8 @@ export interface DraftItem {
   readonly name: string;
   readonly quantity: number;
   readonly price: Cents | null;
+  readonly category: ItemCategory | null;
+  readonly hints: ItemHints | null;
 }
 
 export type DraftTip =
@@ -46,7 +53,7 @@ export function todayIso(now: Date = new Date()): string {
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
 
-const blankItem = (n: number): DraftItem => ({ key: `item-${n}`, name: "", quantity: 1, price: null });
+const blankItem = (n: number): DraftItem => ({ key: `item-${n}`, name: "", quantity: 1, price: null, category: null, hints: null });
 
 const freshPerson: SplitPerson = { included: true, shares: SHARES_RANGE.min, percent: null, amount: null };
 
@@ -139,6 +146,8 @@ export function draftFromBill(values: BillValues, members: readonly PersonId[]):
     name: item.name,
     quantity: item.quantity,
     price: cents(item.priceCents),
+    category: item.category,
+    hints: null,
   }));
   const byItems = values.method === "ITEMS";
   const participants = new Map(values.participants.map((p) => [p.personId, p]));

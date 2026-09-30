@@ -24,6 +24,7 @@ export const routes = {
     tab === "bills" ? `/groups/${encodeURIComponent(id)}` : `/groups/${encodeURIComponent(id)}?tab=${tab}`,
   newBillFor: (groupId: string) => `/bills/new?group=${encodeURIComponent(groupId)}`,
   manualBill: (groupId: string) => `/bills/new/manual?group=${encodeURIComponent(groupId)}`,
+  scanReview: (scanId: string) => `/bills/new/scan/${encodeURIComponent(scanId)}`,
   bill: (slug: string) => `/bills/${encodeURIComponent(slug)}`,
   editBill: (slug: string, step?: "items" | "claim" | "split") =>
     `/bills/${encodeURIComponent(slug)}/edit${step ? `?step=${step}` : ""}`,

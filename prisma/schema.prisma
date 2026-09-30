@@ -85,6 +85,32 @@ enum GroupRole {
   MEMBER
 }
 
+enum Plan {
+  FREE
+  PRO
+}
+
+enum ItemCategory {
+  STARTER
+  MAIN
+  SIDE
+  DRINK
+  DESSERT
+  GROCERY
+  TRANSPORT
+  HOUSEHOLD
+  OTHER
+}
+
+enum ReceiptScanStatus {
+  PENDING
+  EXTRACTING
+  SUCCEEDED
+  FAILED
+  CONSUMED
+  DISCARDED
+}
+
 enum BillStatus {
   DRAFT
   CLAIMING
@@ -146,6 +172,7 @@ model Person {
   email          String?
   onboardedAt    DateTime?
   activitySeenAt DateTime?
+  plan           Plan      @default(FREE)
   mergedIntoId   String?
   mergedInto     Person?   @relation("PersonMerge", fields: [mergedIntoId], references: [id], onDelete: Restrict)
   mergedFrom     Person[]  @relation("PersonMerge")
@@ -165,6 +192,7 @@ model Person {
   settlementsIn      Settlement[]      @relation("SettlementTo")
   settlementsLogged  Settlement[]      @relation("SettlementRecorder")
   activity           ActivityEvent[]
+  receiptScans       ReceiptScan[]
 
   @@index([mergedIntoId])
   @@map("person")
@@ -210,11 +238,12 @@ model Group {
   updatedAt   DateTime  @default(now()) @updatedAt
   deletedAt   DateTime?
 
-  members     GroupMember[]
-  guestTokens GuestToken[]
-  bills       Bill[]
-  settlements Settlement[]
-  activity    ActivityEvent[]
+  members      GroupMember[]
+  guestTokens  GuestToken[]
+  bills        Bill[]
+  settlements  Settlement[]
+  activity     ActivityEvent[]
+  receiptScans ReceiptScan[]
 
   @@index([createdById])
   @@map("group")
@@ -239,28 +268,30 @@ model GroupMember {
 }
 
 model Bill {
-  id            String      @id @default(cuid())
+  id            String       @id @default(cuid())
   groupId       String?
-  group         Group?      @relation(fields: [groupId], references: [id], onDelete: Restrict)
+  group         Group?       @relation(fields: [groupId], references: [id], onDelete: Restrict)
   title         String
   occurredAt    DateTime
-  currency      String      @db.Char(3)
+  currency      String       @db.Char(3)
   payerId       String
-  payer         Person      @relation("BillPayer", fields: [payerId], references: [id], onDelete: Restrict)
+  payer         Person       @relation("BillPayer", fields: [payerId], references: [id], onDelete: Restrict)
   createdById   String
-  createdBy     Person      @relation("BillCreator", fields: [createdById], references: [id], onDelete: Restrict)
-  status        BillStatus  @default(DRAFT)
-  splitMethod   SplitMethod @default(ITEMS)
-  taxCents      Int         @default(0)
-  tipKind       TipKind     @default(NONE)
-  tipValue      Int         @default(0)
-  discountCents Int         @default(0)
-  totalCents    Int         @default(0)
-  slug          String      @unique
-  claimCode     String?     @unique
+  createdBy     Person       @relation("BillCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  status        BillStatus   @default(DRAFT)
+  splitMethod   SplitMethod  @default(ITEMS)
+  taxCents      Int          @default(0)
+  tipKind       TipKind      @default(NONE)
+  tipValue      Int          @default(0)
+  discountCents Int          @default(0)
+  totalCents    Int          @default(0)
+  slug          String       @unique
+  claimCode     String?      @unique
+  receiptScanId String?      @unique
+  receiptScan   ReceiptScan? @relation(fields: [receiptScanId], references: [id], onDelete: SetNull)
   finalizedAt   DateTime?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @default(now()) @updatedAt
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @default(now()) @updatedAt
   deletedAt     DateTime?
 
   participants BillParticipant[]
@@ -289,15 +320,16 @@ model BillParticipant {
 }
 
 model LineItem {
-  id         String   @id @default(cuid())
+  id         String        @id @default(cuid())
   billId     String
-  bill       Bill     @relation(fields: [billId], references: [id], onDelete: Cascade)
+  bill       Bill          @relation(fields: [billId], references: [id], onDelete: Cascade)
   name       String
-  quantity   Int      @default(1)
+  quantity   Int           @default(1)
   priceCents Int
   position   Int
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @default(now()) @updatedAt
+  category   ItemCategory?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @default(now()) @updatedAt
 
   claims Claim[]
 
@@ -362,4 +394,32 @@ model ActivityEvent {
   @@index([billId, createdAt])
   @@index([actorId])
   @@map("activity_event")
+}
+
+model ReceiptScan {
+  id           String            @id @default(cuid())
+  personId     String
+  person       Person            @relation(fields: [personId], references: [id], onDelete: Restrict)
+  groupId      String
+  group        Group             @relation(fields: [groupId], references: [id], onDelete: Restrict)
+  objectKey    String            @unique
+  contentType  String
+  byteSize     Int
+  timeZone     String
+  status       ReceiptScanStatus @default(PENDING)
+  failure      String?
+  result       Json?
+  model        String?
+  inputTokens  Int?
+  outputTokens Int?
+  createdAt    DateTime          @default(now())
+  startedAt    DateTime?
+  completedAt  DateTime?
+  purgedAt     DateTime?
+  bill         Bill?
+
+  @@index([personId, status, startedAt])
+  @@index([groupId, createdAt])
+  @@index([status, createdAt])
+  @@map("receipt_scan")
 }

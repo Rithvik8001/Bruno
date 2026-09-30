@@ -38,6 +38,10 @@ export const rateRules = {
     ],
   },
   claimRemind: { person: [{ seconds: HOUR, max: 6 }] },
+  scanStart: {
+    person: [{ seconds: MINUTE, max: 6 }],
+    ip: [{ seconds: MINUTE, max: 12 }],
+  },
 } as const satisfies Record<string, RateRule>;
 
 export type RateRuleName = keyof typeof rateRules;
