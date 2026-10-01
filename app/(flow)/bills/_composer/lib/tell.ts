@@ -2,6 +2,7 @@ import { pendingGuestId, type PendingGuest } from "@/lib/members/pending";
 import { personId, type PersonId } from "@/lib/domain/ids";
 import { cents, type Cents } from "@/lib/money";
 import type { TellAnswers, TellResult } from "@/lib/tell/result";
+import { TELL_GUESTS_MAX } from "@/lib/tell/rules";
 import { draftTotals, filledItems } from "./derive";
 import { emptyDraft, type BillDraft, type DraftItem, type DraftMarks, type SplitPerson } from "./draft";
 import type { ReceiptCheck } from "./scan";
@@ -19,20 +20,33 @@ function unique<T>(values: readonly T[]): T[] {
   return [...new Set(values)];
 }
 
-export function pendingGuestsOf(result: TellResult, answers: TellAnswers): PendingGuest[] {
-  return result.people.flatMap((person, index) =>
-    answers.people[String(index)]?.kind === "guest" ? [{ key: guestKey(index), name: person.name }] : [],
-  );
+function askedPeople(result: TellResult): Set<number> {
+  return new Set(result.questions.flatMap((question) => (question.kind === "who" ? [question.person] : [])));
 }
 
-function resolver(result: TellResult, answers: TellAnswers, members: ReadonlySet<PersonId>) {
+export function pendingGuestsOf(result: TellResult, answers: TellAnswers): PendingGuest[] {
+  const asked = askedPeople(result);
+  return result.people
+    .flatMap((person, index) =>
+      asked.has(index) && person.memberIds.length === 0 && answers.people[String(index)]?.kind === "guest"
+        ? [{ key: guestKey(index), name: person.name }]
+        : [],
+    )
+    .slice(0, TELL_GUESTS_MAX);
+}
+
+function resolver(result: TellResult, answers: TellAnswers, members: ReadonlySet<PersonId>, guests: readonly PendingGuest[]) {
+  const asked = askedPeople(result);
+  const guestKeys = new Set(guests.map((guest) => guest.key));
   return (index: number): PersonId | null => {
     const person = result.people[index];
     if (!person) return null;
-    const answer = answers.people[String(index)];
-    if (answer?.kind === "guest") return pendingGuestId(guestKey(index));
+    const only = person.memberIds.length === 1 ? person.memberIds[0] : undefined;
+    const answer = asked.has(index) ? answers.people[String(index)] : undefined;
+    if (answer?.kind === "guest") return guestKeys.has(guestKey(index)) ? pendingGuestId(guestKey(index)) : null;
     if (answer?.kind === "skip") return null;
-    const picked = answer?.kind === "member" ? answer.id : person.memberIds.length === 1 ? person.memberIds[0] : undefined;
+    const candidate = answer?.kind === "member" && (person.memberIds.length === 0 || person.memberIds.includes(answer.id)) ? answer.id : undefined;
+    const picked = candidate ?? only;
     if (picked === undefined) return null;
     const id = personId(picked);
     return members.has(id) ? id : null;
@@ -55,7 +69,7 @@ export function draftFromTell(
   const guests = pendingGuestsOf(result, answers);
   const everyone = [...members];
   const known = new Set<PersonId>([...members, ...guests.map((guest) => pendingGuestId(guest.key))]);
-  const resolve = resolver(result, answers, known);
+  const resolve = resolver(result, answers, known, guests);
   const base = emptyDraft([...known], you, today);
   const stated = result.stated ?? answers.amount;
   const single = result.items.length === 1;

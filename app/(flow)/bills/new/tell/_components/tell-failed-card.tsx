@@ -14,10 +14,11 @@ export interface TellFailedCardProps {
   example: string;
   manualHref: string;
   canRetry: boolean;
+  retryIn: number;
   onRetry: () => void;
 }
 
-export function TellFailedCard({ failure, example, manualHref, canRetry, onRetry }: TellFailedCardProps) {
+export function TellFailedCard({ failure, example, manualHref, canRetry, retryIn, onRetry }: TellFailedCardProps) {
   const copy = tellCopy.failed;
   const vague = failure === "vague";
   return (
@@ -31,7 +32,7 @@ export function TellFailedCard({ failure, example, manualHref, canRetry, onRetry
       </div>
       <div className="flex flex-wrap gap-2">
         <Button size="md" disabled={!canRetry} onClick={onRetry} className="h-11 text-small">
-          {copy.again}
+          {retryIn > 0 ? copy.againIn(retryIn) : copy.again}
         </Button>
         <PressLink href={manualHref} className={cn(buttonVariants({ variant: "elevated", size: "md" }), "h-11 text-small")}>
           {copy.type}

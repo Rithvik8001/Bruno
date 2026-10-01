@@ -74,18 +74,22 @@ export async function countUsed(
       where: {
         personId,
         startedAt,
-        OR: [{ status: { in: ["SUCCEEDED", "CONSUMED"] } }, { status: "EXTRACTING", startedAt: { gt: new Date(now.getTime() - EXTRACT_STALE_MS) } }],
+        OR: [{ status: { in: ["SUCCEEDED", "CONSUMED", "DISCARDED"] } }, { status: "EXTRACTING", startedAt: { gt: new Date(now.getTime() - EXTRACT_STALE_MS) } }],
       },
     }),
     tx.tellDraft.count({
       where: {
         personId,
         startedAt,
-        OR: [{ status: { in: ["SUCCEEDED", "CONSUMED"] } }, { status: "DRAFTING", startedAt: { gt: new Date(now.getTime() - TELL_STALE_MS) } }],
+        OR: [{ status: { in: ["SUCCEEDED", "CONSUMED", "DISCARDED"] } }, { status: "DRAFTING", startedAt: { gt: new Date(now.getTime() - TELL_STALE_MS) } }],
       },
     }),
   ]);
   return scans + drafts;
+}
+
+export async function countTellAttempts(tx: Prisma.TransactionClient, personId: string, window: DayWindow): Promise<number> {
+  return tx.tellDraft.count({ where: { personId, startedAt: { gte: window.start, lt: window.end } } });
 }
 
 export function quotaOf(used: number, plan: Plan): ScanQuota {

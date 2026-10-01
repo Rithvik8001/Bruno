@@ -1,11 +1,14 @@
-import { BILL_ITEMS_MAX, BILL_TITLE_MAX, SPLIT_SHARES_MAX } from "@/lib/bills/schema";
+import { AMOUNT_MAX_CENTS, BILL_TITLE_MAX, SPLIT_SHARES_MAX } from "@/lib/bills/schema";
 import type { CurrencyCode } from "@/lib/currency";
 import { normalizeName } from "@/lib/members/names";
-import { cleanName, cleanQuantity, normalizeDate, validAmount } from "@/lib/scans/normalize";
+import { cents, type Cents } from "@/lib/money";
+import { DISPLAY_NAME_MAX } from "@/lib/people/schema";
+import { cleanName, cleanQuantity, normalizeDate } from "@/lib/scans/normalize";
 import type { TellExtraction, TellExtractionItem } from "./extraction";
+import { numbersSaid, saidAmount, saidLabel, saidName, saidPercent, type SaidNumbers } from "./guard";
 import { tellMessages } from "./messages";
 import type { TellItem, TellPerson, TellQuestion, TellResult, TellSplit } from "./result";
-import { TELL_PEOPLE_MAX, TELL_QUESTIONS_MAX } from "./rules";
+import { TELL_ITEMS_MAX, TELL_LABEL_MAX, TELL_PEOPLE_MAX, TELL_QUESTIONS_MAX } from "./rules";
 
 export interface RosterEntry {
   readonly id: string;
@@ -17,7 +20,19 @@ export interface TellRoster {
   readonly speaker: number;
 }
 
-const SPEAKER = /^(i|me|my|mine|myself)$/i;
+export interface TellSource {
+  readonly text: string;
+  readonly roster: TellRoster;
+  readonly currency: CurrencyCode;
+  readonly minorUnits: number;
+}
+
+export interface NormalizedTell {
+  readonly result: TellResult;
+  readonly usable: boolean;
+}
+
+const SPEAKER = /^(i|me|my|mine|myself|we|us|our)$/i;
 const PREFIX_MIN = 3;
 
 function wordsOf(name: string): string[] {
@@ -49,33 +64,65 @@ function matchMention(mention: string, modelPicks: readonly number[], roster: Te
     .filter((id): id is string => id !== undefined);
 }
 
-function normalizePeople(raw: TellExtraction, roster: TellRoster): TellPerson[] {
-  return raw.people.slice(0, TELL_PEOPLE_MAX).map((person) => {
-    const name = cleanName(person.mention);
-    return { name: name === "" ? "?" : name, memberIds: matchMention(person.mention, person.members, roster) };
+interface PeopleMap {
+  readonly people: TellPerson[];
+  readonly indexOf: ReadonlyMap<number, number>;
+}
+
+function normalizePeople(raw: TellExtraction, source: TellSource): PeopleMap {
+  const people: TellPerson[] = [];
+  const indexOf = new Map<number, number>();
+  raw.people.forEach((person, index) => {
+    if (people.length >= TELL_PEOPLE_MAX) return;
+    const name = normalizeName(person.mention).slice(0, DISPLAY_NAME_MAX).trim();
+    if (name === "") return;
+    if (!SPEAKER.test(name) && !saidName(name, source.text)) return;
+    indexOf.set(index, people.length);
+    people.push({ name, memberIds: matchMention(name, person.members, source.roster) });
   });
+  return { people, indexOf };
 }
 
-function validIndices(indices: readonly number[], count: number): number[] {
-  return unique(indices).filter((index) => Number.isInteger(index) && index >= 0 && index < count);
+function mapIndices(indices: readonly number[], indexOf: ReadonlyMap<number, number>): number[] {
+  return unique(indices.flatMap((index) => indexOf.get(index) ?? []));
 }
 
-function normalizeItem(item: TellExtractionItem, peopleCount: number): TellItem | null {
-  const name = cleanName(item.name);
-  if (name === "") return null;
-  const claimants = validIndices(item.claimants, peopleCount);
+function amountOf(value: number | null, said: SaidNumbers, minorUnits: number): Cents | null {
+  const amount = saidAmount(value, said, minorUnits);
+  return amount === null || amount > AMOUNT_MAX_CENTS ? null : cents(amount);
+}
+
+function labelOf(raw: string, max: number): string {
+  return cleanName(raw).slice(0, max).trim();
+}
+
+interface ItemContext {
+  readonly source: TellSource;
+  readonly said: SaidNumbers;
+  readonly indexOf: ReadonlyMap<number, number>;
+  readonly fallback: string;
+}
+
+function normalizeItem(item: TellExtractionItem, { source, said, indexOf, fallback }: ItemContext): { item: TellItem; named: boolean } | null {
+  const label = labelOf(item.name, TELL_LABEL_MAX);
+  if (label === "") return null;
+  const named = saidLabel(label, source.text);
+  const claimants = mapIndices(item.claimants, indexOf);
   return {
-    name,
-    quantity: cleanQuantity(item.quantity),
-    price: validAmount(item.lineTotalMinor),
-    category: item.category,
-    rest: item.isRemainder,
-    everyone: item.everyone || (claimants.length === 0 && item.isRemainder),
-    claimants,
+    named,
+    item: {
+      name: named ? label : fallback,
+      quantity: cleanQuantity(item.quantity),
+      price: amountOf(item.lineTotalMinor, said, source.minorUnits),
+      category: item.category,
+      rest: item.isRemainder,
+      everyone: item.everyone || (claimants.length === 0 && item.isRemainder),
+      claimants,
+    },
   };
 }
 
-function settleRemainder(parsed: readonly TellItem[], stated: TellResult["stated"]): TellItem[] {
+function settleRemainder(parsed: readonly TellItem[], stated: Cents | null): TellItem[] {
   if (stated === null) return parsed.map((item) => ({ ...item, rest: false }));
   const whole = parsed.length > 1 ? parsed.findIndex((item) => !item.rest && item.price === stated) : -1;
   const flagged = parsed.findIndex((item) => item.rest && item.price === null);
@@ -84,16 +131,22 @@ function settleRemainder(parsed: readonly TellItem[], stated: TellResult["stated
   return parsed.map((item, index) => (index === whole ? { ...item, price: null, rest: true, everyone: item.claimants.length === 0 } : { ...item, rest: false }));
 }
 
-function normalizeSplit(raw: TellExtraction["split"], peopleCount: number): TellSplit | null {
+function normalizeSplit(raw: TellExtraction["split"], said: SaidNumbers, source: TellSource, indexOf: ReadonlyMap<number, number>): TellSplit | null {
   if (raw === null || raw.method === "EVEN") return null;
-  const parts = raw.parts
-    .filter((part) => Number.isInteger(part.person) && part.person >= 0 && part.person < peopleCount)
-    .map((part) => ({
-      person: part.person,
-      shares: part.shares !== null && Number.isInteger(part.shares) && part.shares >= 1 && part.shares <= SPLIT_SHARES_MAX ? part.shares : null,
-      percent: part.percent !== null && Number.isInteger(part.percent) && part.percent >= 0 && part.percent <= 100 ? part.percent : null,
-      amount: validAmount(part.amountMinor),
-    }));
+  const seen = new Set<number>();
+  const parts = raw.parts.flatMap((part) => {
+    const person = indexOf.get(part.person);
+    if (person === undefined || seen.has(person)) return [];
+    seen.add(person);
+    return [
+      {
+        person,
+        shares: part.shares !== null && Number.isInteger(part.shares) && part.shares >= 1 && part.shares <= SPLIT_SHARES_MAX ? part.shares : null,
+        percent: part.percent !== null && part.percent >= 0 && part.percent <= 100 ? saidPercent(part.percent, said) : null,
+        amount: amountOf(part.amountMinor, said, source.minorUnits),
+      },
+    ];
+  });
   const numbered = (part: (typeof parts)[number]) =>
     raw.method === "SHARES" ? part.shares !== null : raw.method === "PERCENT" ? part.percent !== null : part.amount !== null;
   return parts.some(numbered) ? { method: raw.method, parts } : null;
@@ -119,58 +172,47 @@ function questionsFor(result: Omit<TellResult, "questions">): TellQuestion[] {
   return [...asked, ...payer].slice(0, TELL_QUESTIONS_MAX);
 }
 
-function normalizeTitle(raw: string | null): string | null {
+function normalizeTitle(raw: string | null, text: string): string | null {
   if (raw === null) return null;
-  const title = cleanName(raw).slice(0, BILL_TITLE_MAX);
-  return title === "" ? null : title;
+  const title = labelOf(raw, Math.min(BILL_TITLE_MAX, TELL_LABEL_MAX));
+  return title !== "" && saidLabel(title, text) ? title : null;
 }
 
-export function normalizeTell(raw: TellExtraction, roster: TellRoster, currency: CurrencyCode, now: Date = new Date()): TellResult {
-  const people = normalizePeople(raw, roster);
-  const title = normalizeTitle(raw.title);
-  const stated = validAmount(raw.statedTotalMinor);
+export function normalizeTell(raw: TellExtraction, source: TellSource, now: Date = new Date()): NormalizedTell {
+  const said = numbersSaid(source.text, source.minorUnits);
+  const { people, indexOf } = normalizePeople(raw, source);
+  const title = normalizeTitle(raw.title, source.text);
+  const stated = amountOf(raw.statedTotalMinor, said, source.minorUnits);
+  const fallback = title ?? tellMessages.fallbackItem;
   const parsed = raw.items
-    .map((item) => normalizeItem(item, people.length))
-    .filter((item): item is TellItem => item !== null)
-    .slice(0, BILL_ITEMS_MAX);
-  const listed = settleRemainder(parsed, stated);
+    .slice(0, TELL_ITEMS_MAX)
+    .map((item) => normalizeItem(item, { source, said, indexOf, fallback }))
+    .filter((entry): entry is { item: TellItem; named: boolean } => entry !== null);
+  const listed = settleRemainder(
+    parsed.map((entry) => entry.item),
+    stated,
+  );
   const items: TellItem[] =
-    listed.length > 0
-      ? listed
-      : [
-          {
-            name: title ?? tellMessages.fallbackItem,
-            quantity: 1,
-            price: stated,
-            category: null,
-            rest: false,
-            everyone: true,
-            claimants: [],
-          },
-        ];
+    listed.length > 0 ? listed : [{ name: fallback, quantity: 1, price: stated, category: null, rest: false, everyone: true, claimants: [] }];
   const single = items.length === 1 ? items[0] : undefined;
   const settled: TellItem[] = single && single.price === null && stated !== null ? [{ ...single, price: stated, rest: false }] : items;
-  const payer = raw.payer !== null && Number.isInteger(raw.payer) && raw.payer >= 0 && raw.payer < people.length ? raw.payer : null;
-  const tipPercent = raw.tipPercent !== null && Number.isInteger(raw.tipPercent) && raw.tipPercent > 0 && raw.tipPercent <= 100 ? raw.tipPercent : null;
+  const payer = raw.payer === null ? null : (indexOf.get(raw.payer) ?? null);
+  const tipPercent = raw.tipPercent !== null && raw.tipPercent > 0 && raw.tipPercent <= 100 ? saidPercent(raw.tipPercent, said) : null;
   const base: Omit<TellResult, "questions"> = {
     title,
     occurredOn: normalizeDate(raw.date, now),
-    currency,
+    currency: source.currency,
     stated,
     people,
     payer,
     items: settled,
-    tax: validAmount(raw.taxMinor),
-    tip: tipPercent === null ? validAmount(raw.tipMinor) : null,
+    tax: amountOf(raw.taxMinor, said, source.minorUnits),
+    tip: tipPercent === null ? amountOf(raw.tipMinor, said, source.minorUnits) : null,
     tipPercent,
-    discount: validAmount(raw.discountMinor),
-    split: normalizeSplit(raw.split, people.length),
+    discount: amountOf(raw.discountMinor, said, source.minorUnits),
+    split: normalizeSplit(raw.split, said, source, indexOf),
   };
-  return { ...base, questions: questionsFor(base) };
-}
-
-export function isUsable(raw: TellExtraction, result: TellResult): boolean {
-  if (raw.problem !== "none") return false;
-  const priced = result.items.some((item) => item.price !== null);
-  return priced || result.stated !== null || result.title !== null || raw.items.length > 0;
+  const priced = settled.some((item) => item.price !== null);
+  const usable = raw.problem === "none" && (priced || stated !== null || title !== null || parsed.some((entry) => entry.named));
+  return { result: { ...base, questions: questionsFor(base) }, usable };
 }

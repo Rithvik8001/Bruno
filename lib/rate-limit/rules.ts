@@ -43,8 +43,14 @@ export const rateRules = {
     ip: [{ seconds: MINUTE, max: 12 }],
   },
   tellStart: {
-    person: [{ seconds: MINUTE, max: 6 }],
-    ip: [{ seconds: MINUTE, max: 12 }],
+    person: [
+      { seconds: MINUTE, max: 4 },
+      { seconds: HOUR, max: 25 },
+    ],
+    ip: [
+      { seconds: MINUTE, max: 10 },
+      { seconds: HOUR, max: 80 },
+    ],
   },
 } as const satisfies Record<string, RateRule>;
 

@@ -4,7 +4,8 @@ import { generateText, NoObjectGeneratedError, NoOutputGeneratedError, Output } 
 import { tellApiKey } from "./config";
 import { tellExtractionSchema, tellInstructions, type TellExtraction, type TellPromptContext } from "./extraction";
 import type { TellFailure } from "./messages";
-import { TELL_MODEL, TELL_REASONING, TELL_TIMEOUT_MS } from "./rules";
+import { forPrompt } from "./guard";
+import { TELL_MAX_OUTPUT_TOKENS, TELL_MODEL, TELL_REASONING, TELL_TIMEOUT_MS } from "./rules";
 
 export interface TellUsage {
   readonly inputTokens: number | null;
@@ -26,8 +27,10 @@ export async function runTell(text: string, context: TellPromptContext): Promise
       model: openai(TELL_MODEL),
       output: Output.object({ schema: tellExtractionSchema }),
       instructions: tellInstructions(context),
-      messages: [{ role: "user", content: [{ type: "text", text }] }],
+      messages: [{ role: "user", content: [{ type: "text", text: `<message>${forPrompt(text)}</message>` }] }],
       providerOptions: { openai: { reasoningEffort: TELL_REASONING, strictJsonSchema: true } },
+      maxRetries: 0,
+      maxOutputTokens: TELL_MAX_OUTPUT_TOKENS,
       abortSignal: AbortSignal.timeout(TELL_TIMEOUT_MS),
     });
     return {

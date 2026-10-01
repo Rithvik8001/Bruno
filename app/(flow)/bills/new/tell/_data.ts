@@ -31,6 +31,7 @@ export const tellCopy = {
     denied: { title: "Bruno can’t hear you yet.", body: "Allow the microphone in your browser settings, or just type it.", retry: "Try again" },
     over: { title: "A bit long for Bruno.", body: `Keep it to ${TELL_TEXT_MAX} characters, just the bill bits.` },
     cta: "Draft it",
+    wait: (seconds: number) => `Try again in ${seconds}s`,
     ctaNote: "Uses one AI extraction. Free if Bruno can’t work it out.",
     examplesLabel: "Not sure how to say it? Tap one.",
     examples: (first: string | null, second: string | null): readonly string[] => [
@@ -50,6 +51,7 @@ export const tellCopy = {
       body: "Your words are still here. Give it another go in a moment. This one didn’t count against your daily limit.",
     },
     again: "Try again",
+    againIn: (seconds: number) => `Try again in ${seconds}s`,
     type: "Type it in",
   },
   working: {

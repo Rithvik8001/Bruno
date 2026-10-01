@@ -10,15 +10,17 @@ import { getBillComposer } from "@/lib/groups/queries";
 import { normalizeName } from "@/lib/members/names";
 import { consumeRate } from "@/lib/rate-limit/limiter";
 import { scanMessages } from "@/lib/scans/messages";
-import { countUsed, dailyLimit, localDayWindow } from "@/lib/scans/quota";
+import { countTellAttempts, countUsed, dailyLimit, localDayWindow } from "@/lib/scans/quota";
 import { isTellConfigured } from "./config";
 import { runTell } from "./extract";
 import { tellFailureMessage, tellMessages, type TellFailure } from "./messages";
-import { isUsable, normalizeTell, type TellRoster } from "./normalize";
-import type { TellAnswers, TellResult } from "./result";
-import { TELL_ROSTER_NAME_MAX } from "./rules";
+import { hasSubstance } from "./guard";
+import { normalizeTell, type TellRoster } from "./normalize";
+import { parseTellResult, type TellAnswers, type TellResult } from "./result";
+import { TELL_FREE_MISSES, TELL_ROSTER_NAME_MAX } from "./rules";
 import { answerTellSchema, draftBillSchema, tellRefSchema } from "./schema";
 import { maybeSweepTell } from "./sweep";
+import { breakerCooldown, personCooldown } from "./throttle";
 
 const toJson = (value: TellResult | TellAnswers): Prisma.InputJsonValue =>
   JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
@@ -46,19 +48,25 @@ export const draftBill = defineAction(draftBillSchema, async ({ groupId, text, t
   const verdict = await consumeRate("tellStart", person.id);
   if (!verdict.ok) return actionRateLimited(verdict.retryAfter, tellMessages.rateLimited);
 
+  if (!hasSubstance(text)) return actionFail("invalid", tellFailureMessage("vague"));
+  const cooling = (await personCooldown(person.id)) ?? (await breakerCooldown());
+  if (cooling !== null) return actionRateLimited(cooling, tellMessages.cooling(cooling));
+
   const plan = await db.person.findUniqueOrThrow({ where: { id: person.id }, select: { plan: true } });
   const limit = dailyLimit(plan.plan);
   const window = localDayWindow(timeZone);
-  const draft = await db.$transaction(async (tx) => {
+  const reserved = await db.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${person.id}))`;
-    const used = await countUsed(tx, person.id, window);
-    if (used >= limit) return null;
-    return tx.tellDraft.create({
+    if ((await countUsed(tx, person.id, window)) >= limit) return { ok: false as const, reason: "quota" as const };
+    if ((await countTellAttempts(tx, person.id, window)) >= limit + TELL_FREE_MISSES) return { ok: false as const, reason: "tries" as const };
+    const created = await tx.tellDraft.create({
       data: { personId: person.id, groupId, text, timeZone, status: "DRAFTING", startedAt: new Date() },
       select: { id: true },
     });
+    return { ok: true as const, id: created.id };
   });
-  if (!draft) return actionFail("conflict", scanMessages.quota(limit));
+  if (!reserved.ok) return actionFail("conflict", reserved.reason === "quota" ? scanMessages.quota(limit) : tellMessages.tooManyTries);
+  const draft = { id: reserved.id };
   maybeSweepTell();
 
   const roster: TellRoster = {
@@ -72,17 +80,30 @@ export const draftBill = defineAction(draftBillSchema, async ({ groupId, text, t
     minorUnits: minorUnitsOf(composer.currency),
     today: localDay(timeZone),
   }).catch((error: unknown) => {
-    console.error("[tell] drafting failed", error);
+    console.error("[tell] drafting failed", error instanceof Error ? `${error.name}: ${error.message}` : "unknown error");
     return { ok: false as const, failure: "failed" as const };
   });
   if (!outcome.ok) {
     await markFailed(draft.id, outcome.failure);
-    return actionFail(outcome.failure === "vague" ? "invalid" : "unknown", tellFailureMessage(outcome.failure));
+    if (outcome.failure === "vague") return actionFail("invalid", tellFailureMessage(outcome.failure));
+    return actionFail("unknown", (await breakerCooldown()) === null ? tellFailureMessage(outcome.failure) : tellMessages.busy);
   }
 
   const usage = { model: outcome.model, inputTokens: outcome.usage.inputTokens, outputTokens: outcome.usage.outputTokens };
-  const result = normalizeTell(outcome.extraction, roster, composer.currency);
-  if (!isUsable(outcome.extraction, result)) {
+  const normalized = (() => {
+    try {
+      return normalizeTell(outcome.extraction, { text, roster, currency: composer.currency, minorUnits: minorUnitsOf(composer.currency) });
+    } catch (error) {
+      console.error("[tell] normalizing failed", error instanceof Error ? error.message : "unknown error");
+      return null;
+    }
+  })();
+  if (!normalized) {
+    await markFailed(draft.id, "vague", usage);
+    return actionFail("invalid", tellFailureMessage("vague"));
+  }
+  const { result, usable } = normalized;
+  if (!usable) {
     const failure: TellFailure = outcome.extraction.problem === "notBill" ? "notBill" : "vague";
     await markFailed(draft.id, failure, usage);
     return actionFail("invalid", tellFailureMessage(failure));
@@ -96,11 +117,19 @@ export const draftBill = defineAction(draftBillSchema, async ({ groupId, text, t
 });
 
 export const answerTell = defineAction(answerTellSchema, async ({ draftId, answers }, { person }) => {
-  const saved = await db.tellDraft.updateMany({
+  const row = await db.tellDraft.findFirst({
     where: { id: draftId, personId: person.id, status: "SUCCEEDED" },
-    data: { answers: toJson(answers) },
+    select: { id: true, result: true },
   });
-  if (saved.count === 0) return actionFail("notFound", tellMessages.gone);
+  const result = row ? parseTellResult(row.result) : null;
+  if (!row || !result) return actionFail("notFound", tellMessages.gone);
+  const asked = new Set(result.questions.flatMap((question) => (question.kind === "who" ? [String(question.person)] : [])));
+  const kept: TellAnswers = {
+    people: Object.fromEntries(Object.entries(answers.people).filter(([index]) => asked.has(index))),
+    amount: result.questions.some((question) => question.kind === "amount") ? answers.amount : null,
+    payerId: result.payer === null ? answers.payerId : null,
+  };
+  await db.tellDraft.update({ where: { id: row.id }, data: { answers: toJson(kept) } });
   return actionOk(null);
 });
 

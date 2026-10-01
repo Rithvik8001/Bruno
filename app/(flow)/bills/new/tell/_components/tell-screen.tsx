@@ -12,13 +12,14 @@ import { routes } from "@/lib/auth/rules";
 import type { PersonId } from "@/lib/domain/ids";
 import type { BillComposer, GroupSummary } from "@/lib/groups/queries";
 import { useSpeechRecognition } from "@/lib/hooks/use-speech-recognition";
+import { useCooldown } from "@/lib/hooks/use-cooldown";
 import { useTimeline } from "@/lib/hooks/use-timeline";
 import { buzz, HAPTICS } from "@/lib/motion/haptics";
 import { firstNameOf } from "@/lib/people/defaults";
 import { scanQuota } from "@/lib/scans/actions";
 import type { ScanQuota } from "@/lib/scans/quota";
 import { answerTell, discardTell, draftBill } from "@/lib/tell/actions";
-import { TELL_TEXT_MAX } from "@/lib/tell/rules";
+import { TELL_RETRY_GAP_MS, TELL_TEXT_MAX } from "@/lib/tell/rules";
 import { GroupChips } from "../../_components/group-chips";
 import { QuotaChip } from "../../_components/quota-chip";
 import { browserTimeZone } from "../../_lib/upload";
@@ -34,6 +35,7 @@ import { TellWorking } from "./tell-working";
 
 const TOAST_MS = 6000;
 const KEYBOARD_SETTLE_MS = 300;
+const RETRY_GAP_SECONDS = TELL_RETRY_GAP_MS / 1000;
 
 export interface TellScreenProps {
   composer: BillComposer;
@@ -55,6 +57,7 @@ export function TellScreen({ composer, groups, you, quota: initialQuota, initial
   const [navigating, startNavigation] = useTransition();
   const creep = useTimeline(TELL_CREEP);
   const reveal = useTimeline(TELL_REVEAL);
+  const cooldown = useCooldown(RETRY_GAP_SECONDS, false);
   const cancelledRef = useRef(false);
   const anchorRef = useRef<HTMLDivElement>(null);
 
@@ -69,7 +72,7 @@ export function TellScreen({ composer, groups, you, quota: initialQuota, initial
   const examples = copy.compose.examples(others[0] ?? null, others[1] ?? null);
   const empty = text.trim() === "";
   const over = text.length > TELL_TEXT_MAX;
-  const canDraft = !empty && !over && !listening;
+  const canDraft = !empty && !over && !listening && !cooldown.active;
   const failure = phase.kind === "compose" ? phase.failure : null;
 
   const refreshQuota = useCallback(async () => {
@@ -92,11 +95,13 @@ export function TellScreen({ composer, groups, you, quota: initialQuota, initial
     creep.start();
     const result = await draftBill({ groupId: composer.id, text, timeZone: browserTimeZone() }).catch(() => null);
     if (cancelledRef.current) {
-      if (result?.ok) void discardTell({ draftId: result.data.draftId });
+      if (result?.ok) await discardTell({ draftId: result.data.draftId });
+      void refreshQuota();
       return;
     }
     if (result === null) {
       buzz(HAPTICS.error);
+      cooldown.restart();
       toCompose("network");
       return;
     }
@@ -108,9 +113,11 @@ export function TellScreen({ composer, groups, you, quota: initialQuota, initial
         return;
       }
       if (result.error.code === "unknown") {
+        cooldown.restart();
         toCompose("network");
         return;
       }
+      if (result.error.code === "rateLimited") cooldown.restart(result.error.retryAfter ?? RETRY_GAP_SECONDS);
       toast({ message: result.error.fields?.text ?? result.error.message, duration: TOAST_MS });
       toCompose(null);
       return;
@@ -210,13 +217,14 @@ export function TellScreen({ composer, groups, you, quota: initialQuota, initial
                   example={examples[0] ?? ""}
                   manualHref={routes.manualBill(composer.id)}
                   canRetry={canDraft}
+                  retryIn={cooldown.remaining}
                   onRetry={() => void draft()}
                 />
               ) : (
                 <div className="grid gap-2">
                   <Button size="lg" fullWidth disabled={!canDraft} onClick={() => void draft()} className="h-13 text-[16px]">
                     <Icon name="sparkle" size={16} />
-                    {copy.compose.cta}
+                    {cooldown.active ? copy.compose.wait(cooldown.remaining) : copy.compose.cta}
                   </Button>
                   <span className="text-center text-footnote text-muted">{copy.compose.ctaNote}</span>
                 </div>
