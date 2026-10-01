@@ -82,6 +82,18 @@ export const iconRegistry = {
     ),
   },
   document: { node: <path d="M6 3h12v18H6zM9 8h6M9 12h4" /> },
+  download: { node: <path d="M12 4v11M7 10.5l5 5 5-5M5 20h14" /> },
+  file: { node: <path d="M7 3h7l5 5v13H7zM14 3v5h5M10 13h6M10 17h6" /> },
+  grid: {
+    node: (
+      <>
+        <rect x="4" y="4" width="7" height="7" rx="2" />
+        <rect x="13" y="4" width="7" height="7" rx="2" />
+        <rect x="4" y="13" width="7" height="7" rx="2" />
+        <rect x="13" y="13" width="7" height="7" rx="2" />
+      </>
+    ),
+  },
   user: { node: <path d="M12 4a4 4 0 100 8 4 4 0 000-8zM4 21c0-4 3.6-7 8-7s8 3 8 7" /> },
   users: {
     node: (
@@ -227,6 +239,7 @@ export const iconRegistry = {
   swap: { node: <path d="M7 7h13l-3-3M17 17H4l3 3" /> },
   reply: { node: <path d="M9 5v6a4 4 0 004 4h7M16 11l4 4-4 4" /> },
   "chevron-up": { node: <path d="M6 15l6-6 6 6" /> },
+  exit: { node: <path d="M14 4H6.5v16H14M10.5 12H20M16.5 8.5L20 12l-3.5 3.5" /> },
   trash: { node: <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" /> },
   refresh: { node: <path d="M20 11a8 8 0 10-2.3 5.7M20 4v7h-7" /> },
   undo: { node: <path d="M9 14L4 9l5-5M4 9h10a6 6 0 010 12h-3" /> },

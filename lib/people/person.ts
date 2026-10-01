@@ -1,6 +1,7 @@
 import "server-only";
 import type { BuddyShape } from "@/lib/design-system/buddies";
 import type { PaletteTint } from "@/lib/design-system/tokens";
+import { DEFAULT_CURRENCY, isCurrencyCode, type CurrencyCode } from "@/lib/currency";
 import { db } from "@/lib/db";
 import { personId, type PersonId } from "@/lib/domain/ids";
 import { defaultPersonTint, parseBuddy, parseTint } from "./defaults";
@@ -51,4 +52,9 @@ export async function ensurePersonForUser(user: PersonOwner): Promise<PersonView
 export async function findPersonForUser(userId: string): Promise<PersonView | null> {
   const row = await db.person.findUnique({ where: { userId }, select: personSelect });
   return row ? toPersonView(row) : null;
+}
+
+export async function getDefaultCurrency(id: PersonId): Promise<CurrencyCode> {
+  const row = await db.person.findUnique({ where: { id }, select: { defaultCurrency: true } });
+  return row && isCurrencyCode(row.defaultCurrency) ? row.defaultCurrency : DEFAULT_CURRENCY;
 }

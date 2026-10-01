@@ -121,13 +121,13 @@ export const claimGuestSpot = defineAction(claimSchema, async ({ token }, { pers
           usedAt: true,
           expiresAt: true,
           personId: true,
-          person: { select: { userId: true, mergedIntoId: true, displayName: true } },
+          person: { select: { userId: true, mergedIntoId: true, deletedAt: true, displayName: true } },
           group: { select: { deletedAt: true } },
         },
       });
       const dead = { ok: false, code: "notFound", message: memberMessages.claimDead } as const;
       if (!row || row.usedAt || row.expiresAt <= now || row.group.deletedAt) return dead;
-      if (row.person.userId !== null || row.person.mergedIntoId !== null) return dead;
+      if (row.person.userId !== null || row.person.mergedIntoId !== null || row.person.deletedAt !== null) return dead;
       if (row.personId === person.id) return { ok: false, code: "conflict", message: memberMessages.claimSelf };
 
       const guestMembership = await tx.groupMember.findUnique({

@@ -6,14 +6,16 @@ import { Rise } from "@/components/motion/rise";
 import { Button } from "@/components/ui/button";
 import { MomentTile } from "@/components/ui/icon-3d";
 import { groupsCopy } from "../_data";
+import type { CurrencyCode } from "@/lib/currency";
 import { NewGroupSheet } from "./new-group-sheet";
 
 export interface GroupsViewProps {
   hasGroups: boolean;
+  defaultCurrency: CurrencyCode;
   children: ReactNode;
 }
 
-export function GroupsView({ hasGroups, children }: GroupsViewProps) {
+export function GroupsView({ hasGroups, defaultCurrency, children }: GroupsViewProps) {
   const [open, setOpen] = useState(false);
   const copy = groupsCopy;
 
@@ -42,7 +44,7 @@ export function GroupsView({ hasGroups, children }: GroupsViewProps) {
           </div>
         </Rise>
       )}
-      <NewGroupSheet open={open} onOpenChange={setOpen} />
+      <NewGroupSheet defaultCurrency={defaultCurrency} open={open} onOpenChange={setOpen} />
     </div>
   );
 }

@@ -142,6 +142,7 @@ export const groupDetailCopy = {
     confirmLeaveCta: "Leave group",
     cancel: "Cancel",
   },
+  more: { label: "More for this group", settings: "Group settings", settingsCaption: "Name, look and invite link" },
   settingsSheet: {
     title: "Group settings",
     description: "Change how the group looks. Everyone sees the same thing.",

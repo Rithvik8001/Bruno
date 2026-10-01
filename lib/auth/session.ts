@@ -18,8 +18,8 @@ export const getSession = cache(async (): Promise<Session | null> => {
 export const getAppContext = cache(async (): Promise<AppContext | null> => {
   const session = await getSession();
   if (!session) return null;
-  const person = (await findPersonForUser(session.user.id)) ?? (await ensurePersonForUser(session.user));
-  return { session, person };
+  const person = (await findPersonForUser(session.user.id)) ?? (await ensurePersonForUser(session.user).catch(() => null));
+  return person ? { session, person } : null;
 });
 
 export async function requireSession(returnTo?: string): Promise<Session> {

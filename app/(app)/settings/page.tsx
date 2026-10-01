@@ -1,12 +1,19 @@
 import type { Metadata } from "next";
+import { getDeleteStatus } from "@/lib/account/queries";
 import { getAllowance } from "@/lib/ai/allowance";
 import { routes } from "@/lib/auth/rules";
 import { requireAppContext } from "@/lib/auth/session";
+import { localDay } from "@/lib/dates";
 import { buddyShapeFor } from "@/lib/design-system/buddies";
+import { exportGroups } from "@/lib/export/load";
+import { getDefaultCurrency } from "@/lib/people/person";
 import { getNotificationPrefs } from "@/lib/notifications/prefs";
 import { cookieTimeZone } from "@/lib/time-zone";
 import { NOTIFICATIONS_ANCHOR, settingsCopy } from "./_data";
 import { AppearanceRow } from "./_components/appearance-row";
+import { CurrencyRow } from "./_components/currency-row";
+import { DeleteAccountRow } from "./_components/delete-account-row";
+import { ExportRow } from "./_components/export-row";
 import { NotificationsSection } from "./_components/notifications-section";
 import { PlanSection } from "./_components/plan-section";
 import { ProfileSection } from "./_components/profile-section";
@@ -21,7 +28,13 @@ export default async function SettingsPage() {
   const { session, person } = await requireAppContext(routes.settings);
   const { user } = session;
   const timeZone = (await cookieTimeZone()) ?? FALLBACK_TIME_ZONE;
-  const [prefs, allowance] = await Promise.all([getNotificationPrefs(person.id), getAllowance(person.id, timeZone)]);
+  const [prefs, allowance, exportable, currency, deletable] = await Promise.all([
+    getNotificationPrefs(person.id),
+    getAllowance(person.id, timeZone),
+    exportGroups(person.id),
+    getDefaultCurrency(person.id),
+    getDeleteStatus(person.id),
+  ]);
   const { sections } = settingsCopy;
 
   return (
@@ -47,9 +60,12 @@ export default async function SettingsPage() {
       </SettingsSection>
       <SettingsSection copy={sections.preferences} rows>
         <AppearanceRow />
+        <CurrencyRow initial={currency} />
       </SettingsSection>
       <SettingsSection copy={sections.account} rows>
         <SignOutButton />
+        <ExportRow groups={exportable} today={localDay(timeZone)} />
+        <DeleteAccountRow initial={deletable} exportGroups={exportable} today={localDay(timeZone)} />
       </SettingsSection>
     </div>
   );

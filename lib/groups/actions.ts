@@ -20,7 +20,8 @@ import { loadGroupLedgers } from "@/lib/ledger/load";
 import { uniqueSlug } from "@/lib/slug";
 import { groupMessages } from "./messages";
 import { getGroupInvite, type GroupInvite } from "./queries";
-import { groupIdSchema, groupInputSchema } from "./schema";
+import { getDefaultCurrency } from "@/lib/people/person";
+import { createGroupSchema, groupIdSchema, groupInputSchema } from "./schema";
 
 async function slugFor(name: string): Promise<string> {
   return uniqueSlug(name, async (slug) => (await db.group.count({ where: { slug } })) > 0);
@@ -71,15 +72,16 @@ function refresh(groupId?: string): void {
   if (groupId) revalidatePath(routes.group(groupId));
 }
 
-export const createGroup = defineAction(groupInputSchema, async (input, { person }) => {
+export const createGroup = defineAction(createGroupSchema, async (input, { person }) => {
   const slug = await slugFor(input.name);
+  const currency = input.currency ?? (await getDefaultCurrency(person.id));
   const group = await db.$transaction(async (tx) => {
     const created = await tx.group.create({
       data: {
         name: input.name,
         tint: input.tint,
         art: input.art,
-        currency: input.currency,
+        currency,
         slug,
         createdById: person.id,
         members: { create: { personId: person.id, role: "ADMIN" } },

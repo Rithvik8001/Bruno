@@ -33,7 +33,7 @@ export async function resolveClaimer(groupId: string, viewer: AppContext | null)
   const session = await readGuestSession();
   if (!session || session.groupId !== groupId) return null;
   const guest = await db.groupMember.findFirst({
-    where: { groupId, personId: session.personId, leftAt: null, person: { userId: null, mergedIntoId: null } },
+    where: { groupId, personId: session.personId, leftAt: null, person: { userId: null, mergedIntoId: null, deletedAt: null } },
     select: { person: { select: personSelect } },
   });
   return guest ? { kind: "guest", person: toPersonView(guest.person), access: { kind: "guest" } } : null;

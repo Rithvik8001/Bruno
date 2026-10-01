@@ -1,4 +1,4 @@
-import { currencies, CURRENCY_CODES, type CurrencyCode } from "@/lib/currency";
+import { DEFAULT_CURRENCY, type CurrencyCode } from "@/lib/currency";
 import type { GroupArtId } from "@/lib/design-system/icons3d";
 import type { PaletteTint } from "@/lib/design-system/tokens";
 
@@ -9,25 +9,7 @@ export interface GroupFormValue {
   readonly currency: CurrencyCode;
 }
 
-export const emptyGroupForm: GroupFormValue = { name: "", tint: "indigo", art: null, currency: "USD" };
-
-const currencyNames = {
-  USD: "US dollar",
-  EUR: "Euro",
-  GBP: "British pound",
-  CAD: "Canadian dollar",
-  AUD: "Australian dollar",
-  INR: "Indian rupee",
-  CHF: "Swiss franc",
-  MXN: "Mexican peso",
-  JPY: "Japanese yen",
-  KRW: "South Korean won",
-} as const satisfies Record<CurrencyCode, string>;
-
-export const currencyOptions = CURRENCY_CODES.map((code) => ({
-  value: code,
-  label: `${currencyNames[code]} · ${currencies[code].symbol}`,
-}));
+export const emptyGroupForm = (currency: CurrencyCode = DEFAULT_CURRENCY): GroupFormValue => ({ name: "", tint: "indigo", art: null, currency });
 
 export const groupFormCopy = {
   name: { label: "Group name", placeholder: "e.g. Lisbon trip" },

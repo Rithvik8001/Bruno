@@ -202,6 +202,8 @@ model Person {
   activitySeenAt DateTime?
   plan           Plan      @default(FREE)
   timeZone       String?
+  defaultCurrency String   @default("USD") @db.Char(3)
+  deletedAt      DateTime?
   notifyBills    Boolean   @default(true)
   notifyClaims   Boolean   @default(true)
   notifyPayments Boolean   @default(true)

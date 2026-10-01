@@ -22,6 +22,8 @@ export const groupInputSchema = z.object({
   currency: currencyCodeSchema.default(DEFAULT_CURRENCY),
 });
 
+export const createGroupSchema = groupInputSchema.extend({ currency: currencyCodeSchema.optional() });
+
 export type GroupInput = z.input<typeof groupInputSchema>;
 export type GroupValues = z.output<typeof groupInputSchema>;
 

@@ -6,19 +6,21 @@ import { Button } from "@/components/ui/button";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { Sheet } from "@/components/ui/sheet";
 import { routes } from "@/lib/auth/rules";
+import type { CurrencyCode } from "@/lib/currency";
 import { createGroup } from "@/lib/groups/actions";
 import { emptyGroupForm, groupsCopy, type GroupFormValue } from "../_data";
 import { toGroupErrors } from "../_lib/form";
 import { GroupFormFields, type GroupFormErrors } from "./group-form-fields";
 
 export interface NewGroupSheetProps {
+  defaultCurrency: CurrencyCode;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function NewGroupSheet({ open, onOpenChange }: NewGroupSheetProps) {
+export function NewGroupSheet({ defaultCurrency, open, onOpenChange }: NewGroupSheetProps) {
   const router = useRouter();
-  const [value, setValue] = useState<GroupFormValue>(emptyGroupForm);
+  const [value, setValue] = useState<GroupFormValue>(() => emptyGroupForm(defaultCurrency));
   const [errors, setErrors] = useState<GroupFormErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -34,7 +36,7 @@ export function NewGroupSheet({ open, onOpenChange }: NewGroupSheetProps) {
         return;
       }
       onOpenChange(false);
-      setValue(emptyGroupForm);
+      setValue(emptyGroupForm(defaultCurrency));
       router.push(routes.group(result.data.id));
     });
 

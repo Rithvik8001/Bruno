@@ -236,7 +236,7 @@ export const joinAsGuest = definePublicAction(joinAsGuestSchema, async ({ code, 
 
   if (pick.kind === "existing") {
     const existing = await db.groupMember.findFirst({
-      where: { groupId: bill.groupId, personId: pick.guestId, leftAt: null, person: { userId: null, mergedIntoId: null } },
+      where: { groupId: bill.groupId, personId: pick.guestId, leftAt: null, person: { userId: null, mergedIntoId: null, deletedAt: null } },
       select: { person: { select: { displayName: true } } },
     });
     if (!existing) return actionFail("notFound", claimMessages.notGuest);
@@ -294,7 +294,7 @@ export const startGuestTakeover = definePublicAction(codeRefSchema, async ({ cod
   const session = await readGuestSession();
   if (!bill?.groupId || !session || session.groupId !== bill.groupId) return actionFail("notFound", claimMessages.noSpot);
   const guest = await db.groupMember.findFirst({
-    where: { groupId: bill.groupId, personId: session.personId, leftAt: null, person: { userId: null, mergedIntoId: null } },
+    where: { groupId: bill.groupId, personId: session.personId, leftAt: null, person: { userId: null, mergedIntoId: null, deletedAt: null } },
     select: { personId: true },
   });
   if (!guest) return actionFail("notFound", claimMessages.noSpot);

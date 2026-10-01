@@ -1,3 +1,4 @@
+import { DELETED_MEMBER_NAME } from "@/lib/account/rules";
 import { buddyHash, isBuddyShape, type BuddyShape } from "@/lib/design-system/buddies";
 import { PALETTE_TINTS, type PaletteTint } from "@/lib/design-system/tokens";
 
@@ -18,5 +19,6 @@ export function parseBuddy(value: string | null): BuddyShape | null {
 }
 
 export function firstNameOf(name: string): string {
+  if (name === DELETED_MEMBER_NAME) return name;
   return name.trim().split(/\s+/)[0] ?? "";
 }

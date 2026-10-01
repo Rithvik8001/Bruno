@@ -7,6 +7,7 @@ import { LiveMark } from "@/components/brand/live-logo";
 import { pressMotion } from "@/components/motion/press";
 import { StepSwap } from "@/components/motion/rise";
 import { routes } from "@/lib/auth/rules";
+import type { CurrencyCode } from "@/lib/currency";
 import type { BuddyShape } from "@/lib/design-system/buddies";
 import { createGroup, joinGroup } from "@/lib/groups/actions";
 import type { GroupInvite } from "@/lib/groups/queries";
@@ -31,9 +32,10 @@ const POSITION = { profile: 0, crew: 1, done: 2 } as const;
 export interface OnboardingFlowProps {
   person: PersonView;
   defaultBuddy: BuddyShape;
+  defaultCurrency: CurrencyCode;
 }
 
-export function OnboardingFlow({ person, defaultBuddy }: OnboardingFlowProps) {
+export function OnboardingFlow({ person, defaultBuddy, defaultCurrency }: OnboardingFlowProps) {
   const router = useRouter();
   const [state, setState] = useState<FlowState>({ step: "profile" });
   const [profile, setProfile] = useState<ProfileValue>({
@@ -42,7 +44,7 @@ export function OnboardingFlow({ person, defaultBuddy }: OnboardingFlowProps) {
     tint: person.tint,
   });
   const [mode, setMode] = useState<CrewMode>("create");
-  const [group, setGroup] = useState<GroupFormValue>({ ...emptyGroupForm, tint: "indigo" });
+  const [group, setGroup] = useState<GroupFormValue>(() => emptyGroupForm(defaultCurrency));
   const [groupErrors, setGroupErrors] = useState<GroupFormErrors>({});
   const [invite, setInvite] = useState<GroupInvite | null>(null);
   const [error, setError] = useState<string | null>(null);

@@ -5,11 +5,11 @@ import { hoverLift } from "@/components/motion/press";
 import { GroupArtTile, Icon3d } from "@/components/ui/icon-3d";
 import { Select } from "@/components/ui/select";
 import { TextField } from "@/components/ui/text-field";
-import type { CurrencyCode } from "@/lib/currency";
+import { currencyOptions, type CurrencyCode } from "@/lib/currency";
 import { GROUP_ART_IDS, groupArt, groupArtFor } from "@/lib/design-system/icons3d";
 import { PALETTE_TINTS } from "@/lib/design-system/tokens";
 import { cn } from "@/lib/utils/cn";
-import { currencyOptions, groupFormCopy, type GroupFormValue } from "../_data";
+import { groupFormCopy, type GroupFormValue } from "../_data";
 
 export type GroupFormErrors = Partial<Record<keyof GroupFormValue, string>>;
 

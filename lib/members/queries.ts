@@ -62,7 +62,7 @@ export async function activeMember(groupId: string, personId: PersonId) {
 
 export async function activeGuest(groupId: string, personId: string) {
   return db.groupMember.findFirst({
-    where: { groupId, personId, leftAt: null, person: { userId: null, mergedIntoId: null } },
+    where: { groupId, personId, leftAt: null, person: { userId: null, mergedIntoId: null, deletedAt: null } },
     select: { addedById: true },
   });
 }
@@ -111,12 +111,12 @@ export async function getGuestClaim(token: string, viewer: PersonId | null): Pro
       usedAt: true,
       expiresAt: true,
       personId: true,
-      person: { select: { ...personSelect, userId: true, mergedIntoId: true } },
+      person: { select: { ...personSelect, userId: true, mergedIntoId: true, deletedAt: true } },
       group: { select: { id: true, slug: true, name: true, tint: true, art: true, currency: true, deletedAt: true } },
     },
   });
   if (!row || row.usedAt || row.expiresAt <= new Date() || row.group.deletedAt) return null;
-  if (row.person.userId !== null || row.person.mergedIntoId !== null) return null;
+  if (row.person.userId !== null || row.person.mergedIntoId !== null || row.person.deletedAt !== null) return null;
   const groupId = row.group.id;
   const guestId = personId(row.personId);
 

@@ -22,10 +22,12 @@ export const routes = {
   unsubscribeApi: (token: string) => `/api/email/unsubscribe?token=${encodeURIComponent(token)}`,
   secure: (token: string) => `/secure/${encodeURIComponent(token)}`,
   welcome: "/welcome",
+  goodbye: "/goodbye",
   join: "/j",
   authApi: "/api/auth",
   ask: "/ask",
   askApi: "/api/ask",
+  exportApi: "/api/export",
   askAbout: (groupId?: string | null, listen?: boolean) => {
     const query = [groupId ? `group=${encodeURIComponent(groupId)}` : "", listen ? "listen=1" : ""].filter(Boolean).join("&");
     return query ? `/ask?${query}` : "/ask";

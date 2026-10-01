@@ -131,11 +131,12 @@ export interface DatePickerProps {
   value: string;
   today: string;
   onValueChange: (iso: string) => void;
+  align?: "start" | "end";
   fieldClassName?: string;
   className?: string;
 }
 
-export function DatePicker({ label, value, today, onValueChange, fieldClassName, className }: DatePickerProps) {
+export function DatePicker({ label, value, today, onValueChange, align = "end", fieldClassName, className }: DatePickerProps) {
   const [open, setOpen] = useState(false);
   const wide = useMediaQuery(POPOVER_QUERY);
   const wrap = useRef<HTMLDivElement>(null);
@@ -147,7 +148,9 @@ export function DatePicker({ label, value, today, onValueChange, fieldClassName,
       if (event.target instanceof Node && !wrap.current?.contains(event.target)) setOpen(false);
     };
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      setOpen(false);
     };
     document.addEventListener("mousedown", onDown);
     document.addEventListener("keydown", onKey);
@@ -207,7 +210,10 @@ export function DatePicker({ label, value, today, onValueChange, fieldClassName,
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -4, transition: { duration: T.t1, ease: EASE } }}
                 transition={{ duration: T.t2, ease: EASE }}
-                className="absolute top-[calc(100%+8px)] right-0 z-60 w-76 max-w-[calc(100vw-32px)] origin-top-right rounded-card border border-line bg-bg p-3.5 shadow-float"
+                className={cn(
+                  "absolute top-[calc(100%+8px)] z-60 w-76 max-w-[calc(100vw-32px)] rounded-card border border-line bg-bg p-3.5 shadow-float",
+                  align === "start" ? "left-0 origin-top-left" : "right-0 origin-top-right",
+                )}
               >
                 <Calendar value={value} today={today} roomy={false} onPick={pick} />
               </motion.div>

@@ -12,7 +12,9 @@ import { getAskBar } from "@/lib/ask/queries";
 import { firstParam } from "@/lib/auth/redirect";
 import { routes } from "@/lib/auth/rules";
 import { requireAppContext } from "@/lib/auth/session";
+import { localDay } from "@/lib/dates";
 import { canManageGroup } from "@/lib/domain/permissions";
+import { exportGroups } from "@/lib/export/load";
 import { appUrl, displayUrl } from "@/lib/site";
 import { getGroupForMember } from "@/lib/groups/queries";
 import { firstNameOf } from "@/lib/people/defaults";
@@ -20,7 +22,7 @@ import { cookieTimeZone } from "@/lib/time-zone";
 import { cn } from "@/lib/utils/cn";
 import { GROUP_TABS, groupDetailCopy, type GroupTab } from "./_data";
 import { CopyLinkButton } from "@/components/patterns/copy-link-button";
-import { GroupSettings } from "./_components/group-settings";
+import { GroupMore } from "./_components/group-more";
 import { GroupTabs } from "./_components/group-tabs";
 import { HeaderArt } from "./_components/header-art";
 import { MembersSection } from "./_components/members-section";
@@ -40,9 +42,11 @@ function tabFrom(value: string | undefined): GroupTab {
 export default async function GroupPage({ params, searchParams }: PageProps<"/groups/[groupId]">) {
   const { groupId } = await params;
   const { person } = await requireAppContext(routes.group(groupId));
-  const [group, ask] = await Promise.all([
+  const timeZone = (await cookieTimeZone()) ?? "UTC";
+  const [group, ask, exportable] = await Promise.all([
     getGroupForMember(groupId, person.id),
-    cookieTimeZone().then((timeZone) => getAskBar(person.id, timeZone ?? "UTC")),
+    getAskBar(person.id, timeZone),
+    exportGroups(person.id),
   ]);
   if (!group) notFound();
 
@@ -82,14 +86,22 @@ export default async function GroupPage({ params, searchParams }: PageProps<"/gr
             <Icon name="plus" size={18} strokeWidth={2} />
             {copy.addBill}
           </PressLink>
-          {canManage && (
-            <GroupSettings
-              groupId={group.id}
-              initial={{ name: group.name, tint: group.tint, art: group.art, currency: group.currency }}
-              currencyLocked={group.billCount > 0}
-              canDelete={group.everyoneSquare}
-            />
-          )}
+          <GroupMore
+            groupId={group.id}
+            exportGroups={exportable}
+            today={localDay(timeZone)}
+            className="ml-auto sm:ml-0"
+            settings={
+              canManage
+                ? {
+                    groupId: group.id,
+                    initial: { name: group.name, tint: group.tint, art: group.art, currency: group.currency },
+                    currencyLocked: group.billCount > 0,
+                    canDelete: group.everyoneSquare,
+                  }
+                : null
+            }
+          />
         </div>
       </div>
 

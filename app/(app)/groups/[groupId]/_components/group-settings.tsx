@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
-import { IconButton } from "@/components/ui/icon-button";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { Sheet } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/toast";
@@ -14,19 +13,24 @@ import { toGroupErrors } from "../../_lib/form";
 import { GroupFormFields, type GroupFormErrors } from "../../_components/group-form-fields";
 import { groupDetailCopy } from "../_data";
 
-export interface GroupSettingsProps {
+export interface GroupSettingsValues {
   groupId: string;
   initial: GroupFormValue;
   currencyLocked: boolean;
   canDelete: boolean;
 }
 
+export interface GroupSettingsProps extends GroupSettingsValues {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
 type View = "form" | "reset" | "delete";
 
-export function GroupSettings({ groupId, initial, currencyLocked, canDelete }: GroupSettingsProps) {
+export function GroupSettings({ groupId, initial, currencyLocked, canDelete, open, onOpenChange }: GroupSettingsProps) {
   const router = useRouter();
   const { toast } = useToast();
-  const [open, setOpen] = useState(false);
+  const [wasOpen, setWasOpen] = useState(open);
   const [view, setView] = useState<View>("form");
   const [value, setValue] = useState<GroupFormValue>(initial);
   const [errors, setErrors] = useState<GroupFormErrors>({});
@@ -34,13 +38,17 @@ export function GroupSettings({ groupId, initial, currencyLocked, canDelete }: G
   const [pending, startTransition] = useTransition();
   const copy = groupDetailCopy.settingsSheet;
 
-  const openSheet = () => {
-    setValue(initial);
-    setErrors({});
-    setFormError(null);
-    setView("form");
-    setOpen(true);
-  };
+  const setOpen = onOpenChange;
+
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) {
+      setValue(initial);
+      setErrors({});
+      setFormError(null);
+      setView("form");
+    }
+  }
 
   const save = () =>
     startTransition(async () => {
@@ -91,7 +99,6 @@ export function GroupSettings({ groupId, initial, currencyLocked, canDelete }: G
 
   return (
     <>
-      <IconButton icon="settings" label={copy.title} onClick={openSheet} className="bg-surface hover:bg-surface-2" />
       <Sheet
         open={open}
         onOpenChange={setOpen}

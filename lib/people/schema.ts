@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { currencyCodeSchema } from "@/lib/currency";
 import { BUDDY_SHAPES, type BuddyShape } from "@/lib/design-system/buddies";
 import { paletteTintSchema } from "@/lib/groups/schema";
 
@@ -15,3 +16,5 @@ export const profileSchema = z.object({
 });
 
 export type ProfileInput = z.input<typeof profileSchema>;
+
+export const defaultCurrencySchema = z.object({ currency: currencyCodeSchema });

@@ -20,6 +20,24 @@ export const CURRENCY_CODES = Object.keys(currencies) as readonly CurrencyCode[]
 
 export const DEFAULT_CURRENCY: CurrencyCode = "USD";
 
+export const currencyNames = {
+  USD: "US dollar",
+  EUR: "Euro",
+  GBP: "British pound",
+  CAD: "Canadian dollar",
+  AUD: "Australian dollar",
+  INR: "Indian rupee",
+  CHF: "Swiss franc",
+  MXN: "Mexican peso",
+  JPY: "Japanese yen",
+  KRW: "South Korean won",
+} as const satisfies Record<CurrencyCode, string>;
+
+export const currencyOptions = CURRENCY_CODES.map((code) => ({
+  value: code,
+  label: `${currencyNames[code]} · ${currencies[code].symbol}`,
+}));
+
 export function isCurrencyCode(value: string): value is CurrencyCode {
   return value in currencies;
 }

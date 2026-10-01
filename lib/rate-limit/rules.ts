@@ -108,6 +108,25 @@ export const rateRules = {
       { seconds: HOUR, max: 120 },
     ],
   },
+  exportRun: {
+    person: [
+      { seconds: MINUTE, max: 2 },
+      { seconds: HOUR, max: 5 },
+    ],
+    ip: [{ seconds: HOUR, max: 20 }],
+  },
+  prefWrite: { person: [{ seconds: MINUTE, max: 30 }] },
+  accountDelete: {
+    person: [
+      { seconds: MINUTE, max: 3 },
+      { seconds: HOUR, max: 10 },
+    ],
+    ip: [{ seconds: HOUR, max: 30 }],
+  },
+  exportPreview: {
+    person: [{ seconds: MINUTE, max: 30 }],
+    ip: [{ seconds: MINUTE, max: 60 }],
+  },
 } as const satisfies Record<string, RateRule>;
 
 export type RateRuleName = keyof typeof rateRules;
