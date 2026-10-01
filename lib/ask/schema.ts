@@ -23,8 +23,6 @@ export const askSchema = z.object({
   clarifies: z.object({ questionId: idSchema, picks: z.array(askPickSchema).min(1).max(ASK_CLARIFY_MAX) }).nullable(),
 });
 
-export const askQuotaSchema = z.object({ timeZone: timeZoneSchema });
-
 export type AskInput = z.input<typeof askSchema>;
 export type AskValues = z.output<typeof askSchema>;
 

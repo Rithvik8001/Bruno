@@ -2,18 +2,19 @@
 
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { PopIn } from "@/app/(flow)/_components/pop-in";
-import { browserTimeZone } from "@/app/(flow)/bills/new/_lib/upload";
 import { Icon } from "@/components/icons/icon";
+import { AllowanceChip } from "@/components/patterns/allowance-chip";
 import { BackLink } from "@/components/patterns/back-link";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { AI_RETRY_GAP_MS } from "@/lib/ai/rules";
-import { askQuota } from "@/lib/ask/actions";
 import type { AskStartView } from "@/lib/ask/queries";
 import type { AskPick } from "@/lib/ask/result";
 import { ASK_TEXT_MAX } from "@/lib/ask/rules";
 import { routes } from "@/lib/auth/rules";
+import { browserTimeZone } from "@/lib/browser-time-zone";
 import type { PersonId } from "@/lib/domain/ids";
+import { useAllowance } from "@/lib/hooks/use-allowance";
 import { useCooldown } from "@/lib/hooks/use-cooldown";
 import { useSpeechRecognition } from "@/lib/hooks/use-speech-recognition";
 import { buzz, HAPTICS } from "@/lib/motion/haptics";
@@ -28,7 +29,6 @@ import { AnswerCard } from "./answer-card";
 import { AskErrorCard } from "./ask-error-card";
 import { AskField } from "./ask-field";
 import { AskLimitCard } from "./ask-limit-card";
-import { AskQuotaChip } from "./ask-quota-chip";
 import { ClarifyCard } from "./clarify-card";
 import { FoldedAnswer } from "./folded-answer";
 import { ScopeChips } from "./scope-chips";
@@ -56,12 +56,7 @@ export function AskScreen({ start, you, autoListen }: AskScreenProps) {
   const { toast } = useToast();
   const [thread, dispatch] = useReducer(threadReducer, EMPTY_THREAD);
   const [text, setText] = useState("");
-  const [quota, setQuota] = useState(start.quota);
-  const [seenQuota, setSeenQuota] = useState(start.quota);
-  if (seenQuota !== start.quota) {
-    setSeenQuota(start.quota);
-    setQuota(start.quota);
-  }
+  const { quota, setQuota, refresh: refreshQuota } = useAllowance(start.quota);
   const [failure, setFailure] = useState<{ readonly message: string | null } | null>(null);
   const [focused, setFocused] = useState(false);
   const [now] = useState(() => new Date());
@@ -108,11 +103,6 @@ export function AskScreen({ start, you, autoListen }: AskScreenProps) {
     }, SCROLL_SETTLE_MS);
     return () => clearTimeout(timer);
   }, [count]);
-
-  const refreshQuota = useCallback(async () => {
-    const result = await askQuota({ timeZone: browserTimeZone() }).catch(() => null);
-    if (result?.ok) setQuota(result.data);
-  }, []);
 
   const run = async (id: number, question: string, clarifies: Clarifies | null) => {
     const controller = new AbortController();
@@ -218,7 +208,7 @@ export function AskScreen({ start, you, autoListen }: AskScreenProps) {
       <div className="flex min-w-0 items-center justify-between gap-3">
         <BackLink href={backHref} label={scope ? copy.back.group(scope.name) : copy.back.home} className="shrink" />
         <PopIn popKey={quota.left} className="min-w-0 shrink-0">
-          <AskQuotaChip quota={quota} />
+          <AllowanceChip quota={quota} look="sparkle" />
         </PopIn>
       </div>
 

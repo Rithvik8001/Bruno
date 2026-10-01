@@ -7,25 +7,24 @@ import type { ScanLine } from "@/components/patterns/receipt-scan";
 import { useToast } from "@/components/ui/toast";
 import { routes } from "@/lib/auth/rules";
 import type { CurrencyCode } from "@/lib/currency";
-import { AI_RETRY_GAP_MS } from "@/lib/ai/rules";
+import { AI_RETRY_GAP_MS, allowanceSpent, type Allowance } from "@/lib/ai/rules";
+import { browserTimeZone } from "@/lib/browser-time-zone";
 import { useCooldown } from "@/lib/hooks/use-cooldown";
 import { useTimeline } from "@/lib/hooks/use-timeline";
 import { buzz, HAPTICS } from "@/lib/motion/haptics";
-import { createScanUpload, discardScan, extractScan, scanQuota, type ScanSummary } from "@/lib/scans/actions";
-import type { ScanQuota } from "@/lib/scans/quota";
+import { createScanUpload, discardScan, extractScan, type ScanSummary } from "@/lib/scans/actions";
 import { newBillCopy } from "../_data";
 import {
   EXTRACT_CREEP,
   extractProgress,
   ghostLines,
   previewRows,
-  quotaExhausted,
   REVEAL,
   revealProgress,
   uploadProgress,
   type ScanPhase,
 } from "../_lib/phase";
-import { browserTimeZone, validateFile } from "../_lib/upload";
+import { validateFile } from "../_lib/upload";
 import { Dropzone } from "./dropzone";
 import { QuotaBanner } from "./quota-banner";
 import { ScanProgress } from "./scan-progress";
@@ -38,8 +37,9 @@ export interface ScanScreenProps {
   groupId: string;
   currency: CurrencyCode;
   configured: boolean;
-  quota: ScanQuota;
-  onQuota: (quota: ScanQuota) => void;
+  quota: Allowance;
+  onQuota: (quota: Allowance) => void;
+  onRefreshQuota: () => Promise<void>;
   children: React.ReactNode;
 }
 
@@ -66,7 +66,7 @@ function postFile(
   return { promise, abort: () => xhr.abort() };
 }
 
-export function ScanScreen({ groupId, currency, configured, quota, onQuota, children }: ScanScreenProps) {
+export function ScanScreen({ groupId, currency, configured, quota, onQuota, onRefreshQuota, children }: ScanScreenProps) {
   const router = useRouter();
   const { toast } = useToast();
   const copy = newBillCopy.scan;
@@ -78,11 +78,6 @@ export function ScanScreen({ groupId, currency, configured, quota, onQuota, chil
   const abortRef = useRef<(() => void) | null>(null);
   const cancelledRef = useRef(false);
   const ghosts = useMemo(() => ghostLines(), []);
-
-  const refreshQuota = useCallback(async () => {
-    const result = await scanQuota({ timeZone: browserTimeZone() }).catch(() => null);
-    if (result?.ok) onQuota(result.data);
-  }, [onQuota]);
 
   const fail = useCallback(
     (reason: string | null, scanId?: string) => {
@@ -102,8 +97,7 @@ export function ScanScreen({ groupId, currency, configured, quota, onQuota, chil
       return;
     }
     cancelledRef.current = false;
-    const timeZone = browserTimeZone();
-    const started = await createScanUpload({ groupId, contentType: check.mime, byteSize: check.size, timeZone }).catch(() => null);
+    const started = await createScanUpload({ groupId, contentType: check.mime, byteSize: check.size, timeZone: browserTimeZone() }).catch(() => null);
     if (started === null) {
       buzz(HAPTICS.error);
       cooldown.restart();
@@ -111,7 +105,7 @@ export function ScanScreen({ groupId, currency, configured, quota, onQuota, chil
       return;
     }
     if (!started.ok) {
-      if (started.error.code === "conflict") await refreshQuota();
+      if (started.error.code === "conflict") await onRefreshQuota();
       if (started.error.code === "rateLimited") cooldown.restart(started.error.retryAfter ?? RETRY_GAP_SECONDS);
       toast({ message: started.error.message, duration: TOAST_MS });
       return;
@@ -129,7 +123,7 @@ export function ScanScreen({ groupId, currency, configured, quota, onQuota, chil
     }
     setPhase({ kind: "extracting", scanId });
     creep.start();
-    const extracted = await extractScan({ scanId, timeZone }).catch(() => null);
+    const extracted = await extractScan({ scanId }).catch(() => null);
     if (cancelledRef.current) {
       void discardScan({ scanId }).catch(() => undefined);
       return;
@@ -141,7 +135,7 @@ export function ScanScreen({ groupId, currency, configured, quota, onQuota, chil
       return;
     }
     if (!extracted.ok) {
-      await refreshQuota();
+      await onRefreshQuota();
       if (extracted.error.code === "invalid") {
         buzz(HAPTICS.error);
         toast({ message: extracted.error.message, duration: TOAST_MS });
@@ -164,8 +158,8 @@ export function ScanScreen({ groupId, currency, configured, quota, onQuota, chil
       fail(extracted.error.message);
       return;
     }
-    onQuota({ ...quota, used: quota.used + 1, left: Math.max(0, quota.left - 1) });
-    setPhase({ kind: "revealing", summary: extracted.data });
+    onQuota(extracted.data.quota);
+    setPhase({ kind: "revealing", summary: extracted.data.summary });
     reveal.start();
   };
 
@@ -199,7 +193,7 @@ export function ScanScreen({ groupId, currency, configured, quota, onQuota, chil
       ghostWidth: "60%",
     }));
 
-  const exhausted = quotaExhausted(quota);
+  const exhausted = allowanceSpent(quota);
   const manualHref = routes.manualBill(groupId);
 
   return (
@@ -210,7 +204,7 @@ export function ScanScreen({ groupId, currency, configured, quota, onQuota, chil
       {phase.kind === "idle" && (
         <>
           <Dropzone disabled={exhausted || !configured || cooldown.active} waitSeconds={cooldown.remaining} onFile={(file) => void onFile(file)} />
-          {exhausted && configured && <QuotaBanner limit={quota.limit} />}
+          {exhausted && configured && <QuotaBanner quota={quota} />}
           {children}
         </>
       )}

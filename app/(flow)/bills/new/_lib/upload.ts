@@ -32,11 +32,3 @@ export function validateFile(file: File): FileCheck {
   if (file.size > max) return { ok: false, reason: "size", maxMb: max / MIB };
   return { ok: true, mime, size: file.size };
 }
-
-export function browserTimeZone(): string {
-  try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-  } catch {
-    return "UTC";
-  }
-}

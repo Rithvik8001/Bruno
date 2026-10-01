@@ -11,7 +11,7 @@ export const signInCopy = {
   remember: "Keep me signed in on this device",
   submit: "Sign in",
   badCredentials: {
-    title: "That email and password don't match.",
+    title: "That email and password don’t match.",
     body: "Check for typos, or",
     action: "reset your password",
   },
@@ -23,5 +23,5 @@ export const signInCopy = {
   verifyBack: "Back to sign in",
   switchPrompt: "New here?",
   switchCta: "Create an account",
-  footer: "Claiming from a shared link? You don't need to sign in.",
+  footer: "Claiming from a shared link? You don’t need to sign in.",
 } as const;

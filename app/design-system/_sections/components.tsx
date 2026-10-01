@@ -96,7 +96,7 @@ export function ComponentsSection() {
             />
             <TextField
               label="Invite link"
-              defaultValue="bruno.app/j/lisbon"
+              defaultValue="bruno.vin/j/lisbon"
               readOnly
               feedback={{ tone: "success", message: "Copied" }}
             />

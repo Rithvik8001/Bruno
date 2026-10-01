@@ -1,5 +1,5 @@
 import "server-only";
-import { isProduction, serverEnv } from "@/lib/env";
+import { serverEnv } from "@/lib/env";
 
 export interface ScanEnv {
   readonly openAiKey: string;
@@ -45,9 +45,4 @@ export function isScanConfigured(): boolean {
   } catch {
     return false;
   }
-}
-
-export function dailyLimitOverride(): number | undefined {
-  if (isProduction()) return undefined;
-  return serverEnv().SCAN_DAILY_LIMIT_OVERRIDE;
 }

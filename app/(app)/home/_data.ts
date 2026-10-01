@@ -5,7 +5,7 @@ const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one :
 
 export const homeCopy = {
   metaTitle: "Home",
-  headline: { owed: "You're owed", owes: "You owe", settled: "All square", empty: "Welcome to Bruno." },
+  headline: { owed: "You’re owed", owes: "You owe", settled: "All square", empty: "Welcome to Bruno" },
   fallbackGreeting: (firstName: string) => `Hi, ${firstName}`,
   greetings: {
     late: "Up late",
@@ -17,7 +17,7 @@ export const homeCopy = {
   others: (parts: readonly string[]) => `Also ${parts.join(" and ")} in other currencies`,
   people: {
     title: "People",
-    owesYou: (n: number) => `${n} owe${n === 1 ? "s" : ""} you`,
+    owesYou: (n: number) => (n === 1 ? "1 owes you" : `${n} owe you`),
     youOwe: (n: number) => `${n} you owe`,
     allSquare: "All square",
     captionOwed: (titles: readonly string[]) => (titles.length > 0 ? `owes you · ${titles.join(", ")}` : "owes you"),
@@ -43,7 +43,7 @@ export const homeCopy = {
     oweCta: "Settle up",
   },
   empty: {
-    title: "Nothing owed, nothing owing.",
+    title: "Nothing owed, nothing owing",
     body: "Add your first bill and Bruno will keep the score from here.",
     add: "Add a bill",
     group: "Start a group",

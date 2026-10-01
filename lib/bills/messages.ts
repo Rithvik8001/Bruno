@@ -11,12 +11,12 @@ export const billMessages = {
   dateInvalid: "Pick a date.",
   noItems: "Add at least one item.",
   tooManyItems: (max: number) => `A bill can have up to ${max} items.`,
-  duplicatePerson: "Someone is listed twice.",
-  groupGone: "This group doesn't exist any more.",
-  notMember: "You're not in this group any more.",
+  duplicatePerson: "Someone is listed twice. Remove the extra one.",
+  groupGone: "This group doesn’t exist any more. Pick another group.",
+  notMember: "You’re not in this group any more. Ask a member for the invite link.",
   payerNotMember: "Whoever paid has to be in the group.",
   unknownPerson: "Everyone on the bill has to be in the group.",
-  billGone: "This bill doesn't exist any more.",
+  billGone: "This bill doesn’t exist any more. Go back to the group.",
   cantEdit: "Only whoever added the bill or a group admin can change it.",
 } as const;
 
@@ -29,10 +29,10 @@ export function splitErrorMessage(error: SplitError, currency: CurrencyCode): st
     case "discountExceedsSubtotal":
       return `The discount is more than the ${formatMoney(error.subtotal, currency)} of items.`;
     case "invalidParticipantInput":
-      return "Some of the shares aren't valid.";
+      return "Some of the shares aren’t valid. Check each person’s amount.";
     case "unclaimedItems": {
       const n = error.lineItemIds.length;
-      return `${n} ${plural(n, "item has", "items have")} no one on ${plural(n, "it", "them")} yet.`;
+      return `${n} ${plural(n, "item has", "items have")} no one on ${plural(n, "it", "them")} yet. Assign ${plural(n, "it", "them")} to finish.`;
     }
     case "percentMismatch":
       return `Percentages add up to ${error.assignedBps / (FULL_PERCENT_BPS / 100)}%, not 100%.`;

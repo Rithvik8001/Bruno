@@ -28,10 +28,7 @@ const serverEnvSchema = z.object({
   CLOUDINARY_CLOUD_NAME: optionalString,
   CLOUDINARY_API_KEY: optionalString,
   CLOUDINARY_API_SECRET: optionalString,
-  SCAN_DAILY_LIMIT_OVERRIDE: optionalString
-    .transform((v) => (v === undefined ? undefined : Number(v)))
-    .pipe(z.number().int().min(0).optional()),
-  ASK_DAILY_LIMIT_OVERRIDE: optionalString
+  AI_DAILY_LIMIT_OVERRIDE: optionalString
     .transform((v) => (v === undefined ? undefined : Number(v)))
     .pipe(z.number().int().min(0).optional()),
 });

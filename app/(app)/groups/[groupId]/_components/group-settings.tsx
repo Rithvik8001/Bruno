@@ -78,10 +78,10 @@ export function GroupSettings({ groupId, initial, currencyLocked, canDelete }: G
       router.push(routes.groups);
     });
 
-  const confirmActions = (onConfirm: () => void) => (
+  const confirmActions = (label: string, onConfirm: () => void) => (
     <>
       <Button variant="danger" size="lg" fullWidth loading={pending} onClick={onConfirm}>
-        {copy.confirm}
+        {label}
       </Button>
       <Button variant="tertiary" fullWidth className="h-11" onClick={() => setView("form")}>
         {copy.cancel}
@@ -101,9 +101,9 @@ export function GroupSettings({ groupId, initial, currencyLocked, canDelete }: G
         description={view === "reset" ? copy.resetBody : view === "delete" ? copy.deleteBody : copy.description}
         actions={
           view === "reset" ? (
-            confirmActions(reset)
+            confirmActions(copy.reset, reset)
           ) : view === "delete" ? (
-            confirmActions(remove)
+            confirmActions(copy.delete, remove)
           ) : (
             <>
               <Button size="lg" fullWidth loading={pending} onClick={save}>

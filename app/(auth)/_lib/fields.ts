@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const INVALID_EMAIL_MESSAGE = "That doesn't look like an email.";
+export const INVALID_EMAIL_MESSAGE = "Enter an email like name@example.com.";
 
 export function emailSchema(requiredMessage: string) {
   return z.string().trim().min(1, requiredMessage).pipe(z.email(INVALID_EMAIL_MESSAGE));

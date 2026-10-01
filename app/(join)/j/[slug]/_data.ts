@@ -7,7 +7,7 @@ export const joinCopy = {
   join: (name: string) => `Join ${name}`,
   notNow: "Not now",
   dead: {
-    title: "This invite link doesn't work anymore.",
+    title: "This invite link doesn’t work any more",
     body: "Ask whoever sent it for a new one.",
     home: "Go to Bruno",
   },

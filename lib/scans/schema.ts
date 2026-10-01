@@ -20,9 +20,7 @@ export const startScanSchema = z.object({
 
 export const scanRefSchema = z.object({ scanId: idSchema });
 
-export const extractScanSchema = scanRefSchema.extend({ timeZone: timeZoneSchema });
-
-export const quotaSchema = z.object({ timeZone: timeZoneSchema });
+export const extractScanSchema = scanRefSchema;
 
 export type StartScanInput = z.input<typeof startScanSchema>;
 export type ExtractScanInput = z.input<typeof extractScanSchema>;

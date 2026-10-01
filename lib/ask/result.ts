@@ -1,8 +1,8 @@
+import type { Allowance } from "@/lib/ai/rules";
 import type { SpendBucket } from "@/lib/bills/buckets";
 import type { BillGroupRef } from "@/lib/bills/queries";
 import type { CurrencyCode } from "@/lib/currency";
 import type { FeedItem } from "@/lib/feed/types";
-import type { Plan } from "@/lib/generated/prisma/enums";
 import type { PaymentMethod } from "@/lib/ledger/rules";
 import type { Cents } from "@/lib/money";
 import type { PersonView } from "@/lib/people/person";
@@ -272,16 +272,9 @@ export interface AskStep {
   readonly title: string | null;
 }
 
-export interface AskQuota {
-  readonly used: number;
-  readonly limit: number;
-  readonly left: number;
-  readonly plan: Plan;
-}
-
 export interface AskDone {
   readonly reply: AskReply;
-  readonly quota: AskQuota;
+  readonly quota: Allowance;
   readonly questionId: string;
   readonly threadId: string;
 }
@@ -289,4 +282,4 @@ export interface AskDone {
 export type AskStreamEvent =
   | { readonly t: "step"; readonly step: AskStep }
   | ({ readonly t: "done" } & AskDone)
-  | { readonly t: "error"; readonly code: "unknown" | "rateLimited"; readonly message: string; readonly retryAfter: number | null; readonly quota: AskQuota };
+  | { readonly t: "error"; readonly code: "unknown" | "rateLimited"; readonly message: string; readonly retryAfter: number | null; readonly quota: Allowance };

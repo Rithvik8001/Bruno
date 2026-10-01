@@ -1,8 +1,9 @@
 "use server";
 
 import { defineAction } from "@/lib/actions/action";
-import { aiMessages } from "@/lib/ai/messages";
-import { AI_FREE_MISSES } from "@/lib/ai/rules";
+import { getAllowance, localDayWindow, reserveAssist } from "@/lib/ai/allowance";
+import { aiMessages, allowanceCopy } from "@/lib/ai/messages";
+import type { Allowance } from "@/lib/ai/rules";
 import { aiCooldown, breakerCooldown } from "@/lib/ai/throttle";
 import { actionFail, actionOk, actionRateLimited } from "@/lib/actions/errors";
 import { minorUnitsOf } from "@/lib/currency";
@@ -13,8 +14,6 @@ import { groupMessages } from "@/lib/groups/messages";
 import { getBillComposer } from "@/lib/groups/queries";
 import { normalizeName } from "@/lib/members/names";
 import { consumeRate } from "@/lib/rate-limit/limiter";
-import { scanMessages } from "@/lib/scans/messages";
-import { countAttempts, countUsed, dailyLimit, localDayWindow } from "@/lib/scans/quota";
 import { isTellConfigured } from "./config";
 import { runTell } from "./extract";
 import { tellFailureMessage, tellMessages, type TellFailure } from "./messages";
@@ -31,6 +30,7 @@ const toJson = (value: TellResult | TellAnswers): Prisma.InputJsonValue =>
 export interface TellDrafted {
   readonly draftId: string;
   readonly result: TellResult;
+  readonly quota: Allowance;
 }
 
 async function markFailed(draftId: string, failure: TellFailure, usage?: { model: string; inputTokens: number | null; outputTokens: number | null }): Promise<void> {
@@ -51,20 +51,17 @@ export const draftBill = defineAction(draftBillSchema, async ({ groupId, text, t
   const cooling = await aiCooldown(person.id);
   if (cooling !== null) return actionRateLimited(cooling, aiMessages.cooling(cooling));
 
-  const plan = await db.person.findUniqueOrThrow({ where: { id: person.id }, select: { plan: true } });
-  const limit = dailyLimit(plan.plan);
   const window = localDayWindow(timeZone);
   const reserved = await db.$transaction(async (tx) => {
-    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${person.id}))`;
-    if ((await countUsed(tx, person.id, window)) >= limit) return { ok: false as const, reason: "quota" as const };
-    if ((await countAttempts(tx, person.id, window)) >= limit + AI_FREE_MISSES) return { ok: false as const, reason: "tries" as const };
+    const assist = await reserveAssist(tx, person.id, window);
+    if (!assist.ok) return assist;
     const created = await tx.tellDraft.create({
       data: { personId: person.id, groupId, text, timeZone, status: "DRAFTING", startedAt: new Date() },
       select: { id: true },
     });
     return { ok: true as const, id: created.id };
   });
-  if (!reserved.ok) return actionFail("conflict", reserved.reason === "quota" ? scanMessages.quota(limit) : aiMessages.tooManyTries);
+  if (!reserved.ok) return actionFail("conflict", reserved.reason === "quota" ? allowanceCopy.refused(reserved.limit) : aiMessages.tooManyTries);
   const draft = { id: reserved.id };
   maybeSweepTell();
 
@@ -112,7 +109,7 @@ export const draftBill = defineAction(draftBillSchema, async ({ groupId, text, t
     where: { id: draft.id },
     data: { status: "SUCCEEDED", result: toJson(result), completedAt: new Date(), ...usage },
   });
-  return actionOk<TellDrafted>({ draftId: draft.id, result });
+  return actionOk<TellDrafted>({ draftId: draft.id, result, quota: await getAllowance(person.id, timeZone) });
 });
 
 export const answerTell = defineAction(answerTellSchema, async ({ draftId, answers }, { person }) => {

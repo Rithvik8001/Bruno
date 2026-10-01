@@ -1,12 +1,13 @@
 import type { ActionError } from "@/lib/actions/errors";
-import type { AskDone, AskQuota, AskStep, AskStreamEvent } from "@/lib/ask/result";
+import type { Allowance } from "@/lib/ai/rules";
+import type { AskDone, AskStep, AskStreamEvent } from "@/lib/ask/result";
 import type { AskInput } from "@/lib/ask/schema";
 import { routes } from "@/lib/auth/rules";
 
 export type AskStreamResult =
   | { readonly kind: "done"; readonly done: AskDone }
   | { readonly kind: "refused"; readonly error: ActionError }
-  | { readonly kind: "failed"; readonly message: string | null; readonly quota: AskQuota | null }
+  | { readonly kind: "failed"; readonly message: string | null; readonly quota: Allowance | null }
   | { readonly kind: "aborted" };
 
 function parseEvent(line: string): AskStreamEvent | null {

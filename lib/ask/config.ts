@@ -1,5 +1,5 @@
 import "server-only";
-import { isProduction, serverEnv } from "@/lib/env";
+import { serverEnv } from "@/lib/env";
 
 export class AskNotConfiguredError extends Error {
   constructor() {
@@ -16,9 +16,4 @@ export function askApiKey(): string {
 
 export function isAskConfigured(): boolean {
   return Boolean(serverEnv().OPENAI_API_KEY);
-}
-
-export function askLimitOverride(): number | undefined {
-  if (isProduction()) return undefined;
-  return serverEnv().ASK_DAILY_LIMIT_OVERRIDE;
 }

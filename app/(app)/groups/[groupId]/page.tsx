@@ -104,7 +104,7 @@ export default async function GroupPage({ params, searchParams }: PageProps<"/gr
           locked={
             ask.quota.left > 0
               ? null
-              : { title: askCopy.bar.resting, body: askCopy.bar.used(ask.quota.limit), action: askCopy.bar.goPro, href: routes.settings }
+              : { title: askCopy.bar.resting, body: askCopy.bar.used(ask.quota.limit) }
           }
         />
       )}

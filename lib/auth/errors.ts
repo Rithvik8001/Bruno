@@ -1,18 +1,20 @@
+import { authRules } from "./rules";
+
 export const authErrorMessages = {
   USERNAME_IS_ALREADY_TAKEN: "That username is taken. Try another.",
   USERNAME_TOO_SHORT: "Usernames need at least 3 characters.",
   USERNAME_TOO_LONG: "Usernames can be 30 characters at most.",
   INVALID_USERNAME: "Use lowercase letters, numbers, dots or underscores.",
-  PASSWORD_TOO_SHORT: "That password is too short.",
-  PASSWORD_TOO_LONG: "That password is too long.",
-  INVALID_EMAIL: "That doesn't look like an email.",
-  INVALID_EMAIL_OR_PASSWORD: "That email and password don't match.",
-  EMAIL_NOT_VERIFIED: "Confirm your email to keep going. We sent you a new code.",
-  USER_NOT_FOUND: "We couldn't find that account. Request a new code.",
-  INVALID_OTP: "That code didn't match. Try again or resend.",
-  OTP_EXPIRED: "That code has expired. We can send a new one.",
+  PASSWORD_TOO_SHORT: `Choose a password with at least ${authRules.password.min} characters.`,
+  PASSWORD_TOO_LONG: `Choose a password with no more than ${authRules.password.max} characters.`,
+  INVALID_EMAIL: "Enter an email like name@example.com.",
+  INVALID_EMAIL_OR_PASSWORD: "That email and password don’t match. Check for typos, or reset your password.",
+  EMAIL_NOT_VERIFIED: "Confirm your email to keep going. A new code is on its way.",
+  USER_NOT_FOUND: "No account matches that email. Check it, or create an account.",
+  INVALID_OTP: "That code didn’t match. Try again or resend.",
+  OTP_EXPIRED: "That code has expired. Resend to get a new one.",
   TOO_MANY_ATTEMPTS: "Too many tries. Send a new code to keep going.",
-  PROVIDER_NOT_FOUND: "Google sign-in isn't set up yet.",
+  PROVIDER_NOT_FOUND: "Google sign-in isn’t available. Use your email instead.",
 } as const;
 
 export type AuthErrorCode = keyof typeof authErrorMessages;
@@ -24,7 +26,7 @@ export interface AuthClientError {
 }
 
 const RATE_LIMITED = "Too many attempts. Wait a minute and try again.";
-const FALLBACK = "Something went wrong. Please try again.";
+const FALLBACK = "Unable to finish that. Check your connection and try again.";
 const RETRY_AFTER_HEADER = "X-Retry-After";
 const DEFAULT_RETRY_AFTER_SECONDS = 60;
 

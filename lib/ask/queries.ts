@@ -1,4 +1,6 @@
 import "server-only";
+import { getAllowance } from "@/lib/ai/allowance";
+import type { Allowance } from "@/lib/ai/rules";
 import type { BillGroupRef } from "@/lib/bills/queries";
 import type { CurrencyCode } from "@/lib/currency";
 import type { PersonId } from "@/lib/domain/ids";
@@ -8,8 +10,6 @@ import type { Cents } from "@/lib/money";
 import type { PersonView } from "@/lib/people/person";
 import { loadAskAccount } from "./account";
 import { isAskConfigured } from "./config";
-import { getAskQuota } from "./quota";
-import type { AskQuota } from "./result";
 
 const SEED_PEOPLE = 2;
 
@@ -33,14 +33,14 @@ export interface AskScopeGroup extends BillGroupRef {
 
 export interface AskStartView {
   readonly configured: boolean;
-  readonly quota: AskQuota;
+  readonly quota: Allowance;
   readonly groups: readonly AskScopeGroup[];
   readonly scope: AskScopeGroup | null;
   readonly seeds: AskSeeds;
 }
 
 export async function getAskStart(you: PersonId, groupId: string | null, timeZone: string): Promise<AskStartView | null> {
-  const [account, quota] = await Promise.all([loadAskAccount(you, groupId), getAskQuota(you, timeZone)]);
+  const [account, quota] = await Promise.all([loadAskAccount(you, groupId), getAllowance(you, timeZone)]);
   if (!account) return null;
   const pool = account.scope ? [account.scope] : account.groups;
   const ledger = await loadGroupLedgers(pool.map((group) => group.id));
@@ -82,9 +82,9 @@ export async function getAskStart(you: PersonId, groupId: string | null, timeZon
 
 export interface AskBarView {
   readonly configured: boolean;
-  readonly quota: AskQuota;
+  readonly quota: Allowance;
 }
 
 export async function getAskBar(you: PersonId, timeZone: string): Promise<AskBarView> {
-  return { configured: isAskConfigured(), quota: await getAskQuota(you, timeZone) };
+  return { configured: isAskConfigured(), quota: await getAllowance(you, timeZone) };
 }

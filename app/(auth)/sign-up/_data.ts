@@ -4,11 +4,11 @@ export const signUpCopy = {
   metaTitle: "Create your account",
   form: {
     title: "Create your account",
-    subtitle: "Free for 3 AI extractions a day. No card needed.",
+    subtitle: "Free to use. No card needed.",
   },
   done: {
-    title: (firstName: string) => `You're in, ${firstName}.`,
-    subtitle: "Add your first bill whenever you're ready.",
+    title: (firstName: string) => `You’re in, ${firstName}.`,
+    subtitle: "Add your first bill whenever you’re ready.",
     cta: "Go to Bruno",
   },
   fields: {
@@ -25,8 +25,8 @@ export const signUpCopy = {
     taken: "That username is taken. Try another.",
   },
   submit: "Create account",
-  legal: { prefix: "By continuing you agree to the", terms: "terms", and: "and", privacy: "privacy policy" },
+  legal: { prefix: "By creating an account you agree to the", terms: "terms", and: "and", privacy: "privacy policy" },
   switchPrompt: "Already have an account?",
   switchCta: "Sign in",
-  footer: "Friends don't need an account to claim their items.",
+  footer: "Friends don’t need an account to claim their items.",
 } as const;

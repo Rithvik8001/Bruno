@@ -17,7 +17,7 @@ export const claimCopy = {
   square: "All square",
   squareSub: "Nothing left to settle",
   settled: "Settled",
-  forBills: (titles: readonly string[]) => (titles.length > 0 ? `For ${titles.join(", ").toLowerCase()}` : "Across the group"),
+  forBills: (titles: readonly string[]) => (titles.length > 0 ? `For ${titles.join(", ")}` : "Across the group"),
   history: "History",
   historySub: (claims: number, payments: number) =>
     [claims > 0 && plural(claims, "claim", "claims"), payments > 0 && plural(payments, "payment", "payments")]
@@ -28,22 +28,22 @@ export const claimCopy = {
   oneUse: "This link is just for you and works once.",
   signIn: "Sign in to take over",
   signUp: "Create an account",
-  comeBack: "We'll bring you straight back here.",
+  comeBack: "You’ll come straight back here.",
   done: {
-    title: (group: string) => `You're in ${group}`,
+    title: (group: string) => `You’re in ${group}`,
     body: (guest: string, by: string | null) =>
       `${guest}'s spot is yours now. ${by ? `${by} and the group` : "The group"} see you instead.`,
     moved: (bills: number, claims: number, payments: number) =>
       `${[plural(bills, "bill", "bills"), plural(claims, "claim", "claims"), payments > 0 && plural(payments, "payment", "payments")].filter(Boolean).join(", ")} ${bills + claims + payments === 1 ? "is" : "are"} now under your name`,
     owes: (name: string | null, amount: string) => `You owe ${name ?? "the group"} ${amount}`,
     owed: (name: string | null, amount: string) => `${name ?? "The group"} owes you ${amount}`,
-    square: "You're all square with the group",
+    square: "You’re all square with the group",
     gone: (guest: string) => `${guest} is gone from the member list`,
     open: (group: string) => `Open ${group}`,
   },
   alreadyMember: {
-    title: (group: string) => `You've been in ${group} before`,
-    body: "So this spot can't be merged into your account. Ask a member to remove the guest instead.",
+    title: (group: string) => `You’ve been in ${group} before`,
+    body: "So this spot can’t be merged into your account. Ask a member to remove the guest instead.",
     howTitle: "How to sort it",
     steps: (by: string | null, guest: string) => [
       `Ask ${by ?? "anyone in the group"} to open Members.`,
@@ -53,8 +53,8 @@ export const claimCopy = {
     cta: (group: string) => `Open ${group}`,
   },
   invalid: {
-    title: "This link doesn't work",
-    body: "No harm done. Guest links are private and only last a little while, so ask for a fresh one.",
+    title: "This link doesn’t work",
+    body: "Guest links are private and only last a little while, so ask for a fresh one.",
     howTitle: "Ask for a new link",
     steps: [
       "Message whoever added you to the group.",

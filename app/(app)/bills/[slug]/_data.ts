@@ -20,10 +20,10 @@ export const billDetailCopy = {
   actions: {
     share: "Share summary",
     shared: "Summary copied",
-    shareFailed: "Couldn't copy. Try again.",
+    shareFailed: "Unable to copy. Try again.",
     edit: "Edit bill",
     more: "More options",
-    menuBody: "Changes update everyone's balances straight away.",
+    menuBody: "Changes update everyone’s balances straight away.",
     changeSplit: "Change the split",
     reopen: "Reopen claiming",
     reopened: "Claiming is open again. Send the link round.",
@@ -32,15 +32,15 @@ export const billDetailCopy = {
   },
   deleteSheet: {
     title: "Delete this bill?",
-    body: "It drops out of everyone's balances. The group keeps a note that it was deleted.",
+    body: "It drops out of everyone’s balances. The group keeps a note that it was deleted.",
     confirm: "Delete bill",
     cancel: "Keep it",
     done: (title: string) => `${title} deleted`,
   },
   meta: (day: string, payer: string) => `${day} · paid by ${payer}`,
   status: {
-    open: (n: number, payer: string) => `Open · ${n} owe${n === 1 ? "s" : ""} ${payer}`,
-    overdue: (n: number, payer: string) => `Overdue · ${n} owe${n === 1 ? "s" : ""} ${payer}`,
+    open: (n: number, payer: string) => (n === 1 ? `Open · 1 owes ${payer}` : `Open · ${n} owe ${payer}`),
+    overdue: (n: number, payer: string) => (n === 1 ? `Overdue · 1 owes ${payer}` : `Overdue · ${n} owe ${payer}`),
     settled: "Settled",
   },
   people: {

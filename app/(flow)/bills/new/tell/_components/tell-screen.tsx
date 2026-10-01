@@ -5,25 +5,24 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { PopIn } from "@/app/(flow)/_components/pop-in";
 import { Icon } from "@/components/icons/icon";
 import { StepSwap } from "@/components/motion/rise";
+import { AllowanceChip } from "@/components/patterns/allowance-chip";
 import { BackLink } from "@/components/patterns/back-link";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { AI_RETRY_GAP_MS, type Allowance } from "@/lib/ai/rules";
 import { routes } from "@/lib/auth/rules";
+import { browserTimeZone } from "@/lib/browser-time-zone";
 import type { PersonId } from "@/lib/domain/ids";
 import type { BillComposer, GroupSummary } from "@/lib/groups/queries";
+import { useAllowance } from "@/lib/hooks/use-allowance";
 import { useSpeechRecognition } from "@/lib/hooks/use-speech-recognition";
 import { useCooldown } from "@/lib/hooks/use-cooldown";
 import { useTimeline } from "@/lib/hooks/use-timeline";
 import { buzz, HAPTICS } from "@/lib/motion/haptics";
 import { firstNameOf } from "@/lib/people/defaults";
-import { scanQuota } from "@/lib/scans/actions";
-import type { ScanQuota } from "@/lib/scans/quota";
 import { answerTell, discardTell, draftBill } from "@/lib/tell/actions";
-import { AI_RETRY_GAP_MS } from "@/lib/ai/rules";
 import { TELL_TEXT_MAX } from "@/lib/tell/rules";
 import { GroupChips } from "../../_components/group-chips";
-import { QuotaChip } from "../../_components/quota-chip";
-import { browserTimeZone } from "../../_lib/upload";
 import { tellCopy } from "../_data";
 import { EMPTY_CLARIFY, toAnswers, type ClarifyState } from "../_lib/clarify";
 import { REVEAL_HOLD_MS, TELL_CREEP, TELL_REVEAL, type TellFailureKind, type TellPhase } from "../_lib/phase";
@@ -42,7 +41,7 @@ export interface TellScreenProps {
   composer: BillComposer;
   groups: readonly GroupSummary[];
   you: PersonId;
-  quota: ScanQuota;
+  quota: Allowance;
   initialText: string;
 }
 
@@ -52,7 +51,7 @@ export function TellScreen({ composer, groups, you, quota: initialQuota, initial
   const { toast } = useToast();
   const [text, setText] = useState(initialText);
   const [phase, setPhase] = useState<TellPhase>({ kind: "compose", failure: null });
-  const [quota, setQuota] = useState(initialQuota);
+  const { quota, setQuota, refresh: refreshQuota } = useAllowance(initialQuota);
   const [focused, setFocused] = useState(false);
   const [clarify, setClarify] = useState<ClarifyState>(EMPTY_CLARIFY);
   const [navigating, startNavigation] = useTransition();
@@ -75,11 +74,6 @@ export function TellScreen({ composer, groups, you, quota: initialQuota, initial
   const over = text.length > TELL_TEXT_MAX;
   const canDraft = !empty && !over && !listening && !cooldown.active;
   const failure = phase.kind === "compose" ? phase.failure : null;
-
-  const refreshQuota = useCallback(async () => {
-    const result = await scanQuota({ timeZone: browserTimeZone() }).catch(() => null);
-    if (result?.ok) setQuota(result.data);
-  }, []);
 
   const toCompose = (next: TellFailureKind | null) => {
     creep.reset();
@@ -123,7 +117,7 @@ export function TellScreen({ composer, groups, you, quota: initialQuota, initial
       toCompose(null);
       return;
     }
-    setQuota((current) => ({ ...current, used: current.used + 1, left: Math.max(0, current.left - 1) }));
+    setQuota(result.data.quota);
     setPhase({ kind: "revealing", drafted: result.data });
     reveal.start();
   };
@@ -182,7 +176,7 @@ export function TellScreen({ composer, groups, you, quota: initialQuota, initial
           <BackLink label={copy.backToCompose} onClick={cancel} />
         )}
         <PopIn popKey={quota.left} className="min-w-0">
-          <QuotaChip quota={quota} />
+          <AllowanceChip quota={quota} look="dot" />
         </PopIn>
       </div>
 

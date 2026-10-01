@@ -41,7 +41,7 @@ export const groupsCopy = {
   title: "Groups",
   newGroup: "New group",
   empty: {
-    title: "No groups yet.",
+    title: "No groups yet",
     body: "A group keeps a running tab for the people you split with most.",
     cta: "Create your first group",
   },

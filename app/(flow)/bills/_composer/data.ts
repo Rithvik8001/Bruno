@@ -95,7 +95,7 @@ export const composerCopy = {
       guesses: (n: number) => `${plural(n, "guess", "guesses")} to check`,
     },
     check: {
-      ok: "Looks good. Split when you're ready.",
+      ok: "Looks good. Split when you’re ready.",
       noItems: "Add at least one priced item.",
       noTitle: "Say where this was.",
       unnamed: (n: number) => `Name ${n === 1 ? "the item" : `${n} items`} with a price.`,
@@ -147,7 +147,7 @@ export const composerCopy = {
     extras: (discounted: boolean) => (discounted ? "Tax, tip and discount" : "Tax and tip"),
     extrasShare: (name: string) => `${name === "You" ? "Your" : `${name}'s`} share of it`,
     unclaimed: (n: number, total: string) => `${n} unclaimed · ${total}`,
-    unclaimedBody: "Keep assigning, or split what's left between everyone.",
+    unclaimedBody: "Keep assigning, or split what’s left between everyone.",
     splitRest: "Split the rest",
     editor: { title: "Need percentages or fixed amounts?", body: "Open the split editor." },
     live: { title: "Let everyone claim", body: "Send a link and they tap their own items.", saving: "Saving the bill…" },
@@ -159,13 +159,13 @@ export const composerCopy = {
   split: {
     back: "Who had what",
     title: "Split the bill",
-    body: (total: string, place: string) => `${total} at ${place}, including tax and tip. Pick how, then nudge anyone's share.`,
+    body: (total: string, place: string) => `${total} at ${place}, including tax and tip. Pick how, then nudge anyone’s share.`,
     methodsLabel: "Split method",
     methods: { EVEN: "Evenly", SHARES: "Shares", PERCENT: "Percent", AMOUNT: "Amount" },
     hints: {
       EVEN: "Everyone in the split pays the same. Tap an avatar to leave someone out.",
       SHARES: "Weight people — 2 shares pays twice as much as 1. Good for couples or big eaters.",
-      PERCENT: "Percentages must add up to 100. Bruno tells you what's left.",
+      PERCENT: "Percentages must add up to 100. Bruno tells you what’s left.",
       AMOUNT: "Type exact amounts. The remainder shows below until it hits zero.",
     },
     toggle: (name: string) => `Include ${name}`,
@@ -183,7 +183,7 @@ export const composerCopy = {
       nobody: "No one in",
     },
     check: {
-      ok: (people: number, total: string) => `Everything's assigned. ${plural(people, "person", "people")}, ${total}.`,
+      ok: (people: number, total: string) => `Everything’s assigned. ${plural(people, "person", "people")}, ${total}.`,
       nobody: "Tap an avatar to add someone to the split.",
       percentLeft: (sum: number, left: number) => `Percentages add up to ${sum}%. ${left}% still unassigned.`,
       percentOver: (sum: number, over: number) => `Percentages add up to ${sum}%. ${over}% too much.`,

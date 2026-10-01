@@ -1,11 +1,11 @@
 export const actionErrors = {
   invalid: "Check the highlighted fields.",
   unauthorized: "Sign in to keep going.",
-  forbidden: "You don't have permission to do that.",
-  notFound: "We couldn't find that.",
-  conflict: "That can't be done right now.",
-  rateLimited: "That's a lot at once. Give it a minute and try again.",
-  unknown: "Something went wrong. Please try again.",
+  forbidden: "You don’t have permission to do that. Ask a group admin.",
+  notFound: "That isn’t here any more. Go back and try again.",
+  conflict: "Unable to do that right now. Try again in a moment.",
+  rateLimited: "That’s a lot at once. Try again in a minute.",
+  unknown: "Unable to finish that. Check your connection and try again.",
 } as const;
 
 export type ActionErrorCode = keyof typeof actionErrors;

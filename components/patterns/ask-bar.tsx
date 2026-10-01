@@ -3,7 +3,6 @@
 import { useSyncExternalStore } from "react";
 import { Icon } from "@/components/icons/icon";
 import { PressLink } from "@/components/motion/motion-link";
-import { buttonVariants } from "@/components/ui/button-variants";
 import { cn } from "@/lib/utils/cn";
 
 export interface AskBarProps {
@@ -12,7 +11,7 @@ export interface AskBarProps {
   title: string;
   example: string;
   micLabel: string;
-  locked: { readonly title: string; readonly body: string; readonly action: string; readonly href: string } | null;
+  locked: { readonly title: string; readonly body: string } | null;
   className?: string;
 }
 
@@ -23,7 +22,7 @@ export function AskBar({ href, micHref, title, example, micLabel, locked, classN
   const listens = useSyncExternalStore(subscribe, canListen, () => false);
   if (locked) {
     return (
-      <div className={cn("flex min-h-15 items-center gap-3 rounded-card bg-surface py-1.5 pr-1.5 pl-4", className)}>
+      <div className={cn("flex min-h-15 items-center gap-3 rounded-card bg-surface py-1.5 pr-4 pl-4", className)}>
         <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-control bg-surface-2 text-muted">
           <Icon name="lock" size={16} strokeWidth={2} />
         </span>
@@ -31,9 +30,6 @@ export function AskBar({ href, micHref, title, example, micLabel, locked, classN
           <span className="font-semibold text-text-2">{locked.title}</span>
           <span className="text-footnote text-muted">{locked.body}</span>
         </span>
-        <PressLink href={locked.href} className={cn(buttonVariants({ variant: "elevated", size: "md" }), "h-11 shrink-0 px-3.5 text-small")}>
-          {locked.action}
-        </PressLink>
       </div>
     );
   }

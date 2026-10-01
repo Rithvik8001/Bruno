@@ -1,8 +1,14 @@
 "use server";
 
 import { defineAction } from "@/lib/actions/action";
-import { aiMessages } from "@/lib/ai/messages";
-import { AI_FREE_MISSES, AI_UPSTREAM_FAILURES } from "@/lib/ai/rules";
+import {
+  checkAssist,
+  getAllowance,
+  localDayWindow,
+  reserveAssist,
+} from "@/lib/ai/allowance";
+import { aiMessages, allowanceCopy } from "@/lib/ai/messages";
+import { AI_UPSTREAM_FAILURES, type Allowance } from "@/lib/ai/rules";
 import { aiCooldown, breakerCooldown } from "@/lib/ai/throttle";
 import {
   actionFail,
@@ -23,21 +29,8 @@ import { failureMessage, type ScanFailure } from "./messages";
 import { scanMessages } from "./messages";
 import { normalizeExtraction } from "./normalize";
 import type { ScanResult } from "./result";
-import {
-  countAttempts,
-  countUsed,
-  dailyLimit,
-  localDayWindow,
-  quotaOf,
-  type ScanQuota,
-} from "./quota";
 import { maxBytesFor, mimeOfFormat } from "./rules";
-import {
-  extractScanSchema,
-  quotaSchema,
-  scanRefSchema,
-  startScanSchema,
-} from "./schema";
+import { extractScanSchema, scanRefSchema, startScanSchema } from "./schema";
 import {
   deleteObject,
   fetchForModel,
@@ -69,6 +62,11 @@ export interface ScanSummary {
   readonly currency: CurrencyCode;
 }
 
+export interface ScanExtracted {
+  readonly summary: ScanSummary;
+  readonly quota: Allowance;
+}
+
 async function markFailed(scanId: string, failure: ScanFailure): Promise<void> {
   await db.receiptScan.update({
     where: { id: scanId },
@@ -96,16 +94,14 @@ export const createScanUpload = defineAction(
         scanMessages.tooLarge(max / MIB),
       );
 
-    const plan = await db.person.findUniqueOrThrow({
-      where: { id: person.id },
-      select: { plan: true },
-    });
-    const limit = dailyLimit(plan.plan);
-    const day = localDayWindow(timeZone);
-    const used = await countUsed(db, person.id, day);
-    if (used >= limit) return actionFail("conflict", scanMessages.quota(limit));
-    if ((await countAttempts(db, person.id, day)) >= limit + AI_FREE_MISSES)
-      return actionFail("conflict", aiMessages.tooManyTries);
+    const assist = await checkAssist(db, person.id, localDayWindow(timeZone));
+    if (!assist.ok)
+      return actionFail(
+        "conflict",
+        assist.reason === "quota"
+          ? allowanceCopy.refused(assist.limit)
+          : aiMessages.tooManyTries,
+      );
 
     const objectKey = scanPublicId(person.id);
     const scan = await db.receiptScan.create({
@@ -132,18 +128,21 @@ export const createScanUpload = defineAction(
 
 export const extractScan = defineAction(
   extractScanSchema,
-  async ({ scanId, timeZone }, { person }) => {
+  async ({ scanId }, { person }) => {
     const scan = await db.receiptScan.findFirst({
       where: { id: scanId, personId: person.id, status: "PENDING" },
       select: {
         id: true,
         objectKey: true,
         contentType: true,
+        timeZone: true,
         group: { select: { currency: true } },
-        person: { select: { plan: true } },
       },
     });
     if (!scan) return actionFail("notFound", scanMessages.gone);
+    const verdict = await consumeRate("scanExtract", person.id);
+    if (!verdict.ok)
+      return actionRateLimited(verdict.retryAfter, scanMessages.rateLimited);
     if (!isCurrencyCode(scan.group.currency)) return actionFail("conflict");
     const currency = scan.group.currency;
     const contentType = scan.contentType;
@@ -175,24 +174,21 @@ export const extractScan = defineAction(
     if (cooling !== null)
       return actionRateLimited(cooling, aiMessages.cooling(cooling));
 
-    const limit = dailyLimit(scan.person.plan);
-    const window = localDayWindow(timeZone);
+    const window = localDayWindow(scan.timeZone);
     const reserved = await db.$transaction(async (tx) => {
-      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${person.id}))`;
-      if ((await countUsed(tx, person.id, window)) >= limit) return "quota";
-      if ((await countAttempts(tx, person.id, window)) >= limit + AI_FREE_MISSES)
-        return "tries";
+      const assist = await reserveAssist(tx, person.id, window);
+      if (!assist.ok) return assist;
       await tx.receiptScan.update({
         where: { id: scan.id },
         data: { status: "EXTRACTING", startedAt: new Date() },
       });
-      return "ok";
+      return assist;
     });
-    if (reserved !== "ok")
+    if (!reserved.ok)
       return actionFail(
         "conflict",
-        reserved === "quota"
-          ? scanMessages.quota(limit)
+        reserved.reason === "quota"
+          ? allowanceCopy.refused(reserved.limit)
           : aiMessages.tooManyTries,
       );
 
@@ -270,13 +266,16 @@ export const extractScan = defineAction(
             (result.tax ?? 0) +
             (result.tip ?? 0) -
             (result.discount ?? 0)) as Cents);
-    return actionOk<ScanSummary>({
-      scanId: scan.id,
-      itemCount: result.items.length,
-      total,
-      flaggedCount: result.flaggedCount,
-      merchant: result.merchant,
-      currency,
+    return actionOk<ScanExtracted>({
+      summary: {
+        scanId: scan.id,
+        itemCount: result.items.length,
+        total,
+        flaggedCount: result.flaggedCount,
+        merchant: result.merchant,
+        currency,
+      },
+      quota: await getAllowance(person.id, scan.timeZone),
     });
   },
 );
@@ -299,17 +298,5 @@ export const discardScan = defineAction(
     });
     await deleteObject(scan.objectKey).catch(() => undefined);
     return actionOk(null);
-  },
-);
-
-export const scanQuota = defineAction(
-  quotaSchema,
-  async ({ timeZone }, { person }) => {
-    const plan = await db.person.findUniqueOrThrow({
-      where: { id: person.id },
-      select: { plan: true },
-    });
-    const used = await countUsed(db, person.id, localDayWindow(timeZone));
-    return actionOk<ScanQuota>(quotaOf(used, plan.plan));
   },
 );

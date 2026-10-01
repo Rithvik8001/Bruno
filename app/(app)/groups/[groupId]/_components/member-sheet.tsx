@@ -81,7 +81,7 @@ export function MemberSheet({ groupId, target, canManage, onClose }: MemberSheet
                   : run(() => removeMember({ groupId, personId: target.personId }))
               }
             >
-              {copy.confirm}
+              {confirm === "leave" ? copy.confirmLeaveCta : copy.confirmRemoveCta}
             </Button>
             <Button variant="tertiary" fullWidth className="h-11" onClick={() => setConfirm(null)}>
               {copy.cancel}

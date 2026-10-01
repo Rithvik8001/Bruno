@@ -1,5 +1,7 @@
 import "server-only";
-import { aiMessages } from "@/lib/ai/messages";
+import { checkAssist, countUsed, dailyLimit, localDayWindow, lockAssists, type DayWindow } from "@/lib/ai/allowance";
+import { aiMessages, allowanceCopy } from "@/lib/ai/messages";
+import { allowanceOf, type Allowance } from "@/lib/ai/rules";
 import { aiCooldown, breakerCooldown } from "@/lib/ai/throttle";
 import type { ActionError } from "@/lib/actions/errors";
 import { routes } from "@/lib/auth/rules";
@@ -8,16 +10,15 @@ import type { PersonId } from "@/lib/domain/ids";
 import type { Prisma } from "@/lib/generated/prisma/client";
 import type { AskStatus, Plan } from "@/lib/generated/prisma/enums";
 import { consumeRate } from "@/lib/rate-limit/limiter";
-import { localDayWindow, type DayWindow } from "@/lib/scans/quota";
 import { buildAskContext, loadAskAccount, type AskAccount } from "./account";
 import { runAsk, type AskUsage } from "./agent";
 import { isAskConfigured } from "./config";
 import { describeCard } from "./describe";
 import type { AskTurn } from "./instructions";
 import { askMessages } from "./messages";
-import { askDeclineCooldown, askLimit, askQuotaOf, countAskAttempts, countAsked, isAsking } from "./quota";
+import { askDeclineCooldown, isAsking } from "./quota";
 import { ASK_PERIODS, type AskPeriod, type AskPick, type AskReply, type AskStep, type AskStreamEvent } from "./result";
-import { ASK_CONTEXT_TURNS, ASK_FREE_MISSES } from "./rules";
+import { ASK_CONTEXT_TURNS } from "./rules";
 import { askHasSubstance, type AskValues } from "./schema";
 import { maybeSweepAsk } from "./sweep";
 import { periodRange } from "./tools";
@@ -90,12 +91,14 @@ async function close(id: string, status: AskStatus, data: { failure?: string; ou
   });
 }
 
-async function quotaNow(personId: string, plan: Plan, window: DayWindow) {
-  return askQuotaOf(await countAsked(db, personId, window), plan);
+async function quotaNow(personId: string, plan: Plan, window: DayWindow): Promise<Allowance> {
+  return allowanceOf(await countUsed(db, personId, window), dailyLimit(plan), plan);
 }
 
 export async function startAsk(input: AskValues, person: { readonly id: PersonId }): Promise<AskStart> {
   if (!isAskConfigured()) return refuse(409, { code: "conflict", message: askMessages.unavailable });
+  const verdict = await consumeRate("askStart", person.id);
+  if (!verdict.ok) return refuse(429, { code: "rateLimited", message: askMessages.rateLimited, retryAfter: verdict.retryAfter });
   const account = await loadAskAccount(person.id, input.groupId);
   if (!account) return refuse(403, { code: "forbidden", message: askMessages.notMember });
 
@@ -124,19 +127,16 @@ export async function startAsk(input: AskValues, person: { readonly id: PersonId
     return { ok: true, run: async () => ({ t: "done", reply, quota, questionId: "", threadId }) };
   }
 
-  const verdict = await consumeRate("askStart", person.id);
-  if (!verdict.ok) return refuse(429, { code: "rateLimited", message: askMessages.rateLimited, retryAfter: verdict.retryAfter });
   const cooling = await aiCooldown(person.id);
   if (cooling !== null) return refuse(429, { code: "rateLimited", message: aiMessages.cooling(cooling), retryAfter: cooling });
   const offTopic = await askDeclineCooldown(person.id);
   if (offTopic !== null) return refuse(429, { code: "rateLimited", message: askMessages.offTopic(offTopic), retryAfter: offTopic });
 
-  const limit = askLimit(plan);
   const reserved = await db.$transaction(async (tx) => {
-    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${person.id}))`;
+    await lockAssists(tx, person.id);
     if (await isAsking(tx, person.id)) return { ok: false as const, reason: "busy" as const };
-    if ((await countAsked(tx, person.id, window)) >= limit) return { ok: false as const, reason: "quota" as const };
-    if ((await countAskAttempts(tx, person.id, window)) >= limit + ASK_FREE_MISSES) return { ok: false as const, reason: "tries" as const };
+    const assist = await checkAssist(tx, person.id, window);
+    if (!assist.ok) return assist;
     const created = await tx.askQuestion.create({
       data: { personId: person.id, threadId, groupId: account.scope?.id ?? null, text: question, timeZone: input.timeZone, status: "ASKING", startedAt: new Date() },
       select: { id: true },
@@ -144,7 +144,7 @@ export async function startAsk(input: AskValues, person: { readonly id: PersonId
     return { ok: true as const, id: created.id };
   });
   if (!reserved.ok) {
-    const message = reserved.reason === "quota" ? askMessages.quota(limit) : reserved.reason === "busy" ? askMessages.busy : askMessages.tooManyTries;
+    const message = reserved.reason === "busy" ? askMessages.busy : reserved.reason === "quota" ? allowanceCopy.refused(reserved.limit) : askMessages.tooManyTries;
     return refuse(409, { code: "conflict", message });
   }
   const questionId = reserved.id;
@@ -176,7 +176,7 @@ export async function startAsk(input: AskValues, person: { readonly id: PersonId
           return {
             t: "error",
             code: "unknown",
-            message: busy ? aiMessages.busy : askMessages[outcome.failure],
+            message: busy ? askMessages.trouble : askMessages[outcome.failure],
             retryAfter: null,
             quota: await quotaNow(person.id, plan, window),
           };

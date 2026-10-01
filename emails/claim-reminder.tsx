@@ -20,7 +20,7 @@ export const claimReminderSubject = ({ senderName, billTitle }: Pick<ClaimRemind
   `${senderName} is waiting on you — claim your ${billTitle} items`;
 
 const progressLine = ({ senderName, claimedPeople, totalPeople }: ClaimReminderEmailProps) =>
-  `${senderName} added the receipt. ${claimedPeople} of ${totalPeople} people have claimed, and Bruno can't settle until everyone's in.`;
+  `${senderName} added the receipt. ${claimedPeople} of ${totalPeople} people have claimed, and the bill can’t be split until everyone’s claimed.`;
 
 export function claimReminderText(props: ClaimReminderEmailProps): string {
   const items = props.unclaimed.map((item) => `- ${item.name} · ${item.price}`).join("\n");
@@ -63,7 +63,7 @@ export default function ClaimReminderEmail(props: ClaimReminderEmailProps) {
       {unclaimed.length > 0 && (
         <Section style={{ backgroundColor: emailTokens.surface, borderRadius: 20, padding: 24, margin: "0 0 28px" }}>
           <Text style={{ margin: "0 0 4px", fontSize: 13, lineHeight: "18px", fontWeight: 500, color: emailTokens.muted }}>
-            STILL UNCLAIMED
+            Still unclaimed
           </Text>
           {unclaimed.map((item, index) => (
             <Row key={`${item.name}-${index}`}>
@@ -93,7 +93,7 @@ export default function ClaimReminderEmail(props: ClaimReminderEmailProps) {
           textDecoration: "none",
         }}
       >
-        Claim my items
+        Claim your items
       </Button>
       <Text style={{ margin: "24px 0 0", fontSize: 13, lineHeight: "20px", color: emailTokens.muted }}>
         You&apos;re a member of the group “{groupName}” on Bruno.

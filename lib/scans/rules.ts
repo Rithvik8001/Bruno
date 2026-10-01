@@ -1,15 +1,10 @@
 import { BILL_ITEMS_MAX } from "@/lib/bills/schema";
-import type { Plan } from "@/lib/generated/prisma/enums";
-
-export const SCAN_LIMITS = { FREE: 3, PRO: 50 } as const satisfies Record<
-  Plan,
-  number
->;
 
 const MIB = 1024 * 1024;
 
-export const SCAN_IMAGE_MAX_BYTES = 10 * MIB;
-export const SCAN_PDF_MAX_BYTES = 10 * MIB;
+export const SCAN_MAX_MB = 10;
+export const SCAN_IMAGE_MAX_BYTES = SCAN_MAX_MB * MIB;
+export const SCAN_PDF_MAX_BYTES = SCAN_MAX_MB * MIB;
 
 export const SCAN_MIME = {
   "image/jpeg": "jpg",
@@ -67,7 +62,7 @@ export function mimeOfFormat(format: string): ScanMime | null {
 }
 export const FLAG_CONFIDENCE = 0.75;
 export const MAX_GUESSES = 3;
-export const EXTRACT_STALE_MS = 3 * 60 * 1000;
+export const EXTRACT_STALE_MS = 90_000;
 export const EXTRACT_TIMEOUT_MS = 45_000;
 export const EXTRACT_MAX_OUTPUT_TOKENS = 8000;
 export const DUPLICATE_WINDOW_DAYS = 3;

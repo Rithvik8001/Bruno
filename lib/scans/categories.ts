@@ -19,8 +19,8 @@ export const categoryLabel = {
   SIDE: "Side",
   DRINK: "Drinks",
   DESSERT: "Dessert",
-  GROCERY: "Grocery",
-  TRANSPORT: "Transport",
+  GROCERY: "Groceries",
+  TRANSPORT: "Travel",
   HOUSEHOLD: "Household",
   OTHER: "Other",
 } as const satisfies Record<ItemCategory, string>;

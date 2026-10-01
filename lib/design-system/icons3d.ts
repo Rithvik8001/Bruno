@@ -111,7 +111,7 @@ export const momentIcons = {
   phone: "Device",
   memo: "Type it in",
   warning: "Error",
-  sparkles: "AI · success",
+  sparkles: "Assist · success",
   trophy: "Milestone",
   party: "Welcome",
   camera: "Camera",

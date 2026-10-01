@@ -1,6 +1,5 @@
 import type { GhostLine, ScanLine, ScanRow } from "@/components/patterns/receipt-scan";
 import type { ScanSummary } from "@/lib/scans/actions";
-import type { ScanQuota } from "@/lib/scans/quota";
 
 export type ScanPhase =
   | { readonly kind: "idle" }
@@ -39,8 +38,4 @@ export function previewRows(lines: readonly ScanLine[]): { rows: ScanRow[]; over
   const rows = lines.slice(0, GHOST_COUNT);
   const ghosts = ghostLines(GHOST_COUNT - rows.length).slice(0);
   return { rows: rows.length > 0 ? rows : ghosts, overflow: Math.max(0, lines.length - rows.length) };
-}
-
-export function quotaExhausted(quota: ScanQuota): boolean {
-  return quota.left <= 0;
 }

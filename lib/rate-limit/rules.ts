@@ -48,6 +48,16 @@ export const rateRules = {
       { seconds: HOUR, max: 80 },
     ],
   },
+  scanExtract: {
+    person: [
+      { seconds: MINUTE, max: 6 },
+      { seconds: HOUR, max: 25 },
+    ],
+    ip: [
+      { seconds: MINUTE, max: 12 },
+      { seconds: HOUR, max: 80 },
+    ],
+  },
   tellStart: {
     person: [
       { seconds: MINUTE, max: 4 },

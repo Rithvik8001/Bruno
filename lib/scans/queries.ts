@@ -1,26 +1,21 @@
 import "server-only";
+import { getAllowance } from "@/lib/ai/allowance";
+import type { Allowance } from "@/lib/ai/rules";
 import { db } from "@/lib/db";
 import { groupId as toGroupId, type GroupId, type PersonId } from "@/lib/domain/ids";
 import { isTellConfigured } from "@/lib/tell/config";
 import { isScanConfigured } from "./config";
 import { findDuplicate, type DuplicateBill } from "./duplicates";
-import { countUsed, localDayWindow, quotaOf, type ScanQuota } from "./quota";
 import { parseScanResult, type ScanResult } from "./result";
 
 export interface ScanAvailability {
   readonly configured: boolean;
   readonly tellConfigured: boolean;
-  readonly quota: ScanQuota;
-}
-
-export async function getScanQuota(personId: PersonId, timeZone: string): Promise<ScanQuota> {
-  const person = await db.person.findUniqueOrThrow({ where: { id: personId }, select: { plan: true } });
-  const used = await countUsed(db, personId, localDayWindow(timeZone));
-  return quotaOf(used, person.plan);
+  readonly quota: Allowance;
 }
 
 export async function getScanAvailability(personId: PersonId, timeZone: string): Promise<ScanAvailability> {
-  return { configured: isScanConfigured(), tellConfigured: isTellConfigured(), quota: await getScanQuota(personId, timeZone) };
+  return { configured: isScanConfigured(), tellConfigured: isTellConfigured(), quota: await getAllowance(personId, timeZone) };
 }
 
 export interface ScanReview {

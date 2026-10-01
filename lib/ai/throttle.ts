@@ -1,6 +1,12 @@
 import "server-only";
 import { db } from "@/lib/db";
-import { AI_BREAKER_FAILS, AI_BREAKER_WINDOW_MS, AI_GAP_LOOKBACK, AI_UPSTREAM_FAILURES, retryGapMs } from "./rules";
+import {
+  AI_BREAKER_FAILS,
+  AI_BREAKER_WINDOW_MS,
+  AI_GAP_LOOKBACK,
+  AI_UPSTREAM_FAILURES,
+  retryGapMs,
+} from "./rules";
 
 interface Attempt {
   readonly failed: boolean;
@@ -10,11 +16,16 @@ interface Attempt {
 
 const upstream: readonly string[] = AI_UPSTREAM_FAILURES;
 
-const isUpstream = (attempt: Attempt) => attempt.failed && attempt.failure !== null && upstream.includes(attempt.failure);
+const isUpstream = (attempt: Attempt) =>
+  attempt.failed &&
+  attempt.failure !== null &&
+  upstream.includes(attempt.failure);
 
-const secondsUntil = (until: number, now: Date) => Math.max(1, Math.ceil((until - now.getTime()) / 1000));
+const secondsUntil = (until: number, now: Date) =>
+  Math.max(1, Math.ceil((until - now.getTime()) / 1000));
 
-const newestFirst = (a: Attempt, b: Attempt) => (b.completedAt?.getTime() ?? 0) - (a.completedAt?.getTime() ?? 0);
+const newestFirst = (a: Attempt, b: Attempt) =>
+  (b.completedAt?.getTime() ?? 0) - (a.completedAt?.getTime() ?? 0);
 
 async function recentAttempts(personId: string): Promise<Attempt[]> {
   const select = { status: true, failure: true, completedAt: true } as const;
@@ -27,15 +38,25 @@ async function recentAttempts(personId: string): Promise<Attempt[]> {
   const [scans, drafts, questions] = await Promise.all([
     db.receiptScan.findMany(page),
     db.tellDraft.findMany(page),
-    db.askQuestion.findMany({ ...page, where: { ...page.where, status: { not: "CANCELLED" } } }),
+    db.askQuestion.findMany({
+      ...page,
+      where: { ...page.where, status: { not: "CANCELLED" } },
+    }),
   ]);
   return [...scans, ...drafts, ...questions]
-    .map((row) => ({ failed: row.status === "FAILED", failure: row.failure, completedAt: row.completedAt }))
+    .map((row) => ({
+      failed: row.status === "FAILED",
+      failure: row.failure,
+      completedAt: row.completedAt,
+    }))
     .sort(newestFirst)
     .slice(0, AI_GAP_LOOKBACK);
 }
 
-export async function personCooldown(personId: string, now: Date = new Date()): Promise<number | null> {
+export async function personCooldown(
+  personId: string,
+  now: Date = new Date(),
+): Promise<number | null> {
   const recent = await recentAttempts(personId);
   const streak = recent.findIndex((attempt) => !isUpstream(attempt));
   const failures = streak === -1 ? recent.length : streak;
@@ -45,20 +66,37 @@ export async function personCooldown(personId: string, now: Date = new Date()): 
   return now.getTime() < until ? secondsUntil(until, now) : null;
 }
 
-export async function breakerCooldown(now: Date = new Date()): Promise<number | null> {
+export async function breakerCooldown(
+  now: Date = new Date(),
+): Promise<number | null> {
   const failure = { in: [...upstream] };
   const completedAt = { gt: new Date(now.getTime() - AI_BREAKER_WINDOW_MS) };
-  const page = { orderBy: { completedAt: "desc" }, take: AI_BREAKER_FAILS, select: { completedAt: true } } as const;
+  const page = {
+    orderBy: { completedAt: "desc" },
+    take: AI_BREAKER_FAILS,
+    select: { completedAt: true },
+  } as const;
   const [scans, drafts, questions] = await Promise.all([
-    db.receiptScan.findMany({ where: { status: "FAILED", failure, completedAt }, ...page }),
-    db.tellDraft.findMany({ where: { status: "FAILED", failure, completedAt }, ...page }),
-    db.askQuestion.findMany({ where: { status: "FAILED", failure, completedAt }, ...page }),
+    db.receiptScan.findMany({
+      where: { status: "FAILED", failure, completedAt },
+      ...page,
+    }),
+    db.tellDraft.findMany({
+      where: { status: "FAILED", failure, completedAt },
+      ...page,
+    }),
+    db.askQuestion.findMany({
+      where: { status: "FAILED", failure, completedAt },
+      ...page,
+    }),
   ]);
   const times = [...scans, ...drafts, ...questions]
     .flatMap((row) => (row.completedAt ? [row.completedAt.getTime()] : []))
     .sort((a, b) => b - a);
   const oldest = times[AI_BREAKER_FAILS - 1];
-  return oldest === undefined ? null : secondsUntil(oldest + AI_BREAKER_WINDOW_MS, now);
+  return oldest === undefined
+    ? null
+    : secondsUntil(oldest + AI_BREAKER_WINDOW_MS, now);
 }
 
 export async function aiCooldown(personId: string): Promise<number | null> {

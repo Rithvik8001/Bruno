@@ -1,3 +1,6 @@
+import { allowanceCopy, assistNames } from "@/lib/ai/messages";
+import { askMessages } from "@/lib/ask/messages";
+import { ASK_TEXT_MAX } from "@/lib/ask/rules";
 import type { SpendBucket } from "@/lib/bills/buckets";
 import type { PaymentMethod } from "@/lib/ledger/rules";
 
@@ -24,9 +27,9 @@ const bucketHint: Partial<Record<SpendBucket, string>> = {
 };
 
 export const askCopy = {
-  metaTitle: "Ask Bruno",
+  metaTitle: assistNames.ask,
   back: { home: "Home", group: (name: string) => name },
-  title: "Ask Bruno",
+  title: assistNames.ask,
   body: "Ask about your bills and balances. Bruno answers with the numbers and shows where they came from. It only reads, never changes a thing.",
   you: "You",
   youLower: "you",
@@ -39,18 +42,12 @@ export const askCopy = {
   allGroups: "all groups",
   yourGroups: "Your groups",
   scope: { label: "Looking at", all: "All groups", nav: "Groups to ask about" },
-  quota: {
-    left: (left: number, limit: number) => `${left} of ${limit} questions left`,
-    leftShort: (left: number, limit: number) => `${left} of ${limit} left`,
-    none: "No questions left today",
-    noneShort: "None left",
-  },
   field: {
     label: "Your question",
     placeholder: (example: string) => example,
     placeholderGroup: (group: string) => `Ask about ${group}`,
     placeholderFollow: "Ask a follow-up, like “and last month?”",
-    hint: { listening: "Listening. Tap stop when you’re done.", denied: "Mic is off", mic: "Type or tap the mic", type: "Type your question", cost: "Uses 1 question" },
+    hint: { listening: "Listening. Tap stop when you’re done.", denied: "Mic is off", mic: "Type or tap the mic", type: "Type your question", cost: allowanceCopy.cost },
     count: (length: number, max: number) => `${length} / ${max}`,
     dictate: "Ask out loud",
     micBlocked: "Microphone blocked",
@@ -60,7 +57,7 @@ export const askCopy = {
     ask: "Ask",
     wait: (seconds: number) => `${seconds}s`,
     denied: { title: "Bruno can’t hear you yet.", body: "Allow the microphone in your browser settings, or just type it.", retry: "Try again" },
-    over: { title: "That’s a lot of question.", body: "Keep it under 200 characters. One thing at a time works best." },
+    over: { title: "That question is too long", body: `Keep it under ${ASK_TEXT_MAX} characters. One thing at a time works best.` },
   },
   thread: { newQuestion: "New question", notSaved: "Nothing here is saved. Leave and it’s gone.", fold: "Fold this answer", open: "Open this answer" },
   suggest: {
@@ -84,7 +81,7 @@ export const askCopy = {
     reading: "Reading your question…",
     wrapping: "Putting the answer together…",
     balancePair: (a: string, b: string) => `Checking what ${a} and ${b} owe each other…`,
-    balanceOne: (a: string) => `Checking where ${a} with everyone…`,
+    balanceOne: (a: string) => `Checking where ${a} stands with everyone…`,
     balanceOneYou: "Checking where you stand with everyone…",
     balanceAll: (group: string | null) => `Adding up balances in ${group ?? "your groups"}…`,
     explain: (b: string, group: string | null) => (group ? `Going through every bill with ${b} in ${group}…` : `Going through every bill with ${b}…`),
@@ -106,29 +103,29 @@ export const askCopy = {
     allTimeSub: "Everything so far",
   },
   error: {
-    title: "Bruno lost the connection.",
-    body: "Your question’s still in the box. Give it a moment and try again. This one didn’t count.",
+    title: "Bruno lost the connection",
+    body: `Your question’s still in the box. Try again in a moment. ${allowanceCopy.notCounted}`,
     again: "Try again",
     againIn: (seconds: number) => `Try again in ${seconds}s`,
   },
   limit: {
-    title: (limit: number) => `That’s your ${limit} questions for today.`,
-    body: (pro: boolean, proLimit: number) =>
-      pro ? "These answers stay put until you leave. Bruno’s back at midnight." : `These answers stay put until you leave. Bruno’s back at midnight, or go Pro for ${proLimit} a day.`,
-    goPro: "Go Pro",
-    backHome: "Back to Home",
+    title: (limit: number) => `That’s today’s ${limit} assists`,
+    body: (pro: boolean, proLimit: number) => {
+      const base = "These answers stay put until you leave. Bruno’s back at midnight.";
+      return pro ? base : `${base} ${allowanceCopy.proSoon(proLimit)}`;
+    },
+    backHome: "Back to home",
     backGroup: (group: string) => `Back to ${group}`,
   },
   bar: {
-    title: "Ask Bruno",
+    title: assistNames.ask,
     titleGroup: (group: string) => `Ask about ${group}`,
     example: "“Where do I stand with everyone?”",
     exampleWith: (name: string) => `“What do I owe ${name} across all groups?”`,
     exampleGroup: "“What did this cost me?”",
     mic: "Ask out loud",
-    resting: "Ask Bruno is resting",
-    used: (limit: number) => `${plural(limit, "question")} used. Back at midnight.`,
-    goPro: "Go Pro",
+    resting: `${assistNames.ask} is back at midnight`,
+    used: (limit: number) => `Today’s ${limit} assists are used.`,
   },
   money: { even: "Even", allSquare: "All square" },
   notes: {
@@ -148,7 +145,7 @@ export const askCopy = {
     checked: (bills: number, place: string) => `Checked ${plural(bills, "bill")} in ${place}.`,
     history: (title: string, group: string) => `From ${title}’s history in ${group}.`,
     activity: (place: string) => `From the latest activity in ${place}.`,
-    free: "This one didn’t use a question.",
+    free: allowanceCopy.notCounted,
   },
   balance: {
     eyebrow: (name: string) => `Balance with ${name}`,
@@ -306,5 +303,5 @@ export const askCopy = {
       ask: (name: string) => `What do I owe ${name}?`,
     },
   },
-  toast: { unavailable: "Ask Bruno isn’t switched on here yet." },
+  toast: { unavailable: askMessages.unavailable },
 } as const;

@@ -1,3 +1,4 @@
+import { allowanceCopy, assistNames } from "@/lib/ai/messages";
 import { TELL_TEXT_MAX } from "@/lib/tell/rules";
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
@@ -11,11 +12,11 @@ function listNames(names: readonly string[], max: number): string {
 }
 
 export const tellCopy = {
-  metaTitle: "Tell Bruno",
+  metaTitle: assistNames.say,
   back: "Add a bill",
   backToCompose: "Back",
   compose: {
-    title: "Tell Bruno",
+    title: assistNames.say,
     body: "Say it like you’d text a friend. Bruno turns it into a bill you can check.",
     fieldLabel: "Describe the bill",
     placeholder: (name: string | null) => `Dinner at Nobu 4,200, I paid, ${name ?? "Sam"} had both cocktails, split the rest`,
@@ -29,10 +30,10 @@ export const tellCopy = {
     stopLabel: "Stop listening",
     listeningEmpty: "Go ahead, Bruno’s listening…",
     denied: { title: "Bruno can’t hear you yet.", body: "Allow the microphone in your browser settings, or just type it.", retry: "Try again" },
-    over: { title: "A bit long for Bruno.", body: `Keep it to ${TELL_TEXT_MAX} characters, just the bill bits.` },
+    over: { title: "That’s too long", body: `Keep it to ${TELL_TEXT_MAX} characters, just the bill bits.` },
     cta: "Draft it",
     wait: (seconds: number) => `Try again in ${seconds}s`,
-    ctaNote: "Uses one AI extraction. Free if Bruno can’t work it out.",
+    ctaNote: `${allowanceCopy.cost}. Free if Bruno can’t work it out.`,
     examplesLabel: "Not sure how to say it? Tap one.",
     examples: (first: string | null, second: string | null): readonly string[] => [
       first ? `Taxi 380, ${first} paid, split it` : "Taxi 380, I paid, split it",
@@ -42,17 +43,17 @@ export const tellCopy = {
   },
   failed: {
     vague: {
-      title: "Bruno couldn’t find a bill in that.",
+      title: "Bruno couldn’t find a bill in that",
       body: (example: string) =>
-        `Try what it was, how much, and who paid, like “${example}”. This one didn’t count against your daily limit.`,
+        `Say what it was, how much, and who paid, like “${example}”. ${allowanceCopy.notCounted}`,
     },
     network: {
-      title: "Bruno lost the connection.",
-      body: "Your words are still here. Give it another go in a moment. This one didn’t count against your daily limit.",
+      title: "Bruno lost the connection",
+      body: `Your words are still here. Try again in a moment. ${allowanceCopy.notCounted}`,
     },
     again: "Try again",
     againIn: (seconds: number) => `Try again in ${seconds}s`,
-    type: "Type it in",
+    type: assistNames.manual,
   },
   working: {
     title: "Drafting it",
@@ -65,7 +66,7 @@ export const tellCopy = {
       reading: ["Reading what you said…", "Picking out places, people and prices."],
       paying: ["Finding who paid…", "And who had what."],
       matching: (group: string) => [`Matching names to ${group}…`, "Checking who Bruno knows."] as const,
-      splitting: ["Splitting it up…", "Bruno does the maths, not the AI."],
+      splitting: ["Splitting it up…", "Every number comes from what you said."],
       found: (title: string, total: string | null) => [total ? `Found ${title} · ${total}` : `Found ${title}`, "Lining up the items."] as const,
       ready: (items: number, total: string | null) => ["Got it.", total ? `${plural(items, "item", "items")} · ${total}` : plural(items, "item", "items")] as const,
     },
@@ -89,7 +90,7 @@ export const tellCopy = {
       skip: (name: string) => `Leaving ${name} out`,
     },
     change: "Change",
-    howMuch: (title: string | null) => `How much was ${title ? title.toLowerCase() : "it"}?`,
+    howMuch: (title: string | null) => `How much was ${title ?? "it"}?`,
     howMuchSub: "You didn’t say a price.",
     amountLabel: "Amount",
     whoPaid: "Who paid?",

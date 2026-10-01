@@ -1,10 +1,6 @@
-import type { Plan } from "@/lib/generated/prisma/enums";
-
 export const ASK_TEXT_MAX = 200;
 export const ASK_COUNT_FROM = 150;
 export const ASK_MIN_LETTERS = 3;
-export const ASK_LIMITS = { FREE: 10, PRO: 100 } as const satisfies Record<Plan, number>;
-export const ASK_FREE_MISSES = 10;
 export const ASK_MODEL = "gpt-5.6-luna";
 export const ASK_REASONING = "low";
 export const ASK_STEPS_MAX = 5;

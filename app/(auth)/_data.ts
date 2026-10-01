@@ -13,7 +13,7 @@ export const authCopy = {
   divider: "or",
   google: {
     label: "Continue with Google",
-    failedTitle: "Google didn't open.",
+    failedTitle: "Google didn’t open.",
     failedBody: "Try again, or use your email below.",
     retry: "Try again",
   },
@@ -32,7 +32,7 @@ export const authCopy = {
     checking: "Checking code…",
     resend: "Resend code",
     resendIn: (seconds: number) => `Resend in ${seconds}s`,
-    didntGetIt: "Didn't get it?",
+    didntGetIt: "Didn’t get it?",
     noCode: "No code?",
     back: "Wrong email? Go back",
     resent: "New code sent",

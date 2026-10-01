@@ -11,7 +11,7 @@ export const signUpFieldSchemas = {
   name: z
     .string()
     .trim()
-    .min(1, "Tell us what to call you.")
+    .min(1, "Enter the name your friends call you.")
     .max(name.max, `Keep it under ${name.max} characters.`),
   username: z
     .string()
@@ -24,7 +24,7 @@ export const signUpFieldSchemas = {
         .max(username.max, `${username.max} characters at most.`)
         .regex(username.pattern, "Use letters, numbers, dots or underscores."),
     ),
-  email: emailSchema("We need an email to send your code."),
+  email: emailSchema("Enter your email to get your code."),
   password: z
     .string()
     .min(1, "Pick a password.")

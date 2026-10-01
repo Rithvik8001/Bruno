@@ -1,5 +1,6 @@
 import type { IconName } from "@/components/icons/icon";
 import type { StackPerson } from "@/components/ui/avatar";
+import { AI_LIMITS } from "@/lib/ai/rules";
 import type { BalanceDirection } from "@/lib/design-system/semantics";
 import type { PaletteTint } from "@/lib/design-system/tokens";
 import { cents, type Cents } from "@/lib/money";
@@ -66,19 +67,27 @@ export interface StoryContent {
 
 export const stories = {
   upload: {
-    label: "Upload",
+    label: "Scan",
     tint: "orange",
     icon: "receipt",
-    title: "Upload the receipt. AI reads it.",
+    title: "Scan the receipt. Bruno reads it.",
     body: "Every line, quantity and price, printed back to you in a second or two. Fix anything it got wrong with a tap, or skip the upload and type the bill in yourself.",
-    features: ["AI receipt scanning", "Review and edit items", "Manual entry", "Add tips and discounts"],
+    features: ["Receipt scanning", "Review and edit items", "Type it in", "Add tips and discounts"],
+  },
+  say: {
+    label: "Say",
+    tint: "indigo",
+    icon: "mic",
+    title: "Or just say what happened.",
+    body: "Type it or say it out loud, the way you’d text a friend. Bruno drafts the bill with every number taken from your words, and asks before it guesses.",
+    features: ["Say it or type it", "Dictation", "Quick checks, no guesses", "Review before saving"],
   },
   claim: {
     label: "Claim",
     tint: "blue",
     icon: "users",
     title: "Send one link. Everyone taps what they had.",
-    body: "No app, no account. Shared dishes split automatically between whoever claims them. You watch it fill in live, and whatever's left you can split evenly with one tap.",
+    body: "No app, no account. Shared dishes split automatically between whoever claims them. You watch it fill in live, and whatever’s left you can split evenly with one tap.",
     features: ["Invite by link", "Assign items", "Split evenly", "By percentage or fixed amount"],
   },
   balance: {
@@ -86,21 +95,28 @@ export const stories = {
     tint: "green",
     icon: "wallet",
     title: "Who owes whom, as one number each.",
-    body: "Ten dinners, two taxis and a flat's worth of groceries collapse into the smallest set of payments. You see what you're owed, what you owe, and the one thing to do next.",
+    body: "Ten dinners, two taxis and a flat’s worth of groceries collapse into the smallest set of payments. You see what you’re owed, what you owe, and the one thing to do next.",
     features: ["Group balances", "Smart settlements", "Share a split summary", "Email notifications"],
+  },
+  ask: {
+    label: "Ask",
+    tint: "cyan",
+    icon: "sparkle",
+    title: "Ask Bruno. Get the number and the working.",
+    body: "What did Lisbon cost me? Why do I owe Sam? Bruno answers from your bills and shows where each number came from. It only reads, never changes a thing.",
+    features: ["Balances across groups", "Spending by category", "Bill history", "Explain a balance"],
   },
   notices: {
     label: "Notices",
     tint: "violet",
     icon: "alert",
-    title: "Bruno notices what you'd miss.",
-    body: "A blurry price gets flagged, not guessed. A receipt you already added gets caught before it double-charges anyone. Items get sorted, splits follow what your group usually does, and every balance can explain itself.",
+    title: "Bruno notices what you’d miss.",
+    body: "A blurry price gets flagged, not guessed. A receipt you already added gets caught before it double-charges anyone. Items get sorted, and splits follow what your group usually does.",
     features: [
       "Flag uncertain items",
       "Detect duplicates",
       "Suggest categories",
       "Suggest splits from past choices",
-      "Explain a balance",
     ],
   },
   settle: {
@@ -108,12 +124,47 @@ export const stories = {
     tint: "pink",
     icon: "check",
     title: "Pay how you always do. Tear it off.",
-    body: "Bruno doesn't move money — it keeps the record straight. Venmo, cash, a round at the pub: mark it settled and the stub tears away. No confetti, just a clean slate.",
+    body: "Bruno doesn’t move money — it keeps the record straight. Venmo, cash, a round at the pub: mark it settled and the stub tears away. Clean slate.",
     features: ["Settlement tracking", "Confirm as recipient", "Payment history"],
   },
 } as const satisfies Record<string, StoryContent>;
 
 export const scanPreview: readonly Pick<BillLine, "name" | "price">[] = lupaLines.slice(0, 3);
+
+const sayLines: readonly BillLine[] = [
+  { name: "Negronis", price: cents(2800), by: ["sam"] },
+  { name: "Rest of dinner", price: cents(5600), by: ["you", "sam", "priya"] },
+];
+
+export const sayPreview = {
+  said: "Dinner at Lupa 84, I paid, Sam had the negronis for 28, split the rest",
+  title: "Lupa",
+  lines: sayLines,
+  total: cents(sayLines.reduce((sum, line) => sum + line.price, 0)),
+} as const satisfies { said: string; title: string; lines: readonly BillLine[]; total: Cents };
+
+export interface AskSegment {
+  readonly label: string;
+  readonly tint: PaletteTint;
+  readonly amount: Cents;
+}
+
+const askSegments: readonly AskSegment[] = [
+  { label: "Food", tint: "orange", amount: cents(19640) },
+  { label: "Travel", tint: "blue", amount: cents(12100) },
+  { label: "Drinks", tint: "pink", amount: cents(5820) },
+  { label: "Other", tint: "violet", amount: cents(3700) },
+];
+
+export const askPreview = {
+  question: "What did Lisbon cost me?",
+  eyebrow: "Your share of Lisbon trip",
+  caption: "Lisbon trip cost you",
+  sub: "Across 9 bills",
+  segments: askSegments,
+  total: cents(askSegments.reduce((sum, segment) => sum + segment.amount, 0)),
+  foot: "From 9 bills in Lisbon trip, as of now.",
+} as const satisfies { question: string; eyebrow: string; caption: string; sub: string; segments: readonly AskSegment[]; total: Cents; foot: string };
 
 export interface BalancePerson {
   readonly person: StackPerson;
@@ -223,7 +274,7 @@ export const foreignExpenses: readonly ForeignExpense[] = [
 
 export const groupsContent = {
   title: "Built for the trip, the flat and the Sunday league.",
-  body: "Groups keep a running tab. Currencies get converted at the day's rate so a bill in Lisbon still settles in dollars back home.",
+  body: "Groups keep a running tab. Currencies get converted at the day’s rate so a bill in Lisbon still settles in dollars back home.",
   features: ["Groups and members", "Multi-currency"],
 } as const;
 
@@ -243,7 +294,7 @@ export interface Plan {
 }
 
 const sharedFeatures: readonly PlanFeature[] = [
-  { label: "Unlimited manual entries" },
+  { label: "Type in as many bills as you like" },
   { label: "Unlimited groups" },
   { label: "Smart settlements" },
   { label: "Multi-currency support" },
@@ -253,7 +304,7 @@ const sharedFeatures: readonly PlanFeature[] = [
 export const pricingContent = {
   label: "Pricing",
   title: "Free for most dinners. Pro for the heavy splitters.",
-  body: "Every feature on this page is free. Pro only raises the daily AI extraction limit and adds priority support. Cancel any time; your history stays.",
+  body: `Every feature on this page is free. Pro only raises your daily assists from ${AI_LIMITS.FREE} to ${AI_LIMITS.PRO}, and it’s coming soon.`,
 } as const;
 
 export const plans: readonly Plan[] = [
@@ -262,22 +313,17 @@ export const plans: readonly Plan[] = [
     price: "$0",
     period: "forever",
     cta: { label: "Get started", variant: "elevated" },
-    features: [{ label: "3 AI extractions per day" }, ...sharedFeatures],
-    footnote: "AI extractions reset every day. Manual entry never runs out.",
+    features: [{ label: `${AI_LIMITS.FREE} assists a day` }, ...sharedFeatures],
+    footnote: "An assist is one scan, one spoken bill or one answer. They reset every day. Typing a bill in never runs out.",
   },
   {
     name: "Pro",
     price: "$2.99",
     period: "per month",
-    badge: "50 scans a day",
-    cta: { label: "Start Pro", variant: "primary" },
-    features: [
-      { label: "50 AI extractions per day", highlight: true },
-      ...sharedFeatures,
-      { label: "Priority support", highlight: true },
-      { label: "Early access to features", highlight: true },
-    ],
-    footnote: "Billed monthly. No card needed until you upgrade.",
+    badge: "Coming soon",
+    cta: { label: "Start free", variant: "primary" },
+    features: [{ label: `${AI_LIMITS.PRO} assists a day`, highlight: true }, ...sharedFeatures],
+    footnote: "Pro isn’t open yet. Start free and switch when it is.",
   },
 ];
 
@@ -290,7 +336,7 @@ export const faqs: readonly Faq[] = [
   {
     question: "Do my friends need an account?",
     answer:
-      "No. They open your link, tap what they had, and that's it. An account only matters if they want their own history and balances.",
+      "No. They open your link, tap what they had, and that’s it. An account only matters if they want their own history and balances.",
   },
   {
     question: "Does Bruno move money?",
@@ -300,19 +346,18 @@ export const faqs: readonly Faq[] = [
   {
     question: "How accurate is the receipt reading?",
     answer:
-      "Very good on printed receipts, decent on crumpled ones. Every line is editable, and you can always add the bill by hand.",
+      "Very good on printed receipts, decent on crumpled ones. Every line is editable, and you can always type the bill in.",
   },
   {
-    question: "What happens when I hit the free limit?",
-    answer:
-      "Manual entry stays unlimited. AI extraction resets to three the next day, or Pro gives you fifty a day for $2.99 a month.",
+    question: "What’s an assist, and what if I run out?",
+    answer: `One scan, one spoken bill or one answer from Ask Bruno. You get ${AI_LIMITS.FREE} a day, back at midnight, and typing a bill in is always unlimited. Pro, coming soon, gives you ${AI_LIMITS.PRO} a day.`,
   },
 ];
 
 export const heroContent = {
   title: "Split the bill, not friendships.",
-  body: "Upload the receipt and AI reads it. Friends tap what they had. Bruno works out who owes whom — one number each, no spreadsheet, no awkward chat.",
-  footnote: "Free for 3 AI extractions a day. Friends don't need an account to claim.",
+  body: "Scan the receipt or just say what happened. Friends tap what they had. Bruno works out who owes whom — one number each, no spreadsheet, no awkward chat.",
+  footnote: `Free, with ${AI_LIMITS.FREE} assists a day. Friends don’t need an account to claim.`,
 } as const;
 
 export const footerContent = {

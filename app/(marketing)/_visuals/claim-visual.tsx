@@ -9,7 +9,7 @@ export function ClaimVisual() {
   return (
     <div className="grid gap-3">
       <SurfaceCard className="flex items-center gap-3 py-1.5 pr-1.5 pl-4">
-        <span className="min-w-0 flex-1 truncate text-small text-text-2">bruno.app/j/lupa-tonight</span>
+        <span className="min-w-0 flex-1 truncate text-small text-text-2">bruno.vin/j/lupa-tonight</span>
         <span
           data-tint="green"
           className="inline-flex h-9 items-center gap-1.5 rounded-sm bg-bg px-3 text-footnote font-semibold text-tint shadow-float"

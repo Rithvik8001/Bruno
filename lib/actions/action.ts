@@ -15,16 +15,27 @@ function fieldErrors(error: z.ZodError): Record<string, string> {
 function parseInput<Schema extends z.ZodType>(
   schema: Schema,
   input: unknown,
-): { ok: true; data: z.output<Schema> } | { ok: false; result: ActionResult<never> } {
+):
+  | { ok: true; data: z.output<Schema> }
+  | { ok: false; result: ActionResult<never> } {
   const parsed = schema.safeParse(input);
   if (parsed.success) return { ok: true, data: parsed.data };
   return {
     ok: false,
-    result: { ok: false, error: { code: "invalid", message: actionErrors.invalid, fields: fieldErrors(parsed.error) } },
+    result: {
+      ok: false,
+      error: {
+        code: "invalid",
+        message: actionErrors.invalid,
+        fields: fieldErrors(parsed.error),
+      },
+    },
   };
 }
 
-async function run<Output>(handler: () => Promise<ActionResult<Output>>): Promise<ActionResult<Output>> {
+async function run<Output>(
+  handler: () => Promise<ActionResult<Output>>,
+): Promise<ActionResult<Output>> {
   try {
     return await handler();
   } catch (error) {
@@ -35,7 +46,10 @@ async function run<Output>(handler: () => Promise<ActionResult<Output>>): Promis
 
 export function defineAction<Schema extends z.ZodType, Output>(
   schema: Schema,
-  handler: (input: z.output<Schema>, context: AppContext) => Promise<ActionResult<Output>>,
+  handler: (
+    input: z.output<Schema>,
+    context: AppContext,
+  ) => Promise<ActionResult<Output>>,
 ): (input: z.input<Schema>) => Promise<ActionResult<Output>> {
   return async (input) => {
     const context = await getAppContext();
@@ -52,7 +66,10 @@ export interface PublicContext {
 
 export function definePublicAction<Schema extends z.ZodType, Output>(
   schema: Schema,
-  handler: (input: z.output<Schema>, context: PublicContext) => Promise<ActionResult<Output>>,
+  handler: (
+    input: z.output<Schema>,
+    context: PublicContext,
+  ) => Promise<ActionResult<Output>>,
 ): (input: z.input<Schema>) => Promise<ActionResult<Output>> {
   return async (input) => {
     const viewer = await getAppContext();

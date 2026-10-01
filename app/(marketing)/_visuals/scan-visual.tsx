@@ -15,7 +15,7 @@ export function ScanVisual() {
         </span>
         <span className="grid min-w-0">
           <span className="font-semibold">Upload a receipt or drop it here</span>
-          <span className="text-footnote text-text-2">JPG, PNG, HEIC, PDF · or add lines by hand</span>
+          <span className="text-footnote text-text-2">JPG, PNG, HEIC, WebP or PDF</span>
         </span>
       </SurfaceCard>
       <Receipt bodyClassName="px-5 pt-3 pb-4.5">

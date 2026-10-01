@@ -19,7 +19,7 @@ export const settleStatusTint = {
 export const settleCopy = {
   metaTitle: "Settle up",
   back: { home: "Home", bill: "Bill", group: "Group", ask: "Ask Bruno" },
-  status: { open: "Open", partial: "Partial", settled: "Settled", awaiting: "Awaiting confirm" },
+  status: { open: "Open", partial: "Partial", settled: "Settled", awaiting: "Awaiting confirmation" },
   payLine: { toYou: (name: string) => `${name} pays you`, fromYou: (name: string) => `You pay ${name}` },
   breakdownMore: (n: number) => `+ ${n} more`,
   amount: "Amount",
@@ -41,7 +41,7 @@ export const settleCopy = {
   payer: {
     title: (name: string) => `Pay ${name} back`,
     body: "Send it the way you usually do, then mark it here. Bruno only keeps the record.",
-    cta: (amount: string) => `I've paid ${amount}`,
+    cta: (amount: string) => `I’ve paid ${amount}`,
     fine: (name: string) => `${name} confirms it here. The balance clears when they do, or in 3 days automatically.`,
     done: "Marked as paid",
     doneSub: (method: string, name: string) => `${method} · waiting for ${name}`,
@@ -49,15 +49,15 @@ export const settleCopy = {
   },
   confirm: {
     title: (name: string) => `${name} says they paid you`,
-    body: (name: string) => `Confirm it landed and the balance clears. If it didn't, say so and ${name} will see it's still open.`,
+    body: (name: string) => `Confirm it landed and the balance clears. If it didn’t, say so and ${name} will see it’s still open.`,
     cta: (amount: string) => `Yes, I got ${amount}`,
-    decline: "Didn't get it",
+    decline: "Didn’t get it",
     fine: (day: string) => `Confirms itself ${day} if you do nothing.`,
     done: (name: string) => `Settled with ${name}`,
     declined: "Marked as not received",
-    declinedSub: (name: string) => `${name} will see it's still open.`,
+    declinedSub: (name: string) => `${name} will see it’s still open.`,
     toast: (name: string) => `You and ${name} are square on this one.`,
-    toastDeclined: (name: string) => `Got it. ${name} will see it didn't land.`,
+    toastDeclined: (name: string) => `Got it. ${name} will see it didn’t land.`,
   },
   awaiting: {
     title: (name: string) => `Waiting for ${name}`,
@@ -72,6 +72,6 @@ export const settleCopy = {
   },
   doneSub: (method: string, left: string | null) => (left ? `${method} · just now · ${left} still open` : `${method} · just now`),
   undo: "Undo",
-  undone: "Undone. No one saw a thing.",
+  undone: "Undone. The payment is back to unpaid.",
   backTo: { home: "Back to home", bill: "Back to the bill", group: "Back to the group", ask: "Back to Ask Bruno" },
 } as const;

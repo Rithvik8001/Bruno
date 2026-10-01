@@ -1,31 +1,9 @@
 import "server-only";
 import { db } from "@/lib/db";
 import type { Prisma } from "@/lib/generated/prisma/client";
-import type { Plan } from "@/lib/generated/prisma/enums";
-import { localDayWindow, type DayWindow } from "@/lib/scans/quota";
-import { askLimitOverride } from "./config";
-import type { AskQuota } from "./result";
-import { ASK_DECLINE_LOOKBACK, ASK_LIMITS, ASK_STALE_MS, declineGapMs } from "./rules";
+import { ASK_DECLINE_LOOKBACK, ASK_STALE_MS, declineGapMs } from "./rules";
 
 type Client = Prisma.TransactionClient | typeof db;
-
-export function askLimit(plan: Plan): number {
-  return askLimitOverride() ?? ASK_LIMITS[plan];
-}
-
-export async function countAsked(client: Client, personId: string, window: DayWindow, now: Date = new Date()): Promise<number> {
-  return client.askQuestion.count({
-    where: {
-      personId,
-      startedAt: { gte: window.start, lt: window.end },
-      OR: [{ status: "ANSWERED" }, { status: "ASKING", startedAt: { gt: new Date(now.getTime() - ASK_STALE_MS) } }],
-    },
-  });
-}
-
-export async function countAskAttempts(client: Client, personId: string, window: DayWindow): Promise<number> {
-  return client.askQuestion.count({ where: { personId, startedAt: { gte: window.start, lt: window.end } } });
-}
 
 export async function isAsking(client: Client, personId: string, now: Date = new Date()): Promise<boolean> {
   const row = await client.askQuestion.findFirst({
@@ -33,16 +11,6 @@ export async function isAsking(client: Client, personId: string, now: Date = new
     select: { id: true },
   });
   return row !== null;
-}
-
-export function askQuotaOf(used: number, plan: Plan): AskQuota {
-  const limit = askLimit(plan);
-  return { used, limit, left: Math.max(0, limit - used), plan };
-}
-
-export async function getAskQuota(personId: string, timeZone: string): Promise<AskQuota> {
-  const person = await db.person.findUniqueOrThrow({ where: { id: personId }, select: { plan: true } });
-  return askQuotaOf(await countAsked(db, personId, localDayWindow(timeZone)), person.plan);
 }
 
 export async function askDeclineCooldown(personId: string, now: Date = new Date()): Promise<number | null> {

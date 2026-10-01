@@ -14,7 +14,7 @@ export function captionFor(steps: readonly AskStep[], yourName: string): string 
   switch (step.tool) {
     case "balance":
       if (a && b) return copy.balancePair(a, b);
-      if (a) return a === askCopy.youLower ? copy.balanceOneYou : copy.balanceOne(`${a} stands`);
+      if (a) return a === askCopy.youLower ? copy.balanceOneYou : copy.balanceOne(a);
       return copy.balanceAll(step.group);
     case "explain":
       return copy.explain(b ?? a ?? askCopy.someone.toLowerCase(), step.group);

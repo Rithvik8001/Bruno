@@ -36,11 +36,11 @@ export const welcomeCopy = {
   crew: {
     title: "Who do you split with?",
     subtitle: "Groups keep running balances, so nobody keeps score.",
-    modesLabel: "How you'll use Bruno",
+    modesLabel: "How you’ll use Bruno",
     newGroup: "Your new group",
     justYou: "Just you so far",
     ideas: ["Flatmates", "Lisbon trip", "Friday dinners", "Office lunch"],
-    link: { label: "Invite link", placeholder: "bruno.app/j/…", paste: "Paste from clipboard", invalid: "That doesn't look like a Bruno invite link." },
+    link: { label: "Invite link", placeholder: "bruno.vin/j/…", paste: "Paste from clipboard", invalid: "Paste a Bruno invite link, like bruno.vin/j/lisbon." },
     solo: "Flying solo is fine. Share any bill with a link whenever someone joins you.",
     create: (name: string) => (name ? `Create “${name}”` : "Create group"),
     join: (name: string | null) => (name ? `Join ${name}` : "Paste a link to continue"),
@@ -48,10 +48,10 @@ export const welcomeCopy = {
     back: "Back",
   },
   done: {
-    title: (first: string) => `You're in, ${first}`,
+    title: (first: string) => `You’re in, ${first}`,
     created: (group: string) => `${group} is ready. Share the invite link whenever you like.`,
-    joined: (group: string) => `You joined ${group}. They'll see you pop in.`,
-    solo: "Scan your first receipt whenever you're ready.",
-    cta: "Let's split something",
+    joined: (group: string) => `You joined ${group}. They’ll see you pop in.`,
+    solo: "Add your first bill whenever you’re ready.",
+    cta: "Let’s split something",
   },
 } as const;
