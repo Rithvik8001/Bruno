@@ -35,7 +35,7 @@ function isTimeout(error: unknown): boolean {
 
 export async function runAsk({ question, ctx, turns, resolved, allowClarify, signal }: AskRun): Promise<AskOutcome> {
   const openai = createOpenAI({ apiKey: askApiKey() });
-  const kit = askToolkit(ctx, allowClarify);
+  const kit = askToolkit(ctx, allowClarify, question);
   try {
     const result = await generateText({
       model: openai(ASK_MODEL),

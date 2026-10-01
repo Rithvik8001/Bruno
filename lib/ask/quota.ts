@@ -15,7 +15,7 @@ export async function isAsking(client: Client, personId: string, now: Date = new
 
 export async function askDeclineCooldown(personId: string, now: Date = new Date()): Promise<number | null> {
   const recent = await db.askQuestion.findMany({
-    where: { personId, completedAt: { not: null }, status: { in: ["ANSWERED", "CLARIFY", "DECLINED"] } },
+    where: { personId, completedAt: { not: null }, status: { in: ["ANSWERED", "CLARIFY", "DECLINED", "PROPOSED"] } },
     orderBy: { completedAt: "desc" },
     take: ASK_DECLINE_LOOKBACK,
     select: { status: true, outcome: true, completedAt: true },

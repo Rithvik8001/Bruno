@@ -13,6 +13,11 @@ export interface Suggestion {
   readonly lead: SuggestLead;
 }
 
+export interface ActionSuggestion {
+  readonly text: string;
+  readonly icon: "bell" | "arrow-right" | "pencil";
+}
+
 const SUGGEST_MAX = 6;
 const copy = askCopy.suggest;
 
@@ -43,4 +48,14 @@ export function suggestionsFor(seeds: AskSeeds, scoped: boolean): Suggestion[] {
         group ? { text: copy.cost(group.name), lead: groupLead } : { text: copy.everyone, lead: { kind: "sparkle" } },
       ];
   return list.filter((item): item is Suggestion => item !== null).slice(0, SUGGEST_MAX);
+}
+
+export function actionSuggestionsFor(seeds: AskSeeds): ActionSuggestion[] {
+  const owes = seeds.people.find((seed) => seed.net < 0);
+  const list: (ActionSuggestion | null)[] = [
+    seeds.people.some((seed) => seed.net > 0) ? { text: askCopy.act.suggest.remindAll, icon: "bell" } : null,
+    owes ? { text: askCopy.act.suggest.settle(firstNameOf(owes.person.displayName)), icon: "arrow-right" } : null,
+    seeds.bill ? { text: askCopy.act.suggest.split(seeds.bill.title), icon: "pencil" } : null,
+  ];
+  return list.filter((item): item is ActionSuggestion => item !== null);
 }

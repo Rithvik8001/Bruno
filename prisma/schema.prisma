@@ -127,6 +127,16 @@ enum AskStatus {
   DECLINED
   FAILED
   CANCELLED
+  PROPOSED
+}
+
+enum AskActionStatus {
+  PROPOSED
+  EXECUTING
+  DONE
+  CANCELLED
+  FAILED
+  UNDONE
 }
 
 enum BillStatus {
@@ -219,6 +229,7 @@ model Person {
   receiptScans       ReceiptScan[]
   tellDrafts         TellDraft[]
   askQuestions       AskQuestion[]
+  askActions         AskAction[]
   emailLogs          EmailLog[]
 
   @@index([mergedIntoId])
@@ -502,6 +513,27 @@ model AskQuestion {
   @@index([personId, threadId, createdAt])
   @@index([status, createdAt])
   @@map("ask_question")
+}
+
+model AskAction {
+  id          String          @id @default(cuid())
+  personId    String
+  person      Person          @relation(fields: [personId], references: [id], onDelete: Cascade)
+  questionId  String?         @unique
+  threadId    String?
+  kind        String
+  intent      Json
+  fingerprint String
+  status      AskActionStatus @default(PROPOSED)
+  result      Json?
+  expiresAt   DateTime
+  createdAt   DateTime        @default(now())
+  claimedAt   DateTime?
+  executedAt  DateTime?
+
+  @@index([personId, status, executedAt])
+  @@index([createdAt])
+  @@map("ask_action")
 }
 
 model EmailLog {

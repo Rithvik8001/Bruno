@@ -323,6 +323,8 @@ export const finishClaiming = defineAction(billIdRefSchema, async ({ billId }, {
   const { bill } = managed;
   if (!isCurrencyCode(bill.currency)) return actionFail("conflict");
   const currency = bill.currency;
+  const verdict = await consumeRate("billWrite", person.id);
+  if (!verdict.ok) return actionRateLimited(verdict.retryAfter, billMessages.tooManyChanges);
 
   const charges = await db.bill.findUniqueOrThrow({
     where: { id: bill.id },

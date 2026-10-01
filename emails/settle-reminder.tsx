@@ -12,13 +12,15 @@ export interface SettleReminderEmailProps {
   bills: SettleReminderLine[];
   total: string;
   settleUrl: string;
+  sender?: string | null;
   chrome: EmailChrome;
 }
 
 const single = (props: Pick<SettleReminderEmailProps, "creditors">) => (props.creditors.length === 1 ? props.creditors[0] : undefined);
 
-export function settleReminderSubject(props: Pick<SettleReminderEmailProps, "creditors" | "total">): string {
+export function settleReminderSubject(props: Pick<SettleReminderEmailProps, "creditors" | "total" | "sender">): string {
   const only = single(props);
+  if (props.sender) return `Reminder from ${props.sender}: you owe ${props.total}`;
   return only ? `You owe ${only.label} ${props.total}` : `You owe ${props.creditors.length} people ${props.total}`;
 }
 
@@ -38,8 +40,9 @@ function breakdown(props: SettleReminderEmailProps): { label: string; rows: Deta
   };
 }
 
-const reason = (props: Pick<SettleReminderEmailProps, "creditors">) => {
+const reason = (props: Pick<SettleReminderEmailProps, "creditors" | "sender">) => {
   const only = single(props);
+  if (props.sender) return `${props.sender} asked Bruno to send you this reminder.`;
   return `Reminders for open balances are sent weekly. ${only ? only.label : "Your friends"} didn’t send this — Bruno did.`;
 };
 

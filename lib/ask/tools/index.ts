@@ -5,7 +5,8 @@ import { routes } from "@/lib/auth/rules";
 import { inScope } from "@/lib/ledger/balances";
 import { pairBalance } from "@/lib/ledger/pair";
 import type { AskContext } from "../account";
-import { ASK_PERIODS, ASK_SLOTS, type AskCard, type AskClarifyQuestion, type AskPeriod, type AskToolName, type DeclineCard } from "../result";
+import { groundProposal, proposeSchema, type Grounded, type ProposeInput } from "../actions/ground";
+import { ASK_MODEL_SLOTS, ASK_PERIODS, type AskCard, type AskClarifyQuestion, type AskPeriod, type AskToolName, type DeclineCard } from "../result";
 import { ASK_CLARIFY_MAX, ASK_CLARIFY_OPTIONS_MAX, ASK_DECLINE_REASONS } from "../rules";
 import { balanceTool } from "./balance";
 import { billsTool } from "./bills";
@@ -15,12 +16,13 @@ import { historyTool } from "./history";
 import { groupAt, personAt, type AskToolDef } from "./shared";
 import { spendingTool } from "./spending";
 
-export const TERMINAL_TOOLS = ["answer", "clarify", "decline"] as const;
+export const TERMINAL_TOOLS = ["answer", "clarify", "decline", "propose"] as const;
 
 export type AskTerminal =
   | { readonly kind: "answer"; readonly card: AskCard }
   | { readonly kind: "clarify"; readonly questions: readonly AskClarifyQuestion[] }
-  | { readonly kind: "decline"; readonly card: DeclineCard };
+  | { readonly kind: "decline"; readonly card: DeclineCard }
+  | { readonly kind: "propose"; readonly grounded: Grounded };
 
 export interface AskCall {
   readonly tool: AskToolName;
@@ -75,7 +77,7 @@ const clarifySchema = z.object({
   questions: z
     .array(
       z.object({
-        slot: z.enum(ASK_SLOTS),
+        slot: z.enum(ASK_MODEL_SLOTS),
         options: z.array(z.number().int()).describe("Person or group indexes to choose between. Empty for period"),
       }),
     )
@@ -89,7 +91,7 @@ const declineSchema = z.object({
   group: z.number().int().nullable().describe("Group index the request was about, if any"),
 });
 
-function clarifyQuestion(ctx: AskContext, slot: (typeof ASK_SLOTS)[number], options: readonly number[]): AskClarifyQuestion | null {
+function clarifyQuestion(ctx: AskContext, slot: (typeof ASK_MODEL_SLOTS)[number], options: readonly number[]): AskClarifyQuestion | null {
   const unique = [...new Set(options)].slice(0, ASK_CLARIFY_OPTIONS_MAX);
   if (slot === "period") {
     return { slot, options: ASK_PERIODS.map((ref) => ({ ref, ...periodRange(ref, ctx.today) })) };
@@ -131,7 +133,24 @@ function declineCard(ctx: AskContext, input: z.output<typeof declineSchema>): De
   };
 }
 
-function buildTools(ctx: AskContext, holder: Holder, allowClarify: boolean) {
+const PROPOSE_DESCRIPTION = [
+  "Finish by proposing one change the user asked Bruno to make. Nothing is changed: the app shows the user a card and only the user can confirm it.",
+  "remindDebts: email people who owe the user (person = one debtor, or null for everyone).",
+  "remindClaims: nudge people who have not claimed on a bill that is still being claimed (needs bills).",
+  "recordPayment: record a payment between the user and person, or settle up with person.",
+  "settlePending: confirm or decline a payment someone recorded to the user (person = who paid, or null).",
+  "splitEvenly: split a bill equally (needs bills).",
+  "changePayer: change who paid a bill (needs bills, person = the new payer).",
+  "renameBill: rename a bill (needs bills and title).",
+  "changeDate: move a bill to another day (needs bills and date).",
+  "changeTotal: change what a bill cost (needs bills and amount).",
+  "finishClaiming: close claiming on a bill and share out what is left (needs bills).",
+  "deleteBill: delete a bill, only when the user's message says delete or remove (needs bills).",
+  "addBill: the user wants to add a new bill or expense.",
+  "other: any other change, such as groups, members, items, percentages, shares or settings, and any request to change or delete several bills at once or all bills.",
+].join(" ");
+
+function buildTools(ctx: AskContext, holder: Holder, allowClarify: boolean, question: string) {
   const base = {
     balance: data(ctx, holder, balanceTool),
     explain: data(ctx, holder, explainTool),
@@ -148,9 +167,17 @@ function buildTools(ctx: AskContext, holder: Holder, allowClarify: boolean) {
         return { done: card !== undefined };
       },
     }),
+    propose: tool({
+      description: PROPOSE_DESCRIPTION,
+      inputSchema: proposeSchema,
+      execute: async (input: ProposeInput) => {
+        holder.terminal = { kind: "propose", grounded: groundProposal(ctx, question, input) };
+        return { done: true };
+      },
+    }),
     decline: tool({
       description:
-        "Finish without an answer. outOfScope: not about this account's bills, balances, spending, payments or history. notYourGroup: about a group or person that is not in the account. wantsChange: asks to add, edit, delete, settle, pay or remind.",
+        "Finish without an answer. outOfScope: not about this account's bills, balances, spending, payments or history. notYourGroup: about a group or person that is not in the account. Never use wantsChange; call propose for requests to change something.",
       inputSchema: declineSchema,
       execute: async (input: z.output<typeof declineSchema>) => {
         holder.terminal = { kind: "decline", card: declineCard(ctx, input) };
@@ -177,7 +204,7 @@ function buildTools(ctx: AskContext, holder: Holder, allowClarify: boolean) {
   };
 }
 
-export function askToolkit(ctx: AskContext, allowClarify: boolean): AskToolkit {
+export function askToolkit(ctx: AskContext, allowClarify: boolean, question: string): AskToolkit {
   const holder: Holder = { terminal: null, calls: [] };
-  return { tools: buildTools(ctx, holder, allowClarify), terminal: () => holder.terminal, calls: () => holder.calls };
+  return { tools: buildTools(ctx, holder, allowClarify, question), terminal: () => holder.terminal, calls: () => holder.calls };
 }

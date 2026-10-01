@@ -1,4 +1,5 @@
 import "server-only";
+import { ACTION_STALE_MS } from "@/lib/ask/actions/kinds";
 import { ASK_STALE_MS } from "@/lib/ask/rules";
 import { db } from "@/lib/db";
 import type { Prisma } from "@/lib/generated/prisma/client";
@@ -84,7 +85,16 @@ export async function countUsed(client: Client, personId: string, window: DayWin
       OR: [{ status: "ANSWERED" }, { status: "ASKING", startedAt: fresh(ASK_STALE_MS) }],
     },
   });
-  return scans + drafts + questions;
+  const actions = await client.askAction.count({
+    where: {
+      personId,
+      OR: [
+        { status: { in: ["DONE", "UNDONE"] }, executedAt: startedAt },
+        { status: "EXECUTING", claimedAt: fresh(ACTION_STALE_MS) },
+      ],
+    },
+  });
+  return scans + drafts + questions + actions;
 }
 
 export async function countAttempts(client: Client, personId: string, window: DayWindow): Promise<number> {

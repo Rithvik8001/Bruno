@@ -25,6 +25,13 @@ function OptionLead({ lead }: { lead: ClarifyLead }) {
       </span>
     );
   }
+  if (lead.kind === "amount") {
+    return (
+      <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-control bg-surface-2 text-body font-semibold text-text-2">
+        {lead.symbol}
+      </span>
+    );
+  }
   return <LeadTile lead={lead} size="md" />;
 }
 

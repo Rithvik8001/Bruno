@@ -11,6 +11,9 @@ import type { Prisma } from "@/lib/generated/prisma/client";
 import type { AskStatus, Plan } from "@/lib/generated/prisma/enums";
 import { consumeRate } from "@/lib/rate-limit/limiter";
 import { buildAskContext, loadAskAccount, type AskAccount } from "./account";
+import { applyPick } from "./actions/build";
+import { parseIntent, type AskIntent } from "./actions/intent";
+import { buildEnv, resolveIntent, settleBuilt, type Resolved } from "./actions/resolve";
 import { runAsk, type AskUsage } from "./agent";
 import { isAskConfigured } from "./config";
 import { describeCard } from "./describe";
@@ -28,17 +31,23 @@ export type AskStart =
   | { readonly ok: true; readonly run: (emit: (step: AskStep) => void, signal: AbortSignal) => Promise<AskStreamEvent | null> };
 
 interface Trace {
-  readonly shown: string;
+  readonly shown?: string;
+  readonly intent?: AskIntent;
 }
 
 const refuse = (status: number, error: ActionError): AskStart => ({ ok: false, status, error });
 
 const toJson = (value: Trace): Prisma.InputJsonValue => JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
 
-function traceOf(raw: unknown): Trace | null {
+function shownOf(raw: unknown): string | null {
   if (typeof raw !== "object" || raw === null) return null;
   const shown = (raw as { shown?: unknown }).shown;
-  return typeof shown === "string" ? { shown } : null;
+  return typeof shown === "string" ? shown : null;
+}
+
+function intentOf(raw: unknown): AskIntent | null {
+  if (typeof raw !== "object" || raw === null) return null;
+  return parseIntent((raw as { intent?: unknown }).intent);
 }
 
 function isPeriod(value: string): value is AskPeriod {
@@ -63,14 +72,14 @@ function resolvedLines(account: AskAccount, picks: readonly AskPick[], today: st
 
 async function turnsOf(personId: string, threadId: string, before: string): Promise<AskTurn[]> {
   const rows = await db.askQuestion.findMany({
-    where: { personId, threadId, status: "ANSWERED", id: { not: before }, text: { not: null } },
+    where: { personId, threadId, status: { in: ["ANSWERED", "PROPOSED"] }, id: { not: before }, text: { not: null } },
     orderBy: { createdAt: "desc" },
     take: ASK_CONTEXT_TURNS,
     select: { text: true, trace: true },
   });
   return rows.reverse().flatMap((row) => {
-    const trace = traceOf(row.trace);
-    return row.text && trace ? [{ question: row.text, shown: trace.shown }] : [];
+    const shown = shownOf(row.trace);
+    return row.text && shown ? [{ question: row.text, shown }] : [];
   });
 }
 
@@ -105,7 +114,7 @@ export async function startAsk(input: AskValues, person: { readonly id: PersonId
   const pending = input.clarifies
     ? await db.askQuestion.findFirst({
         where: { id: input.clarifies.questionId, personId: person.id, status: "CLARIFY", text: { not: null } },
-        select: { text: true, threadId: true },
+        select: { text: true, threadId: true, trace: true },
       })
     : null;
   if (input.clarifies && !pending?.text) return refuse(404, { code: "notFound", message: askMessages.gone });
@@ -127,10 +136,13 @@ export async function startAsk(input: AskValues, person: { readonly id: PersonId
     return { ok: true, run: async () => ({ t: "done", reply, quota, questionId: "", threadId }) };
   }
 
-  const cooling = await aiCooldown(person.id);
-  if (cooling !== null) return refuse(429, { code: "rateLimited", message: aiMessages.cooling(cooling), retryAfter: cooling });
-  const offTopic = await askDeclineCooldown(person.id);
-  if (offTopic !== null) return refuse(429, { code: "rateLimited", message: askMessages.offTopic(offTopic), retryAfter: offTopic });
+  const pendingIntent = pending ? intentOf(pending.trace) : null;
+  if (!pendingIntent) {
+    const cooling = await aiCooldown(person.id);
+    if (cooling !== null) return refuse(429, { code: "rateLimited", message: aiMessages.cooling(cooling), retryAfter: cooling });
+    const offTopic = await askDeclineCooldown(person.id);
+    if (offTopic !== null) return refuse(429, { code: "rateLimited", message: askMessages.offTopic(offTopic), retryAfter: offTopic });
+  }
 
   const reserved = await db.$transaction(async (tx) => {
     await lockAssists(tx, person.id);
@@ -149,6 +161,29 @@ export async function startAsk(input: AskValues, person: { readonly id: PersonId
   }
   const questionId = reserved.id;
   maybeSweepAsk();
+
+  const finish = async (resolved: Resolved, usage: AskUsage | null): Promise<AskStreamEvent> => {
+    const trace: Trace | undefined = resolved.intent ? { intent: resolved.intent } : resolved.shown ? { shown: resolved.shown } : undefined;
+    await close(questionId, resolved.status, { outcome: resolved.outcome, trace, usage });
+    return { t: "done", reply: resolved.reply, quota: await quotaNow(person.id, plan, window), questionId, threadId };
+  };
+  const meta = { questionId, threadId };
+
+  if (pendingIntent) {
+    return {
+      ok: true,
+      run: async () => {
+        try {
+          const intent = picks.reduce(applyPick, pendingIntent);
+          return await finish(await resolveIntent(person.id, intent, buildEnv(input.timeZone), meta), null);
+        } catch (error) {
+          console.error("[ask] action failed", error instanceof Error ? `${error.name}: ${error.message}` : "unknown error");
+          await close(questionId, "FAILED", { failure: "action" }).catch(() => undefined);
+          return { t: "error", code: "unknown", message: askMessages.failed, retryAfter: null, quota: await quotaNow(person.id, plan, window) };
+        }
+      },
+    };
+  }
 
   return {
     ok: true,
@@ -182,6 +217,16 @@ export async function startAsk(input: AskValues, person: { readonly id: PersonId
           };
         }
         const { terminal, usage } = outcome;
+        if (terminal.kind === "propose") {
+          const env = buildEnv(input.timeZone, ctx.now);
+          const { grounded } = terminal;
+          const resolved =
+            grounded.kind === "intent"
+              ? await resolveIntent(person.id, grounded.intent, env, meta)
+              : await settleBuilt(person.id, { kind: "note", note: grounded.note }, env, meta);
+          closed = true;
+          return await finish(resolved, usage);
+        }
         closed = true;
         if (terminal.kind === "clarify") {
           await close(questionId, "CLARIFY", { outcome: "clarify", usage });

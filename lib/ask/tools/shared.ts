@@ -12,6 +12,7 @@ import { cents, sumCents, ZERO_CENTS, type Cents } from "@/lib/money";
 import type { PersonView } from "@/lib/people/person";
 import type { AskContext, AskGroup } from "../account";
 import type { AskBill, AskCard, AskScope, AskSource, AskStep, AskToolName } from "../result";
+import { forPrompt } from "@/lib/tell/guard";
 import { ASK_NAME_MAX } from "../rules";
 
 export type ToolSummary = Readonly<Record<string, unknown>>;
@@ -62,9 +63,9 @@ export function groupsFor(ctx: AskContext, indices: readonly number[] | null): G
   return { groups, all: groups.length === ctx.account.groups.length };
 }
 
-export const nameOf = (person: PersonView | null) => (person ? person.displayName.slice(0, ASK_NAME_MAX) : null);
+export const short = (text: string) => forPrompt(text).slice(0, ASK_NAME_MAX);
 
-export const short = (text: string) => text.slice(0, ASK_NAME_MAX);
+export const nameOf = (person: PersonView | null) => (person ? short(person.displayName) : null);
 
 export const money = (amount: Cents, currency: CurrencyCode) => formatMoney(amount, currency);
 

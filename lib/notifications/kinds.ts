@@ -22,8 +22,11 @@ export const NOTIFICATION_KINDS = {
   paymentReceived: "payments",
   paymentUpdate: "payments",
   weeklyNudge: "weekly",
+  debtReminder: "weekly",
   monthlyRecap: "monthly",
 } as const satisfies Record<string, NotificationCategory | null>;
+
+export const DEBT_REMINDER_GAP_MS = 3 * 24 * 60 * 60 * 1000;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;
 

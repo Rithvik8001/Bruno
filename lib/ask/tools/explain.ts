@@ -9,7 +9,7 @@ import type { PersonView } from "@/lib/people/person";
 import type { AskContext, AskGroup } from "../account";
 import type { EmptyCard, WhyCard, WhyEntry } from "../result";
 import { ASK_HISTORY_MAX } from "../rules";
-import { defineTool, fail, groupAt, groupsFor, money, nameOf, personAt, scopeOf, sourceOf, stepOf, toAskBill, type ToolResult } from "./shared";
+import { defineTool, fail, groupAt, groupsFor, money, nameOf, personAt, scopeOf, short, sourceOf, stepOf, toAskBill, type ToolResult } from "./shared";
 
 const inputSchema = z.object({
   a: z.number().int().describe("Person index, usually the user"),
@@ -58,7 +58,7 @@ function explain(ctx: AskContext, a: PersonView, b: PersonView, group: AskGroup)
   const pick = { groups: [group], all: ctx.account.groups.length === 1 };
   if (history.entries.length === 0) {
     const card: EmptyCard = { kind: "empty", about: "balance", scope: scopeOf(pick, null, null, null), checked: inScope(ctx.ledger.bills, group.id).length, other: b, title: null };
-    return { card, summary: { empty: true, note: `${nameOf(a)} and ${nameOf(b)} share no bills in ${group.ref.name}` } };
+    return { card, summary: { empty: true, note: `${nameOf(a)} and ${nameOf(b)} share no bills in ${short(group.ref.name)}` } };
   }
   const cut = Math.max(0, history.entries.length - ASK_HISTORY_MAX);
   const before = cut > 0 ? history.entries[cut - 1] : undefined;
@@ -88,7 +88,7 @@ function explain(ctx: AskContext, a: PersonView, b: PersonView, group: AskGroup)
     card,
     summary: {
       between: [nameOf(a), nameOf(b)],
-      group: group.ref.name,
+      group: short(group.ref.name),
       net: money(history.net, group.currency),
       note: "positive net = the second person owes the first",
       entries: history.entries.length,
@@ -128,7 +128,7 @@ export const explainTool = defineTool({
       return { card, summary: { empty: true, note: `${nameOf(a)} and ${nameOf(b)} share no bills` } };
     }
     return fail("more than one group has bills between them: pass group, picking the one whose balance matches the question, or clarify", {
-      groups: shared.map((group) => ({ index: group.index, name: group.ref.name })),
+      groups: shared.map((group) => ({ index: group.index, name: short(group.ref.name) })),
     });
   },
 });

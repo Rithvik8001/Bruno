@@ -103,7 +103,7 @@ export const stories = {
     tint: "cyan",
     icon: "sparkle",
     title: "Ask Bruno. Get the number and the working.",
-    body: "What did Lisbon cost me? Why do I owe Sam? Bruno answers from your bills and shows where each number came from. It only reads, never changes a thing.",
+    body: "What did Lisbon cost me? Why do I owe Sam? Bruno answers from your bills and shows where each number came from. Ask it to do something and it shows you the change first; nothing happens until you tap.",
     features: ["Balances across groups", "Spending by category", "Bill history", "Explain a balance"],
   },
   notices: {

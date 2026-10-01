@@ -36,8 +36,8 @@ export const routes = {
   newBillFor: (groupId: string) => `/bills/new?group=${encodeURIComponent(groupId)}`,
   manualBill: (groupId: string) => `/bills/new/manual?group=${encodeURIComponent(groupId)}`,
   scanReview: (scanId: string) => `/bills/new/scan/${encodeURIComponent(scanId)}`,
-  tellBill: (groupId: string, fromDraftId?: string) =>
-    `/bills/new/tell?group=${encodeURIComponent(groupId)}${fromDraftId ? `&from=${encodeURIComponent(fromDraftId)}` : ""}`,
+  tellBill: (groupId: string, fromDraftId?: string, text?: string) =>
+    `/bills/new/tell?group=${encodeURIComponent(groupId)}${fromDraftId ? `&from=${encodeURIComponent(fromDraftId)}` : ""}${text ? `&text=${encodeURIComponent(text)}` : ""}`,
   tellReview: (draftId: string) => `/bills/new/tell/${encodeURIComponent(draftId)}`,
   bill: (slug: string) => `/bills/${encodeURIComponent(slug)}`,
   editBill: (slug: string, step?: "items" | "claim" | "split") =>
@@ -57,6 +57,7 @@ export const authParams = {
 export const billParams = {
   group: "group",
   from: "from",
+  text: "text",
 } as const;
 
 export const askParams = {

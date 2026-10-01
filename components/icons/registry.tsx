@@ -227,6 +227,10 @@ export const iconRegistry = {
   swap: { node: <path d="M7 7h13l-3-3M17 17H4l3 3" /> },
   reply: { node: <path d="M9 5v6a4 4 0 004 4h7M16 11l4 4-4 4" /> },
   "chevron-up": { node: <path d="M6 15l6-6 6 6" /> },
+  trash: { node: <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" /> },
+  refresh: { node: <path d="M20 11a8 8 0 10-2.3 5.7M20 4v7h-7" /> },
+  undo: { node: <path d="M9 14L4 9l5-5M4 9h10a6 6 0 010 12h-3" /> },
+  "check-square": { node: <path d="M4 4h16v16H4zM8 12l3 3 5-6" /> },
   sparkle: {
     filled: true,
     node: <path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z" />,

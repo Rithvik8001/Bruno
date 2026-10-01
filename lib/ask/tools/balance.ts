@@ -12,7 +12,7 @@ import type { PersonView } from "@/lib/people/person";
 import type { AskContext, AskGroup } from "../account";
 import type { AskMoney, AskPayment, BalanceCard, BalanceLine, BalanceOpenLine, BalanceTotal, RankCard, RankRow } from "../result";
 import { ASK_ROWS_MAX } from "../rules";
-import { defineTool, fail, groupsFor, money, nameOf, personAt, scopeOf, sourceOf, stepOf, toAskBill, total, type GroupPick, type ToolResult } from "./shared";
+import { defineTool, fail, groupsFor, money, nameOf, personAt, scopeOf, short, sourceOf, stepOf, toAskBill, total, type GroupPick, type ToolResult } from "./shared";
 
 const TITLES = 2;
 
@@ -116,7 +116,7 @@ function pair(ctx: AskContext, a: PersonView, b: PersonView, pick: GroupPick): T
     summary: {
       between: [nameOf(a), nameOf(b)],
       note: "positive net = the second person owes the first",
-      perGroup: lines.map((line) => ({ group: line.group.name, net: money(line.net, line.currency) })),
+      perGroup: lines.map((line) => ({ group: short(line.group.name), net: money(line.net, line.currency) })),
       totals: totals.map((t) => money(t.net, t.currency)),
       allSquare: totals.length === 0,
     },

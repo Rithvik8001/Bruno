@@ -18,6 +18,7 @@ export const billMessages = {
   unknownPerson: "Everyone on the bill has to be in the group.",
   billGone: "This bill doesn’t exist any more. Go back to the group.",
   cantEdit: "Only whoever added the bill or a group admin can change it.",
+  tooManyChanges: "That’s a lot of changes at once. Try again in a minute.",
 } as const;
 
 const plural = (n: number, one: string, many: string) => (n === 1 ? one : many);

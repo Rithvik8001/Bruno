@@ -24,7 +24,7 @@ import {
   nameOf,
   personAt,
   scopeOf,
-  sourceOf,
+  short, sourceOf,
   stepOf,
   toAskBill,
   total,
@@ -133,7 +133,7 @@ function rank(ctx: AskContext, input: Input, pick: GroupPick, bills: readonly Bi
     card,
     summary: {
       by: card.by,
-      rows: sorted.map((row) => ({ name: row.person ? nameOf(row.person) : row.group?.name, amount: money(row.amount, row.currency), bills: row.bills })),
+      rows: sorted.map((row) => ({ name: row.person ? nameOf(row.person) : row.group ? short(row.group.name) : null, amount: money(row.amount, row.currency), bills: row.bills })),
     },
   };
 }

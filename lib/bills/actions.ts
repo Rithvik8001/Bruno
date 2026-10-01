@@ -4,13 +4,14 @@ import { after } from "next/server";
 import { activity } from "@/lib/activity";
 import { runInBackground } from "@/lib/background";
 import { defineAction } from "@/lib/actions/action";
-import { actionFail, actionInvalid, actionOk } from "@/lib/actions/errors";
+import { actionFail, actionInvalid, actionOk, actionRateLimited } from "@/lib/actions/errors";
 import { isCurrencyCode } from "@/lib/currency";
 import { db } from "@/lib/db";
 import type { PersonId } from "@/lib/domain/ids";
 import { canAddBill } from "@/lib/domain/permissions";
 import type { Cents } from "@/lib/money";
 import { notifyBillShares } from "@/lib/notifications/events/bills";
+import { consumeRate } from "@/lib/rate-limit/limiter";
 import { broadcastBill } from "@/lib/realtime/broadcast";
 import { refreshGroup } from "@/lib/revalidate";
 import { createPendingGuests } from "@/lib/members/guests";
@@ -215,6 +216,8 @@ export const updateBill = defineAction(updateBillSchema, async ({ billId, ...inp
     claimCode: keepClaims ? bill.claimCode : null,
   };
   if (changes.length === 0 && !finalizing) return actionOk(result);
+  const verdict = await consumeRate("billWrite", person.id);
+  if (!verdict.ok) return actionRateLimited(verdict.retryAfter, billMessages.tooManyChanges);
 
   const existingIds = new Set(before.items.flatMap((item) => (item.id === undefined ? [] : [item.id])));
   await db.$transaction(async (tx) => {
@@ -245,6 +248,8 @@ export const deleteBill = defineAction(billRefSchema, async ({ billId }, { perso
   if (!loaded) return actionFail("notFound", billMessages.billGone);
   if (!loaded.allowed) return actionFail("forbidden", billMessages.cantEdit);
   const { bill, groupId } = loaded;
+  const verdict = await consumeRate("billWrite", person.id);
+  if (!verdict.ok) return actionRateLimited(verdict.retryAfter, billMessages.tooManyChanges);
 
   const draft = activity("BILL_DELETED", { title: bill.title });
   await db.$transaction(async (tx) => {

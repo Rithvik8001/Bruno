@@ -19,5 +19,6 @@ export const settlementMessages = {
   gone: "This payment doesn’t exist any more. Reload to see the latest.",
   cantConfirm: "This payment can’t be confirmed any more. Reload to see where it stands.",
   cantDecline: "This payment can’t be declined any more. Reload to see where it stands.",
+  tooMany: "That’s a lot of payments at once. Try again in a minute.",
   cantUndo: "It’s too late to undo this payment. Record a payment the other way instead.",
 } as const;

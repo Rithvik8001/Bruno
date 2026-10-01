@@ -12,6 +12,7 @@ export const ASK_CONTEXT_TURNS = 3;
 export const ASK_GROUPS_MAX = 25;
 export const ASK_PEOPLE_MAX = 60;
 export const ASK_NAME_MAX = 40;
+export const ASK_SHOWN_MAX = 240;
 export const ASK_ROWS_MAX = 12;
 export const ASK_BILLS_MAX = 30;
 export const ASK_TOP_BILLS = 3;

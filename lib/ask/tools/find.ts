@@ -52,7 +52,7 @@ export const findBillsTool = defineTool({
         {
           ref,
           title: short(row.title),
-          group: group.ref.name,
+          group: short(group.ref.name),
           day: billDay(row.occurredAt),
           total: isCurrencyCode(row.currency) ? money(cents(row.totalCents), row.currency) : null,
           status: row.status === "FINALIZED" ? "final" : "being claimed",

@@ -8,6 +8,9 @@ import { BackLink } from "@/components/patterns/back-link";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { AI_RETRY_GAP_MS } from "@/lib/ai/rules";
+import type { AskActResult } from "@/lib/ask/actions/card";
+import { ACTION_WORKING_MIN_MS, type AskDecision } from "@/lib/ask/actions/kinds";
+import { cancelAskAction, confirmAskAction, proposeAskAction, undoAskAction } from "@/lib/ask/actions/server";
 import type { AskStartView } from "@/lib/ask/queries";
 import type { AskPick } from "@/lib/ask/result";
 import { ASK_TEXT_MAX } from "@/lib/ask/rules";
@@ -22,17 +25,21 @@ import { askCopy } from "../_data";
 import { captionFor } from "../_lib/captions";
 import { clarifyView } from "../_lib/clarify";
 import { askStream } from "../_lib/stream";
-import { suggestionsFor } from "../_lib/suggest";
-import { EMPTY_THREAD, isBusy, threadReducer, type AskEntry } from "../_lib/thread";
-import { cardView, type ViewContext } from "../_lib/view";
+import { actionView, deniedView, doneView, noteView, type ActionContext } from "../_lib/action-view";
+import { actionSuggestionsFor, suggestionsFor } from "../_lib/suggest";
+import { EMPTY_THREAD, isBusy, threadReducer, type ActionEntry, type AskEntry, type DoneEntry } from "../_lib/thread";
+import { cardView, type ActView, type ViewContext } from "../_lib/view";
+import { ActionCard } from "./action-card";
+import { ActionDone, ActionLine } from "./action-done";
 import { AnswerCard } from "./answer-card";
 import { AskErrorCard } from "./ask-error-card";
 import { AskField } from "./ask-field";
 import { AskLimitCard } from "./ask-limit-card";
 import { ClarifyCard } from "./clarify-card";
-import { FoldedAnswer } from "./folded-answer";
+import { FoldedAnswer, foldedAnswer } from "./folded-answer";
+import { NoteCard } from "./note-card";
 import { ScopeChips } from "./scope-chips";
-import { Suggestions } from "./suggestions";
+import { ActionSuggestions, Suggestions } from "./suggestions";
 import { ThinkingCard } from "./thinking-card";
 
 const TOAST_MS = 6000;
@@ -91,6 +98,8 @@ export function AskScreen({ start, you, autoListen }: AskScreenProps) {
   const over = text.length > ASK_TEXT_MAX;
   const canAsk = !empty && !over && !listening && !busy && !locked && !cooldown.active;
   const suggestions = useMemo(() => suggestionsFor(start.seeds, scope !== null), [start.seeds, scope]);
+  const actionSuggestions = useMemo(() => actionSuggestionsFor(start.seeds), [start.seeds]);
+  const actionContext: ActionContext = useMemo(() => ({ you: you.id, now }), [you.id, now]);
   const viewContext: ViewContext = useMemo(() => ({ you: you.id, now, examples: suggestions.map((suggestion) => suggestion.text) }), [you.id, now, suggestions]);
   const backHref = scope ? routes.group(scope.id) : routes.app;
 
@@ -128,7 +137,10 @@ export function AskScreen({ start, you, autoListen }: AskScreenProps) {
         return;
       }
       buzz(HAPTICS.press);
-      dispatch({ type: "answer", id, card: reply.card, threadId });
+      if (reply.kind === "action") dispatch({ type: "propose", id, action: reply.action, threadId });
+      else if (reply.kind === "denied") dispatch({ type: "denied", id, denied: reply.denied, threadId });
+      else if (reply.kind === "note") dispatch({ type: "note", id, note: reply.note, threadId });
+      else dispatch({ type: "answer", id, card: reply.card, threadId });
       return;
     }
     buzz(HAPTICS.error);
@@ -183,6 +195,85 @@ export function AskScreen({ start, you, autoListen }: AskScreenProps) {
       rest.map((option) => option.pick),
       rest.map((option) => option.label),
     );
+  };
+
+  const act = async (view: ActView) => {
+    if (busy || cooldown.active) return;
+    const id = nextId.current++;
+    dispatch({ type: "ask", id, question: view.label, resolved: null });
+    setFailure(null);
+    const result = await proposeAskAction({ ...view.intent, threadId: threadIdRef.current, timeZone: browserTimeZone() }).catch(() => null);
+    if (!result?.ok) {
+      buzz(HAPTICS.error);
+      dispatch({ type: "drop", id });
+      if (result?.error.code === "rateLimited") cooldown.restart(result.error.retryAfter ?? RETRY_GAP_SECONDS);
+      toast({ message: result?.error.message ?? copy.act.alert.failed.title, duration: TOAST_MS });
+      return;
+    }
+    buzz(HAPTICS.press);
+    const reply = result.data;
+    if (reply.kind === "action") dispatch({ type: "propose", id, action: reply.action, threadId: null });
+    else if (reply.kind === "denied") dispatch({ type: "denied", id, denied: reply.denied, threadId: null });
+    else dispatch({ type: "note", id, note: reply.note, threadId: null });
+  };
+
+  const settle = (entry: ActionEntry, result: AskActResult) => {
+    setQuota(result.quota);
+    if (result.state === "done") {
+      buzz(HAPTICS.celebrate);
+      dispatch({ type: "finish", id: entry.id, outcome: result.outcome });
+    } else if (result.state === "stale") {
+      dispatch({ type: "edit", id: entry.id, patch: { state: "stale", fresh: result.action, declining: false } });
+    } else if (result.state === "limit") {
+      dispatch({ type: "edit", id: entry.id, patch: { state: "limit", declining: false } });
+    } else if (result.gone.kind === "note") {
+      dispatch({ type: "note", id: entry.id, note: result.gone.note, threadId: null });
+    } else {
+      dispatch({ type: "denied", id: entry.id, denied: result.gone.denied, threadId: null });
+    }
+  };
+
+  const confirm = async (entry: ActionEntry, decision: AskDecision | null) => {
+    if (entry.state === "working") return;
+    dispatch({ type: "edit", id: entry.id, patch: { state: "working", declining: decision === "decline", error: null } });
+    const started = Date.now();
+    const result = await confirmAskAction({
+      actionId: entry.actionId,
+      timeZone: browserTimeZone(),
+      edits: { amount: entry.card.kind === "recordPayment" ? entry.amount : null, skip: [...entry.skip], decision },
+    }).catch(() => null);
+    const wait = ACTION_WORKING_MIN_MS - (Date.now() - started);
+    if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
+    if (result?.ok) {
+      settle(entry, result.data);
+      return;
+    }
+    buzz(HAPTICS.error);
+    dispatch({ type: "edit", id: entry.id, patch: { state: "failed", declining: false, error: result?.error.fields?.amountCents ?? result?.error.message ?? null } });
+  };
+
+  const notNow = (entry: AskEntry, actionId: string | null) => {
+    dispatch({ type: "line", id: entry.id, head: copy.act.line.notNow, body: copy.act.line.unchanged, free: true });
+    if (actionId) void cancelAskAction({ actionId, timeZone: browserTimeZone() }).catch(() => undefined);
+  };
+
+  const undo = async (entry: DoneEntry) => {
+    const undone = doneView(entry.card, entry.outcome, actionContext).undone;
+    if (entry.undoing || undone === null) return;
+    dispatch({ type: "undoing", id: entry.id, undoing: true });
+    const result = await undoAskAction({ actionId: entry.actionId, timeZone: browserTimeZone() }).catch(() => null);
+    if (!result?.ok) {
+      buzz(HAPTICS.error);
+      dispatch({ type: "undoing", id: entry.id, undoing: false });
+      toast({ message: result?.error.message ?? copy.act.alert.failed.title, duration: TOAST_MS });
+      return;
+    }
+    setQuota(result.data.quota);
+    dispatch({ type: "line", id: entry.id, head: copy.act.line.undone, body: undone, free: false });
+  };
+
+  const toggleSkip = (entry: ActionEntry, key: string) => {
+    dispatch({ type: "edit", id: entry.id, patch: { skip: entry.skip.includes(key) ? entry.skip.filter((item) => item !== key) : [...entry.skip, key] } });
   };
 
   const newQuestion = () => {
@@ -248,10 +339,64 @@ export function AskScreen({ start, you, autoListen }: AskScreenProps) {
                   followDisabled={locked || busy || cooldown.active}
                   onFold={() => dispatch({ type: "toggle", id: entry.id })}
                   onAsk={ask}
+                  onAct={(view) => void act(view)}
                 />
               ) : (
-                <FoldedAnswer view={cardView(entry.card, viewContext)} onOpen={() => dispatch({ type: "toggle", id: entry.id })} />
+                <FoldedAnswer view={foldedAnswer(cardView(entry.card, viewContext))} onOpen={() => dispatch({ type: "toggle", id: entry.id })} />
               ))}
+            {entry.kind === "action" && (
+              <ActionCard
+                view={actionView(entry.card, { amount: entry.amount, skip: entry.skip }, actionContext)}
+                state={entry.state}
+                declining={entry.declining}
+                error={entry.error}
+                quota={quota}
+                denied={null}
+                onToggle={(key) => toggleSkip(entry, key)}
+                onAmount={(amount) => dispatch({ type: "edit", id: entry.id, patch: { amount } })}
+                onConfirm={(decision) => void confirm(entry, decision)}
+                onCancel={() => notNow(entry, entry.actionId)}
+                onRefresh={() => dispatch({ type: "renew", id: entry.id })}
+              />
+            )}
+            {entry.kind === "done" &&
+              (() => {
+                const view = doneView(entry.card, entry.outcome, actionContext);
+                return last || thread.open[entry.id] ? (
+                  <ActionDone
+                    view={view}
+                    quota={quota}
+                    canUndo={entry.outcome.canUndo}
+                    undoing={entry.undoing}
+                    foldable={!last}
+                    onUndo={() => void undo(entry)}
+                    onFold={() => dispatch({ type: "toggle", id: entry.id })}
+                  />
+                ) : (
+                  <FoldedAnswer view={{ eyebrow: view.eyebrow, text: view.folded, tone: "plain", ticked: !view.declined }} onOpen={() => dispatch({ type: "toggle", id: entry.id })} />
+                );
+              })()}
+            {entry.kind === "denied" &&
+              (() => {
+                const denied = deniedView(entry.denied, actionContext);
+                return (
+                  <ActionCard
+                    view={denied.view}
+                    state="denied"
+                    declining={false}
+                    error={null}
+                    quota={quota}
+                    denied={denied}
+                    onToggle={() => undefined}
+                    onAmount={() => undefined}
+                    onConfirm={() => undefined}
+                    onCancel={() => undefined}
+                    onRefresh={() => undefined}
+                  />
+                );
+              })()}
+            {entry.kind === "note" && <NoteCard view={noteView(entry.note)} onDismiss={() => notNow(entry, null)} />}
+            {entry.kind === "line" && <ActionLine head={entry.head} body={entry.body} free={entry.free} />}
           </section>
         );
       })}
@@ -296,6 +441,7 @@ export function AskScreen({ start, you, autoListen }: AskScreenProps) {
       </div>
 
       {showSuggestions && <Suggestions label={scope ? copy.suggest.labelGroup(scope.name) : copy.suggest.label} suggestions={suggestions} onPick={ask} />}
+      {showSuggestions && actionSuggestions.length > 0 && <ActionSuggestions suggestions={actionSuggestions} onPick={ask} />}
     </div>
   );
 }

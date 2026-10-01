@@ -14,7 +14,7 @@ import type { Tint } from "@/lib/design-system/tokens";
 import { EASE, SPRING_CURVE, T } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils/cn";
 import { askCopy } from "../_data";
-import type { BillView, CardView, HeadView, MonthBar, RowView, SegmentView, Tone } from "../_lib/view";
+import type { ActView, BillView, CardView, HeadView, MonthBar, RowView, SegmentView, Tone } from "../_lib/view";
 import { LeadTile } from "./lead-tile";
 
 export interface AnswerCardProps {
@@ -24,6 +24,7 @@ export interface AnswerCardProps {
   followDisabled: boolean;
   onFold: () => void;
   onAsk: (question: string) => void;
+  onAct: (act: ActView) => void;
 }
 
 const toneTint = { in: "green", out: "red", plain: undefined, muted: undefined } as const satisfies Record<Tone, Tint | undefined>;
@@ -177,7 +178,7 @@ function Bill({ bill, index }: { bill: BillView; index: number }) {
   );
 }
 
-export function AnswerCard({ view, foldable, showFollow, followDisabled, onFold, onAsk }: AnswerCardProps) {
+export function AnswerCard({ view, foldable, showFollow, followDisabled, onFold, onAsk, onAct }: AnswerCardProps) {
   const copy = askCopy;
   const [all, setAll] = useState(false);
   const capped = view.billsCap !== null && view.bills.length > view.billsCap;
@@ -328,10 +329,24 @@ export function AnswerCard({ view, foldable, showFollow, followDisabled, onFold,
         <span>{view.foot}</span>
       </div>
 
-      {showFollow && view.follow.length > 0 && (
+      {showFollow && (view.follow.length > 0 || view.acts.length > 0) && (
         <div className="-mt-1.5 flex flex-wrap gap-2">
+          {view.acts.map((act, index) => (
+            <Rise key={act.label} delay={0.65 + index * 0.09} className="max-w-full">
+              <motion.button
+                type="button"
+                disabled={followDisabled}
+                onClick={() => onAct(act)}
+                {...pressMotion()}
+                className="inline-flex min-h-11 max-w-full cursor-pointer items-center gap-1.5 rounded-[22px] bg-brand-tint py-2 pr-3.5 pl-3 text-left text-small font-semibold text-brand disabled:cursor-not-allowed disabled:bg-surface-2 disabled:text-muted"
+              >
+                <Icon name={act.icon} size={14} strokeWidth={2.2} className="shrink-0" />
+                {act.label}
+              </motion.button>
+            </Rise>
+          ))}
           {view.follow.map((question, index) => (
-            <Rise key={question} delay={0.65 + index * 0.09} className="max-w-full">
+            <Rise key={question} delay={0.65 + (view.acts.length + index) * 0.09} className="max-w-full">
               <motion.button
                 type="button"
                 disabled={followDisabled}

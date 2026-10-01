@@ -3,7 +3,7 @@
 import { activity } from "@/lib/activity";
 import { runInBackground } from "@/lib/background";
 import { defineAction } from "@/lib/actions/action";
-import { actionFail, actionInvalid, actionOk } from "@/lib/actions/errors";
+import { actionFail, actionInvalid, actionOk, actionRateLimited } from "@/lib/actions/errors";
 import { formatMoney, isCurrencyCode } from "@/lib/currency";
 import { db } from "@/lib/db";
 import { groupId as toGroupId, personId as toPersonId, type PersonId } from "@/lib/domain/ids";
@@ -13,6 +13,7 @@ import type { SettlementStatus } from "@/lib/ledger/rules";
 import { canConfirm, canDecline, canUndo, initialSettlement, type SettlementState } from "@/lib/ledger/settlements";
 import { cents } from "@/lib/money";
 import { notifySettlementChanged, notifySettlementRecorded } from "@/lib/notifications/events/payments";
+import { consumeRate } from "@/lib/rate-limit/limiter";
 import { refreshGroup } from "@/lib/revalidate";
 import { settlementMessages } from "./messages";
 import { stateOf } from "./rows";
@@ -45,6 +46,8 @@ export const recordSettlement = defineAction(recordSettlementSchema, async (inpu
   const counterpart = group.members.find((m) => m.personId === input.personId);
   if (!counterpart) return actionFail("forbidden", settlementMessages.unknownPerson);
   if (!isCurrencyCode(group.currency)) return actionFail("conflict");
+  const verdict = await consumeRate("settleWrite", you);
+  if (!verdict.ok) return actionRateLimited(verdict.retryAfter, settlementMessages.tooMany);
 
   const now = new Date();
   const them = toPersonId(input.personId);
@@ -122,6 +125,8 @@ function transition({ allowed, denied, next, update }: Transition) {
     if (!loaded) return actionFail("notFound", settlementMessages.gone);
     const now = new Date();
     if (!allowed(loaded.state, person.id, now)) return actionFail("conflict", denied);
+    const verdict = await consumeRate("settleWrite", person.id);
+    if (!verdict.ok) return actionRateLimited(verdict.retryAfter, settlementMessages.tooMany);
 
     const draft =
       next === "CONFIRMED"

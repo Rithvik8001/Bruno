@@ -95,6 +95,12 @@ export interface LinkView {
   readonly primary: boolean;
 }
 
+export interface ActView {
+  readonly label: string;
+  readonly icon: "arrow-right" | "bell";
+  readonly intent: { readonly action: "recordPayment" | "remindDebts"; readonly personId: string; readonly groupId: string | null };
+}
+
 export interface AskLinkView {
   readonly label: string;
   readonly question: string;
@@ -117,6 +123,7 @@ export interface CardView {
   readonly examples: readonly string[];
   readonly links: readonly LinkView[];
   readonly asks: readonly AskLinkView[];
+  readonly acts: readonly ActView[];
   readonly foot: string;
   readonly follow: readonly string[];
   readonly folded: { readonly text: string; readonly tone: Tone };
@@ -148,6 +155,7 @@ const blank = {
   examples: [],
   links: [],
   asks: [],
+  acts: [],
   follow: [],
 } as const satisfies Partial<CardView>;
 
@@ -291,12 +299,22 @@ function balanceView(card: BalanceCard, ctx: ViewContext): CardView {
 
   const owing = card.lines.find((line) => line.net < 0 && line.settleHref !== null);
   const single = card.lines.length === 1 ? card.lines[0] : undefined;
+  const canAct = card.mine && card.subject.id === ctx.you;
   const links: LinkView[] =
-    owing?.settleHref != null
+    owing?.settleHref != null && !canAct
       ? [{ label: copy.balance.settle(money(owing.net, owing.currency), other), href: owing.settleHref, primary: false }]
       : single
         ? [{ label: copy.balance.open(single.group.name), href: routes.group(single.group.id), primary: false }]
         : [];
+  const owedLines = card.lines.filter((line) => line.net > 0);
+  const acts: ActView[] = canAct
+    ? [
+        ...(owing ? [{ label: copy.act.follow.settle(money(owing.net, owing.currency), other), icon: "arrow-right" as const, intent: { action: "recordPayment" as const, personId: card.other.id, groupId: owing.group.id } }] : []),
+        ...(owedLines.length > 0
+          ? [{ label: copy.act.follow.remind(other), icon: "bell" as const, intent: { action: "remindDebts" as const, personId: card.other.id, groupId: owedLines.length === 1 ? (owedLines[0]?.group.id ?? null) : null } }]
+          : []),
+      ]
+    : [];
 
   const top = card.totals[0];
   const topGroup = top ? groupOf(top.groups[0] ?? "") : card.lines[0]?.group;
@@ -316,6 +334,7 @@ function balanceView(card: BalanceCard, ctx: ViewContext): CardView {
     rowsHead: openRows.length > 0 ? { left: copy.balance.addsUp, right: "" } : null,
     rows: openRows.length > 0 ? openRows : [...groupRows, ...paymentRow],
     links,
+    acts,
     foot: copy.foot.from(card.source.bills, card.source.payments, card.source.groups.length > 0 ? card.source.groups : [copy.allGroups]),
     follow: follow.slice(0, FOLLOW_MAX),
     folded: top

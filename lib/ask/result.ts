@@ -6,6 +6,9 @@ import type { FeedItem } from "@/lib/feed/types";
 import type { PaymentMethod } from "@/lib/ledger/rules";
 import type { Cents } from "@/lib/money";
 import type { PersonView } from "@/lib/people/person";
+import type { ActionBill, AskActionView, AskDenied, AskNote } from "./actions/card";
+import type { AskPortion } from "./actions/kinds";
+import type { SettleDirection } from "@/lib/settlements/schema";
 import type { AskDeclineReason } from "./rules";
 
 export interface AskMoney {
@@ -237,8 +240,11 @@ export type AskCardKind = AskCard["kind"];
 export const ASK_PERIODS = ["thisMonth", "lastMonth", "monthBefore", "all"] as const;
 export type AskPeriod = (typeof ASK_PERIODS)[number];
 
-export const ASK_SLOTS = ["person", "group", "period"] as const;
+export const ASK_SLOTS = ["person", "group", "period", "bill", "amount", "payment"] as const;
 export type AskSlot = (typeof ASK_SLOTS)[number];
+
+export const ASK_MODEL_SLOTS = ["person", "group", "period"] as const satisfies readonly AskSlot[];
+export type AskModelSlot = (typeof ASK_MODEL_SLOTS)[number];
 
 export type AskClarifyQuestion =
   | { readonly slot: "person"; readonly options: readonly { readonly ref: string; readonly person: PersonView; readonly groups: readonly string[] }[] }
@@ -249,6 +255,27 @@ export type AskClarifyQuestion =
   | {
       readonly slot: "period";
       readonly options: readonly { readonly ref: AskPeriod; readonly from: string | null; readonly to: string | null }[];
+    }
+  | { readonly slot: "bill"; readonly options: readonly { readonly ref: string; readonly bill: ActionBill }[] }
+  | {
+      readonly slot: "amount";
+      readonly other: PersonView;
+      readonly group: BillGroupRef;
+      readonly currency: CurrencyCode;
+      readonly owed: Cents;
+      readonly direction: SettleDirection;
+      readonly options: readonly { readonly ref: AskPortion; readonly amount: Cents | null }[];
+    }
+  | {
+      readonly slot: "payment";
+      readonly options: readonly {
+        readonly ref: string;
+        readonly from: PersonView;
+        readonly group: BillGroupRef;
+        readonly amount: Cents;
+        readonly currency: CurrencyCode;
+        readonly at: string;
+      }[];
     };
 
 export interface AskPick {
@@ -258,7 +285,10 @@ export interface AskPick {
 
 export type AskReply =
   | { readonly kind: "answer"; readonly card: AskCard }
-  | { readonly kind: "clarify"; readonly questions: readonly AskClarifyQuestion[] };
+  | { readonly kind: "clarify"; readonly questions: readonly AskClarifyQuestion[] }
+  | { readonly kind: "action"; readonly action: AskActionView }
+  | { readonly kind: "denied"; readonly denied: AskDenied }
+  | { readonly kind: "note"; readonly note: AskNote };
 
 export const ASK_TOOLS = ["balance", "explain", "spending", "bills", "findBills", "history"] as const;
 export type AskToolName = (typeof ASK_TOOLS)[number];
