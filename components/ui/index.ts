@@ -6,6 +6,7 @@ export * from "./button";
 export * from "./checkbox";
 export * from "./chip";
 export * from "./command-menu";
+export * from "./date-picker";
 export * from "./empty-state";
 export * from "./field";
 export * from "./icon-3d";

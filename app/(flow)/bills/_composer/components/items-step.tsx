@@ -5,6 +5,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Icon } from "@/components/icons/icon";
 import { pressMotion } from "@/components/motion/press";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { Receipt } from "@/components/ui/receipt";
 import { Select } from "@/components/ui/select";
@@ -206,14 +207,12 @@ export function ItemsStep({
             autoComplete="off"
             onChange={(e) => onDraft((d) => ({ ...d, title: e.target.value }))}
           />
-          <TextField
+          <DatePicker
             label={copy.date.label}
-            type="date"
             fieldClassName="min-w-0"
-            className="min-w-0"
             value={draft.occurredOn}
-            suppressHydrationWarning
-            onChange={(e) => onDraft((d) => ({ ...d, occurredOn: e.target.value || d.occurredOn }))}
+            today={today}
+            onValueChange={(occurredOn) => onDraft((d) => ({ ...d, occurredOn }))}
           />
         </div>
         <div
