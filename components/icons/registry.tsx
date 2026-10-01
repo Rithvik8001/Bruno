@@ -203,6 +203,27 @@ export const iconRegistry = {
       </>
     ),
   },
+  mic: {
+    node: (
+      <>
+        <rect x="9" y="3" width="6" height="11" rx="3" />
+        <path d="M5.5 11a6.5 6.5 0 0013 0M12 17.5V21" />
+      </>
+    ),
+  },
+  "mic-off": {
+    node: (
+      <>
+        <rect x="9" y="3" width="6" height="11" rx="3" />
+        <path d="M5.5 11a6.5 6.5 0 0013 0M12 17.5V21M4 4l16 16" />
+      </>
+    ),
+  },
+  quote: {
+    filled: true,
+    node: <path d="M4 18v-5c0-3.5 1.6-6 5-7l.8 1.6C8 8.4 7.2 9.7 7 11h3v7H4zm10 0v-5c0-3.5 1.6-6 5-7l.8 1.6c-1.8.8-2.6 2.1-2.8 3.4h3v7h-6z" />,
+  },
+  lines: { node: <path d="M7 7h10M7 12h10M7 17h6" /> },
   sparkle: {
     filled: true,
     node: <path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z" />,

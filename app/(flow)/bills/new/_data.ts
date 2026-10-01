@@ -5,10 +5,15 @@ export const newBillCopy = {
   entry: {
     back: "Home",
     title: "Add a bill",
-    body: "Upload the receipt and Bruno's AI pulls out every item. Or type it in yourself.",
+    body: "Scan the receipt, or just tell Bruno what happened. AI fills in the rest.",
     forLabel: "For",
     groupsLabel: "Which group is this for?",
     typeItIn: { title: "Type it in", body: "Add items by hand. Unlimited, always." },
+    tellBruno: {
+      title: "Tell Bruno",
+      body: "Say or type what happened. AI drafts the bill.",
+      locked: "Back at midnight. Shares today’s AI limit with scanning.",
+    },
     empty: {
       message: "Bills live in a group. Start one, invite the people you split with, then add the bill.",
       cta: "Start a group",
@@ -25,7 +30,7 @@ export const newBillCopy = {
       left: (n: number, max: number) => `${n} of ${max} AI extractions left`,
       none: "No extractions left today",
       banner: (max: number) => `You've used today's ${max} AI extractions.`,
-      bannerBody: "They reset at midnight, or type this one in below.",
+      bannerBody: "Scanning and Tell Bruno are back at midnight. Type this one in, or go Pro for unlimited.",
       goPro: "Go Pro",
     },
     cancel: "Cancel",

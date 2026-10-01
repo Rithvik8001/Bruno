@@ -111,6 +111,14 @@ enum ReceiptScanStatus {
   DISCARDED
 }
 
+enum TellDraftStatus {
+  DRAFTING
+  SUCCEEDED
+  FAILED
+  CONSUMED
+  DISCARDED
+}
+
 enum BillStatus {
   DRAFT
   CLAIMING
@@ -193,6 +201,7 @@ model Person {
   settlementsLogged  Settlement[]      @relation("SettlementRecorder")
   activity           ActivityEvent[]
   receiptScans       ReceiptScan[]
+  tellDrafts         TellDraft[]
 
   @@index([mergedIntoId])
   @@map("person")
@@ -244,6 +253,7 @@ model Group {
   settlements  Settlement[]
   activity     ActivityEvent[]
   receiptScans ReceiptScan[]
+  tellDrafts   TellDraft[]
 
   @@index([createdById])
   @@map("group")
@@ -422,4 +432,28 @@ model ReceiptScan {
   @@index([groupId, createdAt])
   @@index([status, createdAt])
   @@map("receipt_scan")
+}
+
+model TellDraft {
+  id           String          @id @default(cuid())
+  personId     String
+  person       Person          @relation(fields: [personId], references: [id], onDelete: Restrict)
+  groupId      String
+  group        Group           @relation(fields: [groupId], references: [id], onDelete: Restrict)
+  text         String?
+  timeZone     String
+  status       TellDraftStatus @default(DRAFTING)
+  failure      String?
+  result       Json?
+  answers      Json?
+  model        String?
+  inputTokens  Int?
+  outputTokens Int?
+  createdAt    DateTime        @default(now())
+  startedAt    DateTime?
+  completedAt  DateTime?
+
+  @@index([personId, status, startedAt])
+  @@index([status, createdAt])
+  @@map("tell_draft")
 }

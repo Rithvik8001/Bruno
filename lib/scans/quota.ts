@@ -2,6 +2,7 @@ import "server-only";
 import type { Prisma } from "@/lib/generated/prisma/client";
 import type { Plan } from "@/lib/generated/prisma/enums";
 import { dailyLimitOverride } from "./config";
+import { TELL_STALE_MS } from "@/lib/tell/rules";
 import { EXTRACT_STALE_MS, SCAN_LIMITS } from "./rules";
 
 export interface DayWindow {
@@ -67,13 +68,24 @@ export async function countUsed(
   window: DayWindow,
   now: Date = new Date(),
 ): Promise<number> {
-  return tx.receiptScan.count({
-    where: {
-      personId,
-      startedAt: { gte: window.start, lt: window.end },
-      OR: [{ status: { in: ["SUCCEEDED", "CONSUMED"] } }, { status: "EXTRACTING", startedAt: { gt: new Date(now.getTime() - EXTRACT_STALE_MS) } }],
-    },
-  });
+  const startedAt = { gte: window.start, lt: window.end };
+  const [scans, drafts] = await Promise.all([
+    tx.receiptScan.count({
+      where: {
+        personId,
+        startedAt,
+        OR: [{ status: { in: ["SUCCEEDED", "CONSUMED"] } }, { status: "EXTRACTING", startedAt: { gt: new Date(now.getTime() - EXTRACT_STALE_MS) } }],
+      },
+    }),
+    tx.tellDraft.count({
+      where: {
+        personId,
+        startedAt,
+        OR: [{ status: { in: ["SUCCEEDED", "CONSUMED"] } }, { status: "DRAFTING", startedAt: { gt: new Date(now.getTime() - TELL_STALE_MS) } }],
+      },
+    }),
+  ]);
+  return scans + drafts;
 }
 
 export function quotaOf(used: number, plan: Plan): ScanQuota {

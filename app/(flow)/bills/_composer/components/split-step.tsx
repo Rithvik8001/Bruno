@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { AmountInput } from "@/components/ui/amount-input";
 import { Button } from "@/components/ui/button";
 import { RollingNumber } from "@/components/ui/rolling-number";
@@ -26,6 +27,7 @@ export interface SplitStepProps {
   roster: Roster;
   memberIds: readonly PersonId[];
   you: PersonId;
+  banner?: ReactNode;
   error: string | null;
   pending: boolean;
   cta: string;
@@ -93,7 +95,7 @@ function PercentField({ value, label, onValueChange }: { value: number | null; l
   );
 }
 
-export function SplitStep({ draft, onDraft, composer, roster, memberIds, you, error, pending, cta, onBack, onSave }: SplitStepProps) {
+export function SplitStep({ draft, onDraft, composer, roster, memberIds, you, banner, error, pending, cta, onBack, onSave }: SplitStepProps) {
   const currency = composer.currency;
   const view = splitView(draft, memberIds);
   const status = statusOf(view.check, currency);
@@ -106,12 +108,13 @@ export function SplitStep({ draft, onDraft, composer, roster, memberIds, you, er
   const fixLabel = draft.method === "AMOUNT" ? copy.fix.AMOUNT : copy.fix.PERCENT;
 
   return (
-    <div className="grid gap-5">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-5">
       <StepHeader
         back={{ label: copy.back, onBack }}
         status={status}
         title={copy.title}
         body={copy.body(total, draft.title.trim())}
+        banner={banner}
       />
 
       <div className="grid gap-3">
@@ -120,7 +123,7 @@ export function SplitStep({ draft, onDraft, composer, roster, memberIds, you, er
           value={draft.method}
           onValueChange={(method) => onDraft((d) => ({ ...d, method }))}
           options={SPLIT_TABS.map((method) => ({ value: method, label: copy.methods[method] }))}
-          className="flex w-full [&>button]:flex-1"
+          className="flex w-full min-w-0 [&>button]:min-w-0 [&>button]:flex-1 [&>button]:px-1"
         />
         <p className="m-0 text-footnote text-muted">{copy.hints[draft.method]}</p>
       </div>

@@ -42,6 +42,10 @@ export const rateRules = {
     person: [{ seconds: MINUTE, max: 6 }],
     ip: [{ seconds: MINUTE, max: 12 }],
   },
+  tellStart: {
+    person: [{ seconds: MINUTE, max: 6 }],
+    ip: [{ seconds: MINUTE, max: 12 }],
+  },
 } as const satisfies Record<string, RateRule>;
 
 export type RateRuleName = keyof typeof rateRules;

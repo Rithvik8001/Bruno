@@ -11,17 +11,17 @@ const FUTURE_TOLERANCE_MS = DAY_MS;
 const PAST_TOLERANCE_MS = 2 * 365 * DAY_MS;
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 
-function validAmount(value: number | null | undefined): Cents | null {
+export function validAmount(value: number | null | undefined): Cents | null {
   if (value === null || value === undefined) return null;
   if (!Number.isSafeInteger(value) || value <= 0 || value > AMOUNT_MAX_CENTS) return null;
   return cents(value);
 }
 
-function cleanName(raw: string): string {
+export function cleanName(raw: string): string {
   return raw.replace(/\s+/g, " ").trim().slice(0, ITEM_NAME_MAX);
 }
 
-function cleanQuantity(raw: number): number {
+export function cleanQuantity(raw: number): number {
   if (!Number.isInteger(raw)) return 1;
   return Math.min(ITEM_QUANTITY_MAX, Math.max(1, raw));
 }
@@ -50,7 +50,7 @@ function normalizeItem(item: ExtractionItem): ScanItem | null {
   };
 }
 
-function normalizeDate(raw: string | null, now: Date): string | null {
+export function normalizeDate(raw: string | null, now: Date): string | null {
   if (raw === null || !ISO_DAY.test(raw)) return null;
   const at = Date.parse(`${raw}T12:00:00.000Z`);
   if (Number.isNaN(at)) return null;

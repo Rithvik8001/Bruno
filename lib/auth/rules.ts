@@ -25,6 +25,9 @@ export const routes = {
   newBillFor: (groupId: string) => `/bills/new?group=${encodeURIComponent(groupId)}`,
   manualBill: (groupId: string) => `/bills/new/manual?group=${encodeURIComponent(groupId)}`,
   scanReview: (scanId: string) => `/bills/new/scan/${encodeURIComponent(scanId)}`,
+  tellBill: (groupId: string, fromDraftId?: string) =>
+    `/bills/new/tell?group=${encodeURIComponent(groupId)}${fromDraftId ? `&from=${encodeURIComponent(fromDraftId)}` : ""}`,
+  tellReview: (draftId: string) => `/bills/new/tell/${encodeURIComponent(draftId)}`,
   bill: (slug: string) => `/bills/${encodeURIComponent(slug)}`,
   editBill: (slug: string, step?: "items" | "claim" | "split") =>
     `/bills/${encodeURIComponent(slug)}/edit${step ? `?step=${step}` : ""}`,
@@ -42,6 +45,7 @@ export const authParams = {
 
 export const billParams = {
   group: "group",
+  from: "from",
 } as const;
 
 export const guestOnlyRoutes: readonly string[] = [routes.signUp, routes.signIn, routes.resetPassword];

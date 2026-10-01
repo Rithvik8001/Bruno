@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
 import { PressLink } from "@/components/motion/motion-link";
 import { BackLink } from "@/components/patterns/back-link";
-import { TIME_ZONE_COOKIE, TimeZoneCookie } from "@/components/patterns/time-zone-cookie";
+import { TimeZoneCookie } from "@/components/patterns/time-zone-cookie";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { EmptyState } from "@/components/ui/empty-state";
 import { firstParam } from "@/lib/auth/redirect";
@@ -10,20 +9,13 @@ import { billParams, routes } from "@/lib/auth/rules";
 import { requireAppContext } from "@/lib/auth/session";
 import { listGroupsFor } from "@/lib/groups/queries";
 import { getScanAvailability } from "@/lib/scans/queries";
-import { timeZoneSchema } from "@/lib/scans/schema";
 import { cn } from "@/lib/utils/cn";
 import { newBillCopy } from "./_data";
 import { NewBillEntry } from "./_components/new-bill-entry";
+import { cookieTimeZone } from "./_lib/time-zone";
 
 export const metadata: Metadata = { title: newBillCopy.metaTitle };
 export const maxDuration = 60;
-
-async function cookieTimeZone(): Promise<string | null> {
-  const raw = (await cookies()).get(TIME_ZONE_COOKIE)?.value;
-  if (!raw) return null;
-  const parsed = timeZoneSchema.safeParse(decodeURIComponent(raw));
-  return parsed.success ? parsed.data : null;
-}
 
 export default async function NewBillPage({ searchParams }: PageProps<"/bills/new">) {
   const requested = firstParam((await searchParams)[billParams.group]);
@@ -65,6 +57,7 @@ export default async function NewBillPage({ searchParams }: PageProps<"/bills/ne
         selectedId={selected.id}
         currency={selected.currency}
         configured={availability.configured}
+        tellConfigured={availability.tellConfigured}
         quota={availability.quota}
       />
     </>

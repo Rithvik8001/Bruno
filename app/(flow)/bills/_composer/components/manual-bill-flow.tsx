@@ -11,15 +11,18 @@ import type { ActionResult } from "@/lib/actions/errors";
 import { formatMoney } from "@/lib/currency";
 import type { PersonId } from "@/lib/domain/ids";
 import type { BillComposer } from "@/lib/groups/queries";
+import { usedGuests } from "@/lib/members/pending";
 import { claimingEditCopy, composerCopy, flowModeCopy } from "../data";
 import { draftTotals, toBillValues, toCreateInput, type FlowMode } from "../lib/derive";
 import { emptyDraft, todayIso, type BillDraft } from "../lib/draft";
 import { dayLabel } from "../lib/format";
 import { rosterOf } from "../lib/people";
 import type { ComposerMode, FlowStep } from "../lib/steps";
+import { reconcileMarks } from "../lib/tell";
 import { ClaimStep } from "./claim-step";
 import { ItemsStep } from "./items-step";
 import { SplitStep } from "./split-step";
+import { YouSaidBanner } from "./you-said-banner";
 
 const ITEM_FIELDS = ["title", "occurredOn", "payerId", "items", "taxCents", "tip", "discountCents"] as const;
 
@@ -56,9 +59,24 @@ export function ManualBillFlow({ composer, you, mode, initialDraft, initialStep 
   const modeCopy = flowModeCopy[mode.kind];
   const claimCode = mode.kind === "edit" ? mode.claimCode : null;
   const claimHref = claimCode ? routes.claimBill(claimCode) : null;
-  const exitHref = claimHref ?? (mode.kind === "edit" ? routes.bill(mode.slug) : routes.newBillFor(composer.id));
+  const exitHref =
+    claimHref ??
+    (mode.kind === "edit"
+      ? routes.bill(mode.slug)
+      : mode.kind === "tell"
+        ? routes.tellBill(composer.id, mode.draftId)
+        : routes.newBillFor(composer.id));
   const scan = mode.kind === "scan" ? mode.receipt : null;
   const receiptScanId = mode.kind === "scan" ? mode.scanId : undefined;
+  const told = mode.kind === "tell";
+  const banner = mode.kind === "tell" ? <YouSaidBanner text={mode.said} redraftHref={routes.tellBill(composer.id, mode.draftId)} /> : undefined;
+
+  const createInput = (flow: FlowMode) => {
+    const input = toCreateInput(draft, composer.id, memberIds, flow);
+    if (mode.kind !== "tell") return { ...input, receiptScanId };
+    const newGuests = usedGuests(input, mode.guests);
+    return { ...input, tellDraftId: mode.draftId, newGuests };
+  };
 
   const go = (next: FlowStep) => {
     setError(null);
@@ -68,7 +86,7 @@ export function ManualBillFlow({ composer, you, mode, initialDraft, initialStep 
 
   const onDraft = (update: (draft: BillDraft) => BillDraft) => {
     setError(null);
-    setDraft(update);
+    setDraft((current) => reconcileMarks(current, update(current)));
   };
 
   const submit = async (flow: FlowMode): Promise<ActionResult<Saved>> => {
@@ -76,7 +94,7 @@ export function ManualBillFlow({ composer, you, mode, initialDraft, initialStep 
       const result = await updateBill({ ...toBillValues(draft, memberIds, flow), billId: mode.billId });
       return result.ok ? { ok: true, data: { href: routes.bill(result.data.slug), title: result.data.title } } : result;
     }
-    const result = await createBill({ ...toCreateInput(draft, composer.id, memberIds, flow), receiptScanId });
+    const result = await createBill(createInput(flow));
     return result.ok ? { ok: true, data: { href: routes.group(result.data.groupId), title: result.data.title } } : result;
   };
 
@@ -96,7 +114,7 @@ export function ManualBillFlow({ composer, you, mode, initialDraft, initialStep 
   const goLive = () =>
     startTransition(async () => {
       setError(null);
-      const result = await startClaiming({ ...toCreateInput(draft, composer.id, memberIds, "items"), receiptScanId });
+      const result = await startClaiming(createInput("items"));
       if (!result.ok) {
         const back = stepForFields(result.error.fields);
         if (back) go(back);
@@ -136,6 +154,8 @@ export function ManualBillFlow({ composer, you, mode, initialDraft, initialStep 
           composer={composer}
           you={you}
           scan={scan}
+          told={told}
+          banner={banner}
           today={today}
           error={error}
           modeCopy={claimHref ? claimingEditCopy : modeCopy}
@@ -153,6 +173,7 @@ export function ManualBillFlow({ composer, you, mode, initialDraft, initialStep 
           roster={roster}
           memberIds={memberIds}
           you={you}
+          banner={banner}
           dateLabel={dayLabel(draft.occurredOn, today, composerCopy.today)}
           error={error}
           pending={pending}
@@ -172,6 +193,7 @@ export function ManualBillFlow({ composer, you, mode, initialDraft, initialStep 
           roster={roster}
           memberIds={memberIds}
           you={you}
+          banner={banner}
           error={error}
           pending={pending}
           cta={modeCopy.save}

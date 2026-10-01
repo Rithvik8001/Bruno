@@ -1,11 +1,15 @@
 import "server-only";
-import { actionInvalid, actionOk, type ActionResult } from "@/lib/actions/errors";
+import { actionFail, actionInvalid, actionOk, actionRateLimited, type ActionResult } from "@/lib/actions/errors";
 import type { CurrencyCode } from "@/lib/currency";
 import { db } from "@/lib/db";
 import { groupId as toGroupId, personId as toPersonId, type PersonId } from "@/lib/domain/ids";
 import { canEditBill, type Membership } from "@/lib/domain/permissions";
 import type { Prisma } from "@/lib/generated/prisma/client";
+import { memberMessages } from "@/lib/members/messages";
+import { pendingGuestId, usedGuests, type PendingGuest } from "@/lib/members/pending";
+import { MAX_GROUP_MEMBERS } from "@/lib/members/types";
 import type { Cents } from "@/lib/money";
+import { consumeRate } from "@/lib/rate-limit/limiter";
 import { createCode, uniqueSlug } from "@/lib/slug";
 import { toBillInput } from "./input";
 import { billMessages, splitErrorMessage } from "./messages";
@@ -42,6 +46,21 @@ export function checkPeople(values: BillValues, allowed: ReadonlySet<string>): R
   if (!allowed.has(values.payerId)) fields.payerId = billMessages.payerNotMember;
   if (peopleOnBill(values).some((id) => !allowed.has(id))) fields.participants = billMessages.unknownPerson;
   return fields;
+}
+
+export async function admitGuests(
+  values: BillValues,
+  declared: readonly PendingGuest[] | undefined,
+  group: GroupRoster,
+  actor: PersonId,
+): Promise<ActionResult<{ readonly guests: readonly PendingGuest[]; readonly allowed: ReadonlySet<string> }>> {
+  const guests = usedGuests(values, declared ?? []);
+  const allowed = new Set<string>([...group.roster.map((m) => m.personId), ...guests.map((guest) => pendingGuestId(guest.key))]);
+  if (guests.length === 0) return actionOk({ guests, allowed });
+  if (group.roster.length + guests.length > MAX_GROUP_MEMBERS) return actionFail("conflict", memberMessages.groupFull(MAX_GROUP_MEMBERS));
+  const verdict = await consumeRate("addGuest", actor);
+  if (!verdict.ok) return actionRateLimited(verdict.retryAfter, memberMessages.tooManyGuests);
+  return actionOk({ guests, allowed });
 }
 
 export function splitTotal(values: BillValues, currency: CurrencyCode): ActionResult<Cents> {

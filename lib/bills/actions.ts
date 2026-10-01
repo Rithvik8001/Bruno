@@ -11,11 +11,16 @@ import { canAddBill } from "@/lib/domain/permissions";
 import type { Cents } from "@/lib/money";
 import { broadcastBill } from "@/lib/realtime/broadcast";
 import { refreshGroup } from "@/lib/revalidate";
+import { createPendingGuests } from "@/lib/members/guests";
+import { resolveGuests } from "@/lib/members/pending";
 import { consumeScan, keepReceipt, ScanGoneError } from "@/lib/scans/consume";
 import { scanMessages } from "@/lib/scans/messages";
+import { consumeTellDraft, TellGoneError } from "@/lib/tell/consume";
+import { tellMessages } from "@/lib/tell/messages";
 import { changedFields } from "./diff";
 import { billMessages } from "./messages";
 import {
+  admitGuests,
   billColumns,
   checkPeople,
   claimingTotal,
@@ -57,18 +62,23 @@ export const createBill = defineAction(createBillSchema, async (input, { person 
   if (!isCurrencyCode(group.currency)) return actionFail("conflict");
   const currency = group.currency;
 
-  const fields = checkPeople(input, new Set(group.roster.map((m) => m.personId)));
+  const actor: PersonId = person.id;
+  const admitted = await admitGuests(input, input.newGuests, group, actor);
+  if (!admitted.ok) return admitted;
+  const fields = checkPeople(input, admitted.data.allowed);
   if (Object.keys(fields).length > 0) return actionInvalid(fields);
   const total = splitTotal(input, currency);
   if (!total.ok) return total;
 
   const slug = await freeSlug(input.title);
-  const actor: PersonId = person.id;
   const bill = await db.$transaction(async (tx) => {
     const receiptScanId = await consumeScan(tx, input.receiptScanId, actor, input.groupId);
-    const created = await tx.bill.create({
+    await consumeTellDraft(tx, input.tellDraftId, actor, input.groupId);
+    const created = await createPendingGuests(tx, { groupId: input.groupId, addedById: actor, guests: admitted.data.guests });
+    const values = resolveGuests(input, created);
+    const saved = await tx.bill.create({
       data: {
-        ...billColumns(input, total.data),
+        ...billColumns(values, total.data),
         groupId: input.groupId,
         currency,
         createdById: actor,
@@ -76,8 +86,8 @@ export const createBill = defineAction(createBillSchema, async (input, { person 
         finalizedAt: new Date(),
         slug,
         receiptScanId,
-        items: { create: itemCreates(input) },
-        participants: { create: participantRows(input) },
+        items: { create: itemCreates(values) },
+        participants: { create: participantRows(values) },
       },
       select: { id: true, slug: true },
     });
@@ -88,19 +98,25 @@ export const createBill = defineAction(createBillSchema, async (input, { person 
     await tx.activityEvent.createMany({
       data: events.map((draft) => ({
         groupId: input.groupId,
-        billId: created.id,
+        billId: saved.id,
         actorId: actor,
         type: draft.type,
         payload: draft.payload,
       })),
     });
-    return created;
-  }).catch((error: unknown) => (error instanceof ScanGoneError ? null : Promise.reject(error)));
-  if (!bill) return actionFail("conflict", scanMessages.gone);
+    return { ok: true as const, saved };
+  }).catch((error: unknown) =>
+    error instanceof ScanGoneError
+      ? { ok: false as const, message: scanMessages.gone }
+      : error instanceof TellGoneError
+        ? { ok: false as const, message: tellMessages.gone }
+        : Promise.reject(error),
+  );
+  if (!bill.ok) return actionFail("conflict", bill.message);
 
-  if (input.receiptScanId) after(() => keepReceipt(input.receiptScanId ?? "", bill.id));
+  if (input.receiptScanId) after(() => keepReceipt(input.receiptScanId ?? "", bill.saved.id));
   refreshGroup(input.groupId);
-  return actionOk<CreatedBill>({ id: bill.id, slug: bill.slug, groupId: input.groupId, title: input.title, total: total.data });
+  return actionOk<CreatedBill>({ id: bill.saved.id, slug: bill.saved.slug, groupId: input.groupId, title: input.title, total: total.data });
 });
 
 async function loadEditable(billId: string, you: PersonId) {

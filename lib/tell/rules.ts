@@ -1,0 +1,12 @@
+export const TELL_TEXT_MAX = 280;
+export const TELL_COUNT_FROM = 200;
+export const TELL_MODEL = "gpt-5.6-luna";
+export const TELL_REASONING = "low";
+export const TELL_TIMEOUT_MS = 20_000;
+export const TELL_STALE_MS = 2 * 60 * 1000;
+export const TELL_QUESTIONS_MAX = 3;
+export const TELL_GUESTS_MAX = 3;
+export const TELL_PEOPLE_MAX = 12;
+export const TELL_ROSTER_NAME_MAX = 40;
+export const TELL_SWEEP_AFTER_MS = 2 * 24 * 60 * 60 * 1000;
+export const TELL_SWEEP_CHANCE = 0.02;

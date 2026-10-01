@@ -9,6 +9,7 @@ import { actionFail, actionInvalid, actionOk, actionRateLimited } from "@/lib/ac
 import { routes } from "@/lib/auth/rules";
 import { billMessages } from "@/lib/bills/messages";
 import {
+  admitGuests,
   billColumns,
   checkPeople,
   claimingTotal,
@@ -27,7 +28,8 @@ import { canAddBill, canClaim } from "@/lib/domain/permissions";
 import { groupId as toGroupId, personId as toPersonId } from "@/lib/domain/ids";
 import { sendEmail } from "@/lib/email/send";
 import { issueGuestToken } from "@/lib/members/guest-token";
-import { createGuestMember } from "@/lib/members/guests";
+import { createGuestMember, createPendingGuests } from "@/lib/members/guests";
+import { resolveGuests } from "@/lib/members/pending";
 import { activeMemberCount } from "@/lib/members/queries";
 import { MAX_GROUP_MEMBERS } from "@/lib/members/types";
 import { memberMessages } from "@/lib/members/messages";
@@ -40,6 +42,8 @@ import type { BillEvent, ClaimSignal } from "@/lib/realtime/topics";
 import { refreshGroup } from "@/lib/revalidate";
 import { consumeScan, keepReceipt, ScanGoneError } from "@/lib/scans/consume";
 import { scanMessages } from "@/lib/scans/messages";
+import { consumeTellDraft, TellGoneError } from "@/lib/tell/consume";
+import { tellMessages } from "@/lib/tell/messages";
 import { appUrl } from "@/lib/site";
 import { clearGuestSession, readGuestSession, setGuestSession } from "./guest-session";
 import { claimMessages } from "./messages";
@@ -96,15 +100,20 @@ export const startClaiming = defineAction(createBillSchema, async (input, { pers
   if (!isCurrencyCode(group.currency)) return actionFail("conflict");
   const currency = group.currency;
 
-  const values = { ...input, method: "ITEMS" as const, participants: [] };
-  const fields = checkPeople(values, new Set(group.roster.map((m) => m.personId)));
+  const draft = { ...input, method: "ITEMS" as const, participants: [] };
+  const admitted = await admitGuests(draft, input.newGuests, group, person.id);
+  if (!admitted.ok) return admitted;
+  const fields = checkPeople(draft, admitted.data.allowed);
   if (Object.keys(fields).length > 0) return actionInvalid(fields);
-  const total = claimingTotal(values, currency);
+  const total = claimingTotal(draft, currency);
   if (!total.ok) return total;
 
-  const [slug, code] = await Promise.all([freeSlug(values.title), freeClaimCode()]);
+  const [slug, code] = await Promise.all([freeSlug(draft.title), freeClaimCode()]);
   const bill = await db.$transaction(async (tx) => {
     const receiptScanId = await consumeScan(tx, input.receiptScanId, person.id, input.groupId);
+    await consumeTellDraft(tx, input.tellDraftId, person.id, input.groupId);
+    const guests = await createPendingGuests(tx, { groupId: input.groupId, addedById: person.id, guests: admitted.data.guests });
+    const values = resolveGuests(draft, guests);
     const created = await tx.bill.create({
       data: {
         ...billColumns(values, total.data),
@@ -124,24 +133,30 @@ export const startClaiming = defineAction(createBillSchema, async (input, { pers
       activity("BILL_CLAIMING_OPENED", { title: values.title, itemCount: values.items.length, reopened: false }),
     ];
     await tx.activityEvent.createMany({
-      data: events.map((draft) => ({
+      data: events.map((event) => ({
         groupId: input.groupId,
         billId: created.id,
         actorId: person.id,
-        type: draft.type,
-        payload: draft.payload,
+        type: event.type,
+        payload: event.payload,
       })),
     });
     const target: ClaimTarget = { id: created.id, title: values.title, groupId: input.groupId, payerId: values.payerId };
     const claimants = new Set(values.items.flatMap((item) => item.claimedBy));
     for (const claimant of claimants) await syncClaimedEvent(tx, target, claimant);
-    return created;
-  }).catch((error: unknown) => (error instanceof ScanGoneError ? null : Promise.reject(error)));
-  if (!bill) return actionFail("conflict", scanMessages.gone);
+    return { ok: true as const, id: created.id };
+  }).catch((error: unknown) =>
+    error instanceof ScanGoneError
+      ? { ok: false as const, message: scanMessages.gone }
+      : error instanceof TellGoneError
+        ? { ok: false as const, message: tellMessages.gone }
+        : Promise.reject(error),
+  );
+  if (!bill.ok) return actionFail("conflict", bill.message);
 
   if (input.receiptScanId) after(() => keepReceipt(input.receiptScanId ?? "", bill.id));
   refreshGroup(input.groupId);
-  return actionOk<StartedClaiming>({ code, title: values.title });
+  return actionOk<StartedClaiming>({ code, title: draft.title });
 });
 
 export interface ToggledClaim {

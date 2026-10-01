@@ -7,9 +7,10 @@ import { newBillCopy } from "../_data";
 export interface GroupChipsProps {
   groups: readonly GroupSummary[];
   selectedId: string;
+  hrefFor?: (groupId: string) => string;
 }
 
-export function GroupChips({ groups, selectedId }: GroupChipsProps) {
+export function GroupChips({ groups, selectedId, hrefFor = routes.newBillFor }: GroupChipsProps) {
   const copy = newBillCopy.entry;
   return (
     <nav aria-label={copy.groupsLabel} className="flex flex-wrap items-center gap-2">
@@ -19,7 +20,7 @@ export function GroupChips({ groups, selectedId }: GroupChipsProps) {
         return (
           <PressLink
             key={group.id}
-            href={routes.newBillFor(group.id)}
+            href={hrefFor(group.id)}
             replace
             scroll={false}
             aria-current={selected ? "true" : undefined}

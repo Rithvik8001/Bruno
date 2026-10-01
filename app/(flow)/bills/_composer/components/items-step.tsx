@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Icon } from "@/components/icons/icon";
 import { pressMotion } from "@/components/motion/press";
 import { Button } from "@/components/ui/button";
@@ -21,11 +21,12 @@ import { draftTotals, filledItems, itemsCheck, subtotalOf, type ItemsIssue } fro
 import { addItem, removeItem, updateItem, type BillDraft } from "../lib/draft";
 import { dayLabel } from "../lib/format";
 import { flaggedCount, receiptCheck, type ReceiptCheck, type ScanReceipt } from "../lib/scan";
+import { confirmPayer, guessCount, isUnpriced, saidCheck, unpricedCount } from "../lib/tell";
 import { CheckBanner } from "./check-banner";
 import { Charges } from "./charges";
 import { DuplicateBanner } from "./duplicate-banner";
 import { FlowFooter } from "./flow-footer";
-import { itemGridClassName, ItemRow } from "./item-row";
+import { itemGridClassName, ItemRow, type ItemNote } from "./item-row";
 import { StepHeader } from "./step-header";
 
 const PRINT_STEP_MS = 260;
@@ -37,6 +38,8 @@ export interface ItemsStepProps {
   composer: BillComposer;
   you: PersonId;
   scan: ScanReceipt | null;
+  told: boolean;
+  banner?: ReactNode;
   today: string;
   error: string | null;
   modeCopy: ItemsModeCopy;
@@ -65,6 +68,21 @@ function checkMessage(issue: ItemsIssue | null, unnamed: number): string {
       return check.discount;
     case "noTitle":
       return check.noTitle;
+  }
+}
+
+function saidMessage(check: ReceiptCheck, currency: BillComposer["currency"]): string | null {
+  const copy = composerCopy.items.check;
+  switch (check.kind) {
+    case "unresolved":
+      return copy.saidUnpriced(check.count);
+    case "match":
+      return copy.saidMatch(formatMoney(check.total, currency));
+    case "off":
+      return copy.saidOff(formatMoney(check.total, currency), formatMoney(check.printed, currency), formatMoney(check.diff, currency));
+    case "printing":
+    case "plain":
+      return null;
   }
 }
 
@@ -101,6 +119,8 @@ export function ItemsStep({
   composer,
   you,
   scan,
+  told,
+  banner,
   today,
   error,
   modeCopy,
@@ -115,20 +135,33 @@ export function ItemsStep({
   const totals = draftTotals(draft);
   const check = itemsCheck(draft);
   const count = filledItems(draft).length;
-  const shown = usePrintIn(draft.items.length, scan !== null);
-  const printing = scan !== null && shown < draft.items.length;
-  const flagged = scan === null ? 0 : flaggedCount(draft);
+  const sourced = scan !== null || told;
+  const shown = usePrintIn(draft.items.length, sourced);
+  const printing = sourced && shown < draft.items.length;
+  const flagged = scan !== null ? flaggedCount(draft) : told ? unpricedCount(draft) : 0;
+  const guesses = told ? guessCount(draft) : 0;
   const ready = !printing && flagged === 0 && check.issue === null;
-  const receipt = scan === null ? null : receiptCheck(draft, scan.printedTotal, printing);
-  const receiptText = receipt === null ? null : receiptMessage(receipt, currency);
+  const receipt = scan !== null ? receiptCheck(draft, scan.printedTotal, printing) : told ? saidCheck(draft, printing) : null;
+  const receiptText = receipt === null ? null : told ? saidMessage(receipt, currency) : receiptMessage(receipt, currency);
+  const marks = draft.marks;
+  const noteFor = (item: BillDraft["items"][number]): ItemNote | null =>
+    !told
+      ? null
+      : isUnpriced(item)
+        ? { kind: "unpriced" }
+        : marks?.restKey === item.key && marks.stated !== null
+          ? { kind: "rest", label: copy.told.rest(formatMoney(marks.stated, currency)) }
+          : null;
   const [duplicateDismissed, setDuplicateDismissed] = useState(false);
   const duplicate = scan?.duplicate ?? null;
 
   const status: { label: string; tone: CheckTone } = printing
     ? { label: copy.status.reading, tone: "reading" }
-    : flagged > 0
-      ? { label: copy.status.toCheck(flagged), tone: "pending" }
-      : ready
+    : guesses > 0
+      ? { label: copy.status.guesses(guesses), tone: "pending" }
+      : flagged > 0
+        ? { label: copy.status.toCheck(flagged), tone: "pending" }
+        : ready
         ? { label: copy.status.ready, tone: "ok" }
         : { label: copy.status.draft, tone: "neutral" };
 
@@ -146,7 +179,13 @@ export function ItemsStep({
 
   return (
     <div className="grid gap-6">
-      <StepHeader back={{ label: modeCopy.back, onBack }} status={status} title={modeCopy.itemsTitle} body={modeCopy.itemsBody} />
+      <StepHeader
+        back={{ label: modeCopy.back, onBack }}
+        status={status}
+        title={modeCopy.itemsTitle}
+        body={modeCopy.itemsBody}
+        banner={banner}
+      />
 
       {duplicate && !duplicateDismissed && !printing && (
         <DuplicateBanner
@@ -177,15 +216,33 @@ export function ItemsStep({
             onChange={(e) => onDraft((d) => ({ ...d, occurredOn: e.target.value || d.occurredOn }))}
           />
         </div>
-        <Select<PersonId>
-          label={copy.payer.label}
-          value={draft.payerId}
-          onValueChange={(payerId) => onDraft((d) => ({ ...d, payerId }))}
-          options={composer.members.map((m) => ({
-            value: m.id,
-            label: m.id === you ? copy.payer.you(m.displayName) : m.displayName,
-          }))}
-        />
+        <div
+          data-tint="amber"
+          className={cn(
+            "grid gap-2 rounded-tile transition-[background-color,padding,margin] duration-220 ease-standard",
+            marks?.payerGuessed && "-mx-3 bg-tint-bg px-3 pt-2.5 pb-3",
+          )}
+        >
+          <Select<PersonId>
+            label={copy.payer.label}
+            value={draft.payerId}
+            onValueChange={(payerId) => onDraft((d) => ({ ...d, payerId }))}
+            className={cn(marks?.payerGuessed && "bg-bg hover:bg-bg")}
+            options={composer.members.map((m) => ({
+              value: m.id,
+              label: m.id === you ? copy.payer.you(m.displayName) : m.displayName,
+            }))}
+          />
+          {marks?.payerGuessed && (
+            <div className="flex flex-wrap items-center gap-2 text-footnote font-semibold text-tint">
+              <Icon name="sparkle" size={14} className="shrink-0" />
+              <span className="min-w-40 flex-1">{copy.told.payerGuess}</span>
+              <Button variant="elevated" size="sm" onClick={() => onDraft(confirmPayer)} className="pointer-coarse:h-11">
+                {copy.told.payerKeep}
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
 
       <Receipt bodyClassName="grid px-4 pt-2 pb-4">
@@ -200,6 +257,7 @@ export function ItemsStep({
             <ItemRow
               key={item.key}
               item={item}
+              note={noteFor(item)}
               currency={currency}
               onChange={(patch) => onDraft((d) => updateItem(d, item.key, patch))}
               onRemove={() => remove(item.key, item.name)}
@@ -232,6 +290,7 @@ export function ItemsStep({
         />
       </Receipt>
 
+      {told && count === 1 && !printing && <p className="m-0 text-small text-text-2">{copy.told.single}</p>}
       <CheckBanner tone={bannerTone}>{bannerText}</CheckBanner>
       {error && <InlineAlert>{error}</InlineAlert>}
 

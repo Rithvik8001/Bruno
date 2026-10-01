@@ -20,7 +20,7 @@ export const checkTint = {
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
-export const FLOW_MODES = ["create", "scan", "edit"] as const;
+export const FLOW_MODES = ["create", "scan", "tell", "edit"] as const;
 export type FlowModeKind = (typeof FLOW_MODES)[number];
 
 export const flowModeCopy = {
@@ -36,6 +36,14 @@ export const flowModeCopy = {
     back: "Back",
     itemsTitle: "Check what Bruno read",
     itemsBody: "Fix anything off. Tap a flagged price to pick the right one.",
+    finish: "Finish bill",
+    save: "Save split",
+    saved: (title: string, total: string) => `${title} added · ${total}`,
+  },
+  tell: {
+    back: "Back",
+    itemsTitle: "Check Bruno’s draft",
+    itemsBody: "Bruno filled it in from what you said. Anything it guessed is marked.",
     finish: "Finish bill",
     save: "Save split",
     saved: (title: string, total: string) => `${title} added · ${total}`,
@@ -79,7 +87,13 @@ export const composerCopy = {
     discount: "Discount",
     total: "Total",
     noTotal: "—",
-    status: { ready: "Ready", draft: "Draft", reading: "Reading", toCheck: (n: number) => `${n} to check` },
+    status: {
+      ready: "Ready",
+      draft: "Draft",
+      reading: "Reading",
+      toCheck: (n: number) => `${n} to check`,
+      guesses: (n: number) => `${plural(n, "guess", "guesses")} to check`,
+    },
     check: {
       ok: "Looks good. Split when you're ready.",
       noItems: "Add at least one priced item.",
@@ -91,6 +105,20 @@ export const composerCopy = {
       receiptUnresolved: (printed: string, n: number) => `Receipt says ${printed}. Resolve ${n} flagged ${n === 1 ? "price" : "prices"} to match.`,
       receiptOff: (total: string, printed: string, diff: string) => `Adds up to ${total}, receipt says ${printed}. Off by ${diff}.`,
       unresolved: (n: number) => `Pick a price for ${n} flagged ${n === 1 ? "item" : "items"}.`,
+      saidMatch: (total: string) => `Adds up to ${total}, same as you said.`,
+      saidOff: (total: string, said: string, diff: string) => `Adds up to ${total}, you said ${said}. Off by ${diff}.`,
+      saidUnpriced: (n: number) => `Add a price for ${n === 1 ? "the marked item" : `${n} marked items`}.`,
+    },
+    told: {
+      label: "You said",
+      show: "Show what you said",
+      redraft: "Edit and redraft",
+      redraftNote: "Redrafting replaces this draft.",
+      unpriced: "No price yet. Type what it cost.",
+      rest: (stated: string) => `The rest of the ${stated}`,
+      payerGuess: "Bruno guessed you paid. Pick someone else if not.",
+      payerKeep: "Yes, I paid",
+      single: "One line for the whole bill. Add items if people should claim different things.",
     },
     guessPrompt: "Hard to read — was it",
     orType: "or type it.",
@@ -124,6 +152,8 @@ export const composerCopy = {
     editor: { title: "Need percentages or fixed amounts?", body: "Open the split editor." },
     live: { title: "Let everyone claim", body: "Send a link and they tap their own items.", saving: "Saving the bill…" },
     shareLabel: (name: string) => (name === "You" ? "Your share" : `${name}'s share`),
+    assumed: "Bruno assumed everyone was in on this.",
+    assumedKeep: "Looks right",
     status: { ready: "Ready", progress: (done: number, all: number) => `${done} of ${all} claimed` },
   },
   split: {

@@ -16,9 +16,10 @@ export interface StepHeaderProps {
   status: StepStatus;
   title: ReactNode;
   body: ReactNode;
+  banner?: ReactNode;
 }
 
-export function StepHeader({ back, status, title, body }: StepHeaderProps) {
+export function StepHeader({ back, status, title, body, banner }: StepHeaderProps) {
   return (
     <>
       <div className="flex items-center justify-between gap-3">
@@ -33,6 +34,7 @@ export function StepHeader({ back, status, title, body }: StepHeaderProps) {
         <h1 className="m-0 text-heading">{title}</h1>
         <p className="m-0 text-text-2">{body}</p>
       </div>
+      {banner}
     </>
   );
 }

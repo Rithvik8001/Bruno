@@ -1,4 +1,7 @@
 import { z } from "zod";
+import { PENDING_GUEST_KEY } from "@/lib/members/pending";
+import { guestNameSchema } from "@/lib/members/schema";
+import { TELL_GUESTS_MAX } from "@/lib/tell/rules";
 import { billMessages } from "./messages";
 import { FULL_PERCENT_BPS, ITEM_CATEGORIES, SPLIT_METHODS } from "./types";
 
@@ -67,7 +70,20 @@ function refineBill(value: BillFields, ctx: z.RefinementCtx): void {
   });
 }
 
-export const createBillSchema = billFieldsSchema.extend({ groupId: idSchema, receiptScanId: idSchema.optional() }).superRefine(refineBill);
+export const newGuestSchema = z.object({ key: z.string().regex(PENDING_GUEST_KEY), name: guestNameSchema });
+
+export const createBillSchema = billFieldsSchema
+  .extend({
+    groupId: idSchema,
+    receiptScanId: idSchema.optional(),
+    tellDraftId: idSchema.optional(),
+    newGuests: z.array(newGuestSchema).max(TELL_GUESTS_MAX).optional(),
+  })
+  .superRefine(refineBill)
+  .superRefine((value, ctx) => {
+    const keys = (value.newGuests ?? []).map((guest) => guest.key);
+    if (new Set(keys).size !== keys.length) ctx.addIssue({ code: "custom", path: ["newGuests"], message: billMessages.duplicatePerson });
+  });
 
 export const updateBillSchema = billFieldsSchema.extend({ billId: idSchema }).superRefine(refineBill);
 

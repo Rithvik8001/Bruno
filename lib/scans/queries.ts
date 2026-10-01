@@ -1,6 +1,7 @@
 import "server-only";
 import { db } from "@/lib/db";
 import { groupId as toGroupId, type GroupId, type PersonId } from "@/lib/domain/ids";
+import { isTellConfigured } from "@/lib/tell/config";
 import { isScanConfigured } from "./config";
 import { findDuplicate, type DuplicateBill } from "./duplicates";
 import { countUsed, localDayWindow, quotaOf, type ScanQuota } from "./quota";
@@ -8,6 +9,7 @@ import { parseScanResult, type ScanResult } from "./result";
 
 export interface ScanAvailability {
   readonly configured: boolean;
+  readonly tellConfigured: boolean;
   readonly quota: ScanQuota;
 }
 
@@ -18,7 +20,7 @@ export async function getScanQuota(personId: PersonId, timeZone: string): Promis
 }
 
 export async function getScanAvailability(personId: PersonId, timeZone: string): Promise<ScanAvailability> {
-  return { configured: isScanConfigured(), quota: await getScanQuota(personId, timeZone) };
+  return { configured: isScanConfigured(), tellConfigured: isTellConfigured(), quota: await getScanQuota(personId, timeZone) };
 }
 
 export interface ScanReview {

@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { useState } from "react";
+import { Fragment, useState, type ReactNode } from "react";
 import { Icon } from "@/components/icons/icon";
 import { pressMotion } from "@/components/motion/press";
 import { Rise } from "@/components/motion/rise";
@@ -10,7 +10,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { Receipt } from "@/components/ui/receipt";
 import { RollingNumber } from "@/components/ui/rolling-number";
-import { SOFT_SPRING } from "@/lib/motion/tokens";
+import { EASE, SOFT_SPRING, T } from "@/lib/motion/tokens";
 import { currencySymbol, formatAmount, formatMoney } from "@/lib/currency";
 import type { PersonId } from "@/lib/domain/ids";
 import type { BillComposer } from "@/lib/groups/queries";
@@ -18,6 +18,7 @@ import { composerCopy } from "../data";
 import { claimView } from "../lib/derive";
 import { claimRest, toggleClaim, type BillDraft } from "../lib/draft";
 import { shortName, type Roster } from "../lib/people";
+import { confirmEveryone } from "../lib/tell";
 import { ClaimRow } from "./claim-row";
 import { FlowFooter } from "./flow-footer";
 import { PersonPicker } from "./person-picker";
@@ -30,6 +31,7 @@ export interface ClaimStepProps {
   roster: Roster;
   memberIds: readonly PersonId[];
   you: PersonId;
+  banner?: ReactNode;
   dateLabel: string;
   error: string | null;
   pending: boolean;
@@ -48,6 +50,7 @@ export function ClaimStep({
   roster,
   memberIds,
   you,
+  banner,
   dateLabel,
   error,
   pending,
@@ -62,6 +65,7 @@ export function ClaimStep({
   const currency = composer.currency;
   const [selected, setSelected] = useState<PersonId>(you);
   const view = claimView(draft);
+  const assumed = new Set(draft.marks?.everyone ?? []);
   const share = view.shareOf(selected);
   const name = shortName(selected, roster, you, copy.you);
   const payer = shortName(draft.payerId, roster, you, copy.you.toLowerCase());
@@ -77,6 +81,7 @@ export function ClaimStep({
         }}
         title={copy.title}
         body={copy.body}
+        banner={banner}
       />
 
       <PersonPicker members={composer.members} roster={roster} you={you} value={selected} onValueChange={setSelected} />
@@ -104,15 +109,39 @@ export function ClaimStep({
           </span>
         </div>
         {view.lines.map((line) => (
-          <ClaimRow
-            key={line.key}
-            line={line}
-            selected={selected}
-            roster={roster}
-            you={you}
-            currency={currency}
-            onToggle={() => onDraft((d) => toggleClaim(d, line.key, selected))}
-          />
+          <Fragment key={line.key}>
+            <ClaimRow
+              line={line}
+              selected={selected}
+              roster={roster}
+              you={you}
+              currency={currency}
+              onToggle={() => onDraft((d) => toggleClaim(d, line.key, selected))}
+            />
+            <AnimatePresence initial={false}>
+              {assumed.has(line.key) && line.claimants.length > 0 && (
+                <motion.div
+                  key="assumed"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: T.t2, ease: EASE }}
+                  className="overflow-hidden"
+                >
+                  <div
+                    data-tint="amber"
+                    className="mb-2 flex flex-wrap items-center gap-2 rounded-control bg-tint-bg py-1.5 pr-1.5 pl-3 text-footnote font-semibold text-tint"
+                  >
+                    <Icon name="sparkle" size={14} className="shrink-0" />
+                    <span className="min-w-36 flex-1">{copy.assumed}</span>
+                    <Button variant="elevated" size="sm" onClick={() => onDraft((d) => confirmEveryone(d, line.key))} className="pointer-coarse:h-11">
+                      {copy.assumedKeep}
+                    </Button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </Fragment>
         ))}
         <div className="mt-1 grid gap-1 border-t border-border pt-3 text-small text-text-2">
           <div className="flex justify-between gap-3">

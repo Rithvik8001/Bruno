@@ -31,6 +31,13 @@ export interface SplitPerson {
   readonly amount: Cents | null;
 }
 
+export interface DraftMarks {
+  readonly payerGuessed: boolean;
+  readonly everyone: readonly string[];
+  readonly restKey: string | null;
+  readonly stated: Cents | null;
+}
+
 export interface BillDraft {
   readonly title: string;
   readonly occurredOn: string;
@@ -43,6 +50,7 @@ export interface BillDraft {
   readonly claims: Readonly<Record<string, readonly PersonId[]>>;
   readonly method: SplitTab;
   readonly people: Readonly<Record<PersonId, SplitPerson>>;
+  readonly marks?: DraftMarks;
 }
 
 const BPS_PER_PERCENT = FULL_PERCENT_BPS / 100;

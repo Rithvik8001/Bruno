@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion, type Variants } from "motion/react";
 import { useState } from "react";
+import { Icon } from "@/components/icons/icon";
 import { FlaggedGuesses } from "@/components/patterns/flagged-line";
 import { pressMotion } from "@/components/motion/press";
 import { AmountInput, ghostInputClassName } from "@/components/ui/amount-input";
@@ -35,8 +36,11 @@ const arrive: Variants = {
 
 const FADE = { duration: T.t3, ease: EASE } as const;
 
+export type ItemNote = { readonly kind: "unpriced" } | { readonly kind: "rest"; readonly label: string };
+
 export interface ItemRowProps {
   item: DraftItem;
+  note?: ItemNote | null;
   currency: CurrencyCode;
   onChange: (patch: Partial<Omit<DraftItem, "key">>) => void;
   onRemove: () => void;
@@ -104,9 +108,10 @@ function CategoryChips({ name, picked, options, onPick }: CategoryChipsProps) {
   );
 }
 
-export function ItemRow({ item, currency, onChange, onRemove }: ItemRowProps) {
+export function ItemRow({ item, note = null, currency, onChange, onRemove }: ItemRowProps) {
   const copy = composerCopy.items;
-  const flagged = isFlagged(item);
+  const unpriced = note?.kind === "unpriced";
+  const flagged = isFlagged(item) || unpriced;
   const categories = item.hints?.categories ?? [];
   const showCategories = categories.length > 1 || (categories.length === 1 && item.category === null);
   return (
@@ -151,8 +156,23 @@ export function ItemRow({ item, currency, onChange, onRemove }: ItemRowProps) {
         {showCategories && (
           <CategoryChips name={item.name.trim()} picked={item.category} options={categories} onPick={(category) => onChange({ category })} />
         )}
+        {note?.kind === "rest" && <span className="pl-2.5 text-caption text-text-2">{note.label}</span>}
         <AnimatePresence initial={false}>
-          {flagged && item.hints && (
+          {unpriced && (
+            <motion.div
+              key="unpriced"
+              initial={{ height: 0, opacity: 0, overflow: "hidden" }}
+              animate={{ height: "auto", opacity: 1, transitionEnd: { overflow: "visible" } }}
+              exit={{ height: 0, opacity: 0, overflow: "hidden" }}
+              transition={FADE}
+            >
+              <span className="flex items-center gap-2 pl-1 text-footnote font-semibold text-tint">
+                <Icon name="sparkle" size={14} className="shrink-0" />
+                {copy.told.unpriced}
+              </span>
+            </motion.div>
+          )}
+          {isFlagged(item) && item.hints && (
             <motion.div
               key="guesses"
               initial={{ height: 0, opacity: 0, overflow: "hidden" }}
