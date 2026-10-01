@@ -31,6 +31,9 @@ const serverEnvSchema = z.object({
   SCAN_DAILY_LIMIT_OVERRIDE: optionalString
     .transform((v) => (v === undefined ? undefined : Number(v)))
     .pipe(z.number().int().min(0).optional()),
+  ASK_DAILY_LIMIT_OVERRIDE: optionalString
+    .transform((v) => (v === undefined ? undefined : Number(v)))
+    .pipe(z.number().int().min(0).optional()),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;

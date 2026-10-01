@@ -12,7 +12,7 @@ import { getScanAvailability } from "@/lib/scans/queries";
 import { cn } from "@/lib/utils/cn";
 import { newBillCopy } from "./_data";
 import { NewBillEntry } from "./_components/new-bill-entry";
-import { cookieTimeZone } from "./_lib/time-zone";
+import { cookieTimeZone } from "@/lib/time-zone";
 
 export const metadata: Metadata = { title: newBillCopy.metaTitle };
 export const maxDuration = 60;

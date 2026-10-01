@@ -1,6 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
-import { TIME_ZONE_COOKIE } from "@/components/patterns/time-zone-cookie";
+import { TIME_ZONE_COOKIE } from "./time-zone-cookie";
 import { timeZoneSchema } from "@/lib/scans/schema";
 
 export async function cookieTimeZone(): Promise<string | null> {

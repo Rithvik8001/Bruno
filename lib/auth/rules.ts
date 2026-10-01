@@ -19,6 +19,12 @@ export const routes = {
   welcome: "/welcome",
   join: "/j",
   authApi: "/api/auth",
+  ask: "/ask",
+  askApi: "/api/ask",
+  askAbout: (groupId?: string | null, listen?: boolean) => {
+    const query = [groupId ? `group=${encodeURIComponent(groupId)}` : "", listen ? "listen=1" : ""].filter(Boolean).join("&");
+    return query ? `/ask?${query}` : "/ask";
+  },
   group: (id: string) => `/groups/${encodeURIComponent(id)}`,
   groupTab: (id: string, tab: "bills" | "balances" | "members") =>
     tab === "bills" ? `/groups/${encodeURIComponent(id)}` : `/groups/${encodeURIComponent(id)}?tab=${tab}`,
@@ -48,6 +54,11 @@ export const billParams = {
   from: "from",
 } as const;
 
+export const askParams = {
+  group: "group",
+  listen: "listen",
+} as const;
+
 export const guestOnlyRoutes: readonly string[] = [routes.signUp, routes.signIn, routes.resetPassword];
 
 export const signedInRoutePrefixes: readonly string[] = [
@@ -58,6 +69,7 @@ export const signedInRoutePrefixes: readonly string[] = [
   routes.settings,
   routes.welcome,
   routes.join,
+  routes.ask,
 ];
 
 export const publicRoutePrefixes: readonly string[] = ["/j/claim", "/b"];

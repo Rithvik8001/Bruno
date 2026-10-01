@@ -58,6 +58,16 @@ export const rateRules = {
       { seconds: HOUR, max: 80 },
     ],
   },
+  askStart: {
+    person: [
+      { seconds: MINUTE, max: 6 },
+      { seconds: HOUR, max: 40 },
+    ],
+    ip: [
+      { seconds: MINUTE, max: 15 },
+      { seconds: HOUR, max: 120 },
+    ],
+  },
 } as const satisfies Record<string, RateRule>;
 
 export type RateRuleName = keyof typeof rateRules;

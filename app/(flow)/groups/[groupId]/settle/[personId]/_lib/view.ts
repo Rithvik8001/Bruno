@@ -3,7 +3,7 @@ import type { OpenLine } from "@/lib/ledger/pair";
 import { subtractCents, type Cents } from "@/lib/money";
 import { settleCopy } from "../_data";
 
-export const BACK_KINDS = ["home", "bill", "group"] as const;
+export const BACK_KINDS = ["home", "bill", "group", "ask"] as const;
 export type BackKind = (typeof BACK_KINDS)[number];
 
 const BREAKDOWN_LINES = 3;
@@ -11,6 +11,7 @@ const BREAKDOWN_LINES = 3;
 export function backKindOf(path: string): BackKind {
   if (path.startsWith("/bills/")) return "bill";
   if (path.startsWith("/groups/")) return "group";
+  if (path === "/ask" || path.startsWith("/ask?")) return "ask";
   return "home";
 }
 

@@ -133,6 +133,7 @@ async function loadEditable(billId: string, you: PersonId) {
       status: true,
       deletedAt: true,
       currency: true,
+      totalCents: true,
       groupId: true,
       splitMethod: true,
       taxCents: true,
@@ -221,7 +222,7 @@ export const updateBill = defineAction(updateBillSchema, async ({ billId, ...inp
     await writeItems(tx, bill.id, existingIds, next, { keepClaims });
     if (!keepClaims) await writeParticipants(tx, bill.id, next);
     const events = [
-      ...(changes.length > 0 ? [activity("BILL_UPDATED", { title: next.title, fields: changes })] : []),
+      ...(changes.length > 0 ? [activity("BILL_UPDATED", { title: next.title, fields: changes, totalBefore: bill.totalCents, totalAfter: total.data, currency })] : []),
       ...(finalizing ? [activity("BILL_FINALIZED", { title: next.title, total: total.data, currency })] : []),
     ];
     await tx.activityEvent.createMany({

@@ -119,6 +119,15 @@ enum TellDraftStatus {
   DISCARDED
 }
 
+enum AskStatus {
+  ASKING
+  ANSWERED
+  CLARIFY
+  DECLINED
+  FAILED
+  CANCELLED
+}
+
 enum BillStatus {
   DRAFT
   CLAIMING
@@ -202,6 +211,7 @@ model Person {
   activity           ActivityEvent[]
   receiptScans       ReceiptScan[]
   tellDrafts         TellDraft[]
+  askQuestions       AskQuestion[]
 
   @@index([mergedIntoId])
   @@map("person")
@@ -254,6 +264,7 @@ model Group {
   activity     ActivityEvent[]
   receiptScans ReceiptScan[]
   tellDrafts   TellDraft[]
+  askQuestions AskQuestion[]
 
   @@index([createdById])
   @@map("group")
@@ -456,4 +467,31 @@ model TellDraft {
   @@index([personId, status, startedAt])
   @@index([status, createdAt])
   @@map("tell_draft")
+}
+
+model AskQuestion {
+  id           String    @id @default(cuid())
+  personId     String
+  person       Person    @relation(fields: [personId], references: [id], onDelete: Restrict)
+  threadId     String
+  groupId      String?
+  group        Group?    @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  text         String?
+  timeZone     String
+  status       AskStatus @default(ASKING)
+  failure      String?
+  outcome      String?
+  trace        Json?
+  steps        Int?
+  model        String?
+  inputTokens  Int?
+  outputTokens Int?
+  createdAt    DateTime  @default(now())
+  startedAt    DateTime?
+  completedAt  DateTime?
+
+  @@index([personId, status, startedAt])
+  @@index([personId, threadId, createdAt])
+  @@index([status, createdAt])
+  @@map("ask_question")
 }

@@ -18,21 +18,18 @@ const newestFirst = (a: Attempt, b: Attempt) => (b.completedAt?.getTime() ?? 0) 
 
 async function recentAttempts(personId: string): Promise<Attempt[]> {
   const select = { status: true, failure: true, completedAt: true } as const;
-  const [scans, drafts] = await Promise.all([
-    db.receiptScan.findMany({
-      where: { personId, startedAt: { not: null }, completedAt: { not: null } },
-      orderBy: { completedAt: "desc" },
-      take: AI_GAP_LOOKBACK,
-      select,
-    }),
-    db.tellDraft.findMany({
-      where: { personId, startedAt: { not: null }, completedAt: { not: null } },
-      orderBy: { completedAt: "desc" },
-      take: AI_GAP_LOOKBACK,
-      select,
-    }),
+  const page = {
+    where: { personId, startedAt: { not: null }, completedAt: { not: null } },
+    orderBy: { completedAt: "desc" },
+    take: AI_GAP_LOOKBACK,
+    select,
+  } as const;
+  const [scans, drafts, questions] = await Promise.all([
+    db.receiptScan.findMany(page),
+    db.tellDraft.findMany(page),
+    db.askQuestion.findMany({ ...page, where: { ...page.where, status: { not: "CANCELLED" } } }),
   ]);
-  return [...scans, ...drafts]
+  return [...scans, ...drafts, ...questions]
     .map((row) => ({ failed: row.status === "FAILED", failure: row.failure, completedAt: row.completedAt }))
     .sort(newestFirst)
     .slice(0, AI_GAP_LOOKBACK);
@@ -52,11 +49,12 @@ export async function breakerCooldown(now: Date = new Date()): Promise<number | 
   const failure = { in: [...upstream] };
   const completedAt = { gt: new Date(now.getTime() - AI_BREAKER_WINDOW_MS) };
   const page = { orderBy: { completedAt: "desc" }, take: AI_BREAKER_FAILS, select: { completedAt: true } } as const;
-  const [scans, drafts] = await Promise.all([
+  const [scans, drafts, questions] = await Promise.all([
     db.receiptScan.findMany({ where: { status: "FAILED", failure, completedAt }, ...page }),
     db.tellDraft.findMany({ where: { status: "FAILED", failure, completedAt }, ...page }),
+    db.askQuestion.findMany({ where: { status: "FAILED", failure, completedAt }, ...page }),
   ]);
-  const times = [...scans, ...drafts]
+  const times = [...scans, ...drafts, ...questions]
     .flatMap((row) => (row.completedAt ? [row.completedAt.getTime()] : []))
     .sort((a, b) => b - a);
   const oldest = times[AI_BREAKER_FAILS - 1];

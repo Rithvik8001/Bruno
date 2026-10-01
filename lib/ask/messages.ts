@@ -1,0 +1,15 @@
+export const askMessages = {
+  unavailable: "Ask Bruno isn’t switched on here yet.",
+  textMissing: "Type a question first.",
+  textTooLong: "Keep it under 200 characters.",
+  rateLimited: "That’s a lot of questions at once. Give it a minute.",
+  busy: "Bruno’s still on your last question.",
+  quota: (limit: number) => `That’s your ${limit} questions for today.`,
+  tooManyTries: "That’s a lot of tries for one day. Come back tomorrow.",
+  offTopic: (seconds: number) => `Bruno only answers about your bills. Try again in ${seconds} seconds.`,
+  notMember: "That group isn’t one of yours.",
+  gone: "That question has expired. Ask it again.",
+  timeout: "Bruno took too long on that one.",
+  failed: "Bruno couldn’t work that one out.",
+  badOrigin: "That request didn’t come from Bruno.",
+} as const;

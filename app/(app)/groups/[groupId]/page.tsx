@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import { cents } from "@/lib/money";
 import { notFound } from "next/navigation";
+import { askCopy } from "@/app/(flow)/ask/_data";
 import { Icon } from "@/components/icons/icon";
 import { PressLink } from "@/components/motion/motion-link";
+import { AskBar } from "@/components/patterns/ask-bar";
 import { backClassName } from "@/components/patterns/back-link-styles";
 import { AvatarStack } from "@/components/ui/avatar-stack";
 import { buttonVariants } from "@/components/ui/button-variants";
+import { getAskBar } from "@/lib/ask/queries";
 import { firstParam } from "@/lib/auth/redirect";
 import { routes } from "@/lib/auth/rules";
 import { requireAppContext } from "@/lib/auth/session";
@@ -13,6 +16,7 @@ import { canManageGroup } from "@/lib/domain/permissions";
 import { appUrl, displayUrl } from "@/lib/site";
 import { getGroupForMember } from "@/lib/groups/queries";
 import { firstNameOf } from "@/lib/people/defaults";
+import { cookieTimeZone } from "@/lib/time-zone";
 import { cn } from "@/lib/utils/cn";
 import { GROUP_TABS, groupDetailCopy, type GroupTab } from "./_data";
 import { CopyLinkButton } from "@/components/patterns/copy-link-button";
@@ -36,7 +40,10 @@ function tabFrom(value: string | undefined): GroupTab {
 export default async function GroupPage({ params, searchParams }: PageProps<"/groups/[groupId]">) {
   const { groupId } = await params;
   const { person } = await requireAppContext(routes.group(groupId));
-  const group = await getGroupForMember(groupId, person.id);
+  const [group, ask] = await Promise.all([
+    getGroupForMember(groupId, person.id),
+    cookieTimeZone().then((timeZone) => getAskBar(person.id, timeZone ?? "UTC")),
+  ]);
   if (!group) notFound();
 
   const tab = tabFrom(firstParam((await searchParams).tab));
@@ -87,6 +94,20 @@ export default async function GroupPage({ params, searchParams }: PageProps<"/gr
       </div>
 
       <SummaryTiles group={group} />
+      {ask.configured && group.billCount > 0 && (
+        <AskBar
+          href={routes.askAbout(group.id)}
+          micHref={routes.askAbout(group.id, true)}
+          title={askCopy.bar.titleGroup(group.name)}
+          example={askCopy.bar.exampleGroup}
+          micLabel={askCopy.bar.mic}
+          locked={
+            ask.quota.left > 0
+              ? null
+              : { title: askCopy.bar.resting, body: askCopy.bar.used(ask.quota.limit), action: askCopy.bar.goPro, href: routes.settings }
+          }
+        />
+      )}
       <GroupTabs value={tab} />
 
       {tab === "bills" && group.bills.length > 0 && <BillsSection bills={group.bills} you={person.id} now={now} />}

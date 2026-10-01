@@ -5,9 +5,10 @@ import { useState } from "react";
 import { Icon } from "@/components/icons/icon";
 import { pressMotion } from "@/components/motion/press";
 import { Rise } from "@/components/motion/rise";
+import { StopListeningButton } from "@/components/patterns/stop-listening-button";
 import { Button } from "@/components/ui/button";
 import type { SpeechRecognitionState } from "@/lib/hooks/use-speech-recognition";
-import { EASE, T } from "@/lib/motion/tokens";
+import { T } from "@/lib/motion/tokens";
 import { TELL_COUNT_FROM, TELL_TEXT_MAX } from "@/lib/tell/rules";
 import { cn } from "@/lib/utils/cn";
 import { tellCopy } from "../_data";
@@ -21,46 +22,7 @@ export interface TellFieldProps {
   onMic: () => void;
 }
 
-const RING = { duration: 1.4, ease: EASE, repeat: Infinity } as const;
-const BAR = { duration: 0.9, ease: "easeInOut", repeat: Infinity, repeatType: "reverse" } as const;
 const CARET: Transition = { duration: 1, ease: "linear", repeat: Infinity, times: [0, 0.5, 0.5, 1] };
-const BARS = [0, 0.15, 0.3] as const;
-
-function StopButton({ onStop }: { onStop: () => void }) {
-  const copy = tellCopy.compose;
-  return (
-    <motion.button
-      type="button"
-      onClick={onStop}
-      aria-label={copy.stopLabel}
-      {...pressMotion()}
-      className="relative inline-flex h-11 shrink-0 cursor-pointer items-center gap-2 rounded-full bg-brand pr-4 pl-3 text-small font-semibold text-on-brand hover:bg-brand-hover"
-    >
-      {[0, 0.7].map((delay) => (
-        <motion.span
-          key={delay}
-          aria-hidden
-          className="pointer-events-none absolute inset-0 rounded-full border-2 border-brand"
-          initial={{ opacity: 0.6, scale: 1 }}
-          animate={{ opacity: 0, scale: 1.25 }}
-          transition={{ ...RING, delay }}
-        />
-      ))}
-      <span aria-hidden className="flex h-4 items-center gap-0.5">
-        {BARS.map((delay) => (
-          <motion.span
-            key={delay}
-            className="h-4 w-0.75 rounded-full bg-current"
-            initial={{ scaleY: 0.35 }}
-            animate={{ scaleY: 1 }}
-            transition={{ ...BAR, delay }}
-          />
-        ))}
-      </span>
-      {copy.stop}
-    </motion.button>
-  );
-}
 
 export function TellField({ text, placeholder, speech, onText, onFocusChange, onMic }: TellFieldProps) {
   const copy = tellCopy.compose;
@@ -140,7 +102,7 @@ export function TellField({ text, placeholder, speech, onText, onFocusChange, on
             {hint}
           </span>
           {listening ? (
-            <StopButton onStop={speech.stop} />
+            <StopListeningButton label={copy.stop} ariaLabel={copy.stopLabel} onStop={speech.stop} />
           ) : (
             speech.supported && (
               <motion.button

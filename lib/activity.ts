@@ -7,7 +7,13 @@ const id = z.string().min(1);
 
 export const activityPayloadSchemas = {
   BILL_CREATED: z.object({ title: z.string(), total: cents, currency: currencyCodeSchema, itemCount: z.number().int() }),
-  BILL_UPDATED: z.object({ title: z.string(), fields: z.array(z.string()).min(1) }),
+  BILL_UPDATED: z.object({
+    title: z.string(),
+    fields: z.array(z.string()).min(1),
+    totalBefore: cents.optional(),
+    totalAfter: cents.optional(),
+    currency: currencyCodeSchema.optional(),
+  }),
   BILL_FINALIZED: z.object({ title: z.string(), total: cents, currency: currencyCodeSchema }),
   BILL_DELETED: z.object({ title: z.string() }),
   ITEM_CLAIMED: z.object({ lineItemId: id, name: z.string(), personId: id }),

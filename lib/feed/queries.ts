@@ -11,7 +11,7 @@ import { describeEvent, payloadPeople, payloadSettlement, type SettlementFacts }
 import type { FeedCursor, FeedFilter, FeedItem, FeedPage } from "./types";
 
 const FEED_PAGE_SIZE = 30;
-const HIDDEN_TYPES = ["BILL_FINALIZED", "ITEM_CLAIMED", "ITEM_UNCLAIMED"] as const;
+export const HIDDEN_TYPES = ["BILL_FINALIZED", "ITEM_CLAIMED", "ITEM_UNCLAIMED"] as const;
 const PAYMENT_TYPES = ["SETTLEMENT_RECORDED", "SETTLEMENT_CONFIRMED", "SETTLEMENT_CANCELLED"] as const;
 
 interface Membership {
@@ -58,7 +58,7 @@ function cursorOf(cursor: FeedCursor | undefined): Prisma.ActivityEventWhereInpu
   return { OR: [{ createdAt: { lt: at } }, { createdAt: at, id: { lt: cursor.id } }] };
 }
 
-async function settlementFacts(ids: readonly string[], now: Date): Promise<ReadonlyMap<string, SettlementFacts>> {
+export async function settlementFacts(ids: readonly string[], now: Date): Promise<ReadonlyMap<string, SettlementFacts>> {
   if (ids.length === 0) return new Map();
   const rows = await db.settlement.findMany({
     where: { id: { in: [...new Set(ids)] } },
@@ -88,7 +88,7 @@ async function settlementFacts(ids: readonly string[], now: Date): Promise<Reado
   return facts;
 }
 
-async function peopleById(ids: readonly string[]): Promise<ReadonlyMap<PersonId, PersonView>> {
+export async function peopleById(ids: readonly string[]): Promise<ReadonlyMap<PersonId, PersonView>> {
   if (ids.length === 0) return new Map();
   const rows = await db.person.findMany({ where: { id: { in: [...new Set(ids)] } }, select: personSelect });
   return new Map(rows.map((row) => [personId(row.id), toPersonView(row)]));

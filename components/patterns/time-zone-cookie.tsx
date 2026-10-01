@@ -2,8 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-
-export const TIME_ZONE_COOKIE = "bruno_tz";
+import { TIME_ZONE_COOKIE } from "@/lib/time-zone-cookie";
 
 const YEAR_SECONDS = 365 * 24 * 60 * 60;
 

@@ -1,11 +1,14 @@
 import "server-only";
 import { billInputFromRow, billSplitSelect } from "@/lib/bills/rows";
+import type { SpendItem } from "@/lib/bills/spend";
 import { computeShares } from "@/lib/bills/split";
+import type { PersonShare, SplitMethod } from "@/lib/bills/types";
 import { isCurrencyCode, type CurrencyCode } from "@/lib/currency";
 import { db } from "@/lib/db";
-import { billId, groupId, personId, settlementId, type BillId, type GroupId, type PersonId } from "@/lib/domain/ids";
+import { billId, groupId, lineItemId, personId, settlementId, type BillId, type GroupId, type PersonId, type SettlementId } from "@/lib/domain/ids";
 import { cents, type Cents } from "@/lib/money";
 import { billDebts, type Debt, type SettlementEntry } from "./balances";
+import type { PaymentMethod } from "./rules";
 
 export interface BillTotalsEntry {
   readonly billId: BillId;
@@ -26,12 +29,33 @@ export interface Ledger {
   readonly bills: readonly BillTotalsEntry[];
 }
 
+export interface BillSpendEntry {
+  readonly method: SplitMethod;
+  readonly items: readonly (SpendItem & { readonly name: string })[];
+  readonly shares: ReadonlyMap<PersonId, PersonShare>;
+}
+
+export interface PaymentFacts {
+  readonly at: Date;
+  readonly method: PaymentMethod;
+}
+
+export interface DetailedLedger extends Ledger {
+  readonly spend: ReadonlyMap<BillId, BillSpendEntry>;
+  readonly payments: ReadonlyMap<SettlementId, PaymentFacts>;
+}
+
 function currencyOf(value: string): CurrencyCode | null {
   return isCurrencyCode(value) ? value : null;
 }
 
 export async function loadGroupLedgers(groupIds: readonly string[]): Promise<Ledger> {
-  if (groupIds.length === 0) return { debts: [], settlements: [], bills: [] };
+  const { debts, settlements, bills } = await loadDetailedLedger(groupIds);
+  return { debts, settlements, bills };
+}
+
+export async function loadDetailedLedger(groupIds: readonly string[]): Promise<DetailedLedger> {
+  if (groupIds.length === 0) return { debts: [], settlements: [], bills: [], spend: new Map(), payments: new Map() };
   const ids = [...groupIds];
 
   const [bills, settlements] = await Promise.all([
@@ -48,6 +72,10 @@ export async function loadGroupLedgers(groupIds: readonly string[]): Promise<Led
         currency: true,
         payerId: true,
         ...billSplitSelect,
+        items: {
+          orderBy: { position: "asc" },
+          select: { id: true, name: true, category: true, priceCents: true, claims: { select: { personId: true } } },
+        },
       },
     }),
     db.settlement.findMany({
@@ -61,6 +89,8 @@ export async function loadGroupLedgers(groupIds: readonly string[]): Promise<Led
         amountCents: true,
         status: true,
         autoConfirmAt: true,
+        method: true,
+        createdAt: true,
       },
     }),
   ]);
@@ -88,6 +118,16 @@ export async function loadGroupLedgers(groupIds: readonly string[]): Promise<Led
           total: split.value.totals.total,
           shares: new Map([...split.value.shares].map(([pid, share]) => [pid, share.total])),
         } satisfies BillTotalsEntry,
+        spend: {
+          method: bill.splitMethod,
+          items: bill.items.map((item) => ({
+            id: lineItemId(item.id),
+            name: item.name,
+            priceCents: cents(item.priceCents),
+            category: item.category,
+          })),
+          shares: split.value.shares,
+        } satisfies BillSpendEntry,
       },
     ];
   });
@@ -109,5 +149,11 @@ export async function loadGroupLedgers(groupIds: readonly string[]): Promise<Led
     ];
   });
 
-  return { debts: computed.flatMap((c) => c.debts), settlements: entries, bills: computed.map((c) => c.totals) };
+  return {
+    debts: computed.flatMap((c) => c.debts),
+    settlements: entries,
+    bills: computed.map((c) => c.totals),
+    spend: new Map(computed.map((c) => [c.totals.billId, c.spend])),
+    payments: new Map(settlements.map((s) => [settlementId(s.id), { at: s.createdAt, method: s.method }])),
+  };
 }

@@ -6,6 +6,7 @@ import { AI_FREE_MISSES } from "@/lib/ai/rules";
 import { aiCooldown, breakerCooldown } from "@/lib/ai/throttle";
 import { actionFail, actionOk, actionRateLimited } from "@/lib/actions/errors";
 import { minorUnitsOf } from "@/lib/currency";
+import { localDay } from "@/lib/dates";
 import { db } from "@/lib/db";
 import type { Prisma } from "@/lib/generated/prisma/client";
 import { groupMessages } from "@/lib/groups/messages";
@@ -30,10 +31,6 @@ const toJson = (value: TellResult | TellAnswers): Prisma.InputJsonValue =>
 export interface TellDrafted {
   readonly draftId: string;
   readonly result: TellResult;
-}
-
-function localDay(timeZone: string, now: Date = new Date()): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
 }
 
 async function markFailed(draftId: string, failure: TellFailure, usage?: { model: string; inputTokens: number | null; outputTokens: number | null }): Promise<void> {

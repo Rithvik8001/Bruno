@@ -7,7 +7,7 @@ import { requireAppContext } from "@/lib/auth/session";
 import { getBillComposer, listGroupsFor } from "@/lib/groups/queries";
 import { getScanAvailability } from "@/lib/scans/queries";
 import { getTellText } from "@/lib/tell/queries";
-import { cookieTimeZone } from "../_lib/time-zone";
+import { cookieTimeZone } from "@/lib/time-zone";
 import { tellCopy } from "./_data";
 import { TellScreen } from "./_components/tell-screen";
 

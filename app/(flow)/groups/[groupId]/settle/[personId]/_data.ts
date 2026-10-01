@@ -18,7 +18,7 @@ export const settleStatusTint = {
 
 export const settleCopy = {
   metaTitle: "Settle up",
-  back: { home: "Home", bill: "Bill", group: "Group" },
+  back: { home: "Home", bill: "Bill", group: "Group", ask: "Ask Bruno" },
   status: { open: "Open", partial: "Partial", settled: "Settled", awaiting: "Awaiting confirm" },
   payLine: { toYou: (name: string) => `${name} pays you`, fromYou: (name: string) => `You pay ${name}` },
   breakdownMore: (n: number) => `+ ${n} more`,
@@ -73,5 +73,5 @@ export const settleCopy = {
   doneSub: (method: string, left: string | null) => (left ? `${method} · just now · ${left} still open` : `${method} · just now`),
   undo: "Undo",
   undone: "Undone. No one saw a thing.",
-  backTo: { home: "Back to home", bill: "Back to the bill", group: "Back to the group" },
+  backTo: { home: "Back to home", bill: "Back to the bill", group: "Back to the group", ask: "Back to Ask Bruno" },
 } as const;

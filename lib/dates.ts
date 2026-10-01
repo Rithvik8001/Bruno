@@ -63,3 +63,11 @@ export function inlineDay(date: Date, now: Date): string {
 export function clockTime(date: Date): string {
   return clock.format(date).replace(/\s/g, " ");
 }
+
+export function localDay(timeZone: string, now: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+}
+
+export function billDay(occurredAt: Date): string {
+  return occurredAt.toISOString().slice(0, 10);
+}

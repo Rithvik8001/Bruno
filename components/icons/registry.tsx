@@ -224,6 +224,9 @@ export const iconRegistry = {
     node: <path d="M4 18v-5c0-3.5 1.6-6 5-7l.8 1.6C8 8.4 7.2 9.7 7 11h3v7H4zm10 0v-5c0-3.5 1.6-6 5-7l.8 1.6c-1.8.8-2.6 2.1-2.8 3.4h3v7h-6z" />,
   },
   lines: { node: <path d="M7 7h10M7 12h10M7 17h6" /> },
+  swap: { node: <path d="M7 7h13l-3-3M17 17H4l3 3" /> },
+  reply: { node: <path d="M9 5v6a4 4 0 004 4h7M16 11l4 4-4 4" /> },
+  "chevron-up": { node: <path d="M6 15l6-6 6 6" /> },
   sparkle: {
     filled: true,
     node: <path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z" />,
