@@ -23,5 +23,6 @@ export * from "./sheet";
 export * from "./skeleton";
 export * from "./spinner";
 export * from "./stepper";
+export * from "./switch";
 export * from "./text-field";
 export * from "./toast";

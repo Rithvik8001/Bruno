@@ -2,12 +2,13 @@ import "server-only";
 import ExistingAccountEmail, { existingAccountSubject, existingAccountText } from "@/emails/existing-account";
 import ResetCodeEmail, { resetCodeSubject, resetCodeText } from "@/emails/reset-code";
 import VerifyCodeEmail, { verifyCodeSubject, verifyCodeText } from "@/emails/verify-code";
+import { emailChrome } from "@/lib/email/chrome";
 import { sendEmail } from "@/lib/email/send";
 import { appUrl } from "@/lib/site";
 import { otpExpiresInMinutes, routes } from "./rules";
 
 export async function sendVerificationCode(email: string, code: string): Promise<void> {
-  const props = { code, expiresInMinutes: otpExpiresInMinutes };
+  const props = { email, code, expiresInMinutes: otpExpiresInMinutes, chrome: emailChrome() };
   await sendEmail({
     to: email,
     subject: verifyCodeSubject(code),
@@ -18,7 +19,7 @@ export async function sendVerificationCode(email: string, code: string): Promise
 }
 
 export async function sendPasswordResetCode(email: string, code: string): Promise<void> {
-  const props = { email, code, expiresInMinutes: otpExpiresInMinutes };
+  const props = { email, code, expiresInMinutes: otpExpiresInMinutes, chrome: emailChrome() };
   await sendEmail({
     to: email,
     subject: resetCodeSubject(code),
@@ -29,7 +30,7 @@ export async function sendPasswordResetCode(email: string, code: string): Promis
 }
 
 export async function sendExistingAccountNotice(email: string): Promise<void> {
-  const props = { signInUrl: appUrl(routes.signIn) };
+  const props = { signInUrl: appUrl(routes.signIn), chrome: emailChrome() };
   await sendEmail({
     to: email,
     subject: existingAccountSubject,

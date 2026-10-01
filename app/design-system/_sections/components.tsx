@@ -18,6 +18,7 @@ import {
   SegmentedDemo,
   SheetDemo,
   StepperDemo,
+  SwitchDemo,
   TabsDemo,
   ToastDemo,
 } from "../_components/demos";
@@ -127,6 +128,9 @@ export function ComponentsSection() {
             <Checkbox defaultChecked>Include tip in the split</Checkbox>
             <Checkbox disabled>Round to nearest dollar</Checkbox>
           </div>
+        </Demo>
+        <Demo title="Switch" description="44×26 track, 20px knob on a spring. Brand when on. Whole row is the target.">
+          <SwitchDemo />
         </Demo>
         <Demo
           title="Avatar and stack"

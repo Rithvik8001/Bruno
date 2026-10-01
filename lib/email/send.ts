@@ -9,6 +9,7 @@ export interface EmailMessage {
   readonly react: ReactElement;
   readonly text: string;
   readonly idempotencyKey: string;
+  readonly headers?: Readonly<Record<string, string>>;
 }
 
 let client: Resend | undefined;
@@ -31,7 +32,7 @@ export async function sendEmail(message: EmailMessage): Promise<void> {
   if (!RESEND_API_KEY) throw new Error("RESEND_API_KEY is required to send email in production");
 
   const { error } = await resend(RESEND_API_KEY).emails.send(
-    { from: EMAIL_FROM, to: message.to, subject: message.subject, react: message.react, text: message.text },
+    { from: EMAIL_FROM, to: message.to, subject: message.subject, react: message.react, text: message.text, headers: message.headers ? { ...message.headers } : undefined },
     { idempotencyKey: message.idempotencyKey },
   );
   if (error) throw new Error(`Resend rejected email "${message.subject}": ${error.name} — ${error.message}`);

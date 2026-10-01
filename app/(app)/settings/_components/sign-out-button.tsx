@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/icons/icon";
+import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/lib/auth/client";
 import { routes } from "@/lib/auth/rules";
 import { settingsCopy } from "../_data";
@@ -19,8 +20,14 @@ export function SignOutButton() {
   };
 
   return (
-    <Button variant="secondary" loading={loading} onClick={signOut}>
+    <button
+      type="button"
+      disabled={loading}
+      onClick={signOut}
+      className="flex min-h-14 w-full cursor-pointer items-center justify-between bg-transparent text-left font-medium disabled:cursor-default"
+    >
       {settingsCopy.signOut}
-    </Button>
+      {loading ? <Spinner /> : <Icon name="chevron-right" size={18} className="text-muted" />}
+    </button>
   );
 }

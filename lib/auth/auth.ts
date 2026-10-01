@@ -6,9 +6,10 @@ import { nextCookies } from "better-auth/next-js";
 import { emailOTP } from "better-auth/plugins/email-otp";
 import { username } from "better-auth/plugins/username";
 import { db } from "@/lib/db";
+import { recordSignIn } from "@/lib/notifications/events/security";
 import { ensurePersonForUser } from "@/lib/people/person";
 import { serverEnv } from "@/lib/env";
-import { runInBackground } from "./background";
+import { runInBackground } from "@/lib/background";
 import { sendExistingAccountNotice, sendPasswordResetCode, sendVerificationCode } from "./emails";
 import { authRules } from "./rules";
 import { isValidUsername, slugifyUsername, usernameCandidates } from "./username";
@@ -32,6 +33,16 @@ function googleProvider() {
       prompt: "select_account" as const,
     },
   };
+}
+
+function geoHeader(headers: Headers | null, name: string): string | null {
+  const raw = headers?.get(name);
+  if (!raw) return null;
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
 }
 
 const env = serverEnv();
@@ -79,6 +90,21 @@ export const auth = betterAuth({
     ipAddress: { ipAddressHeaders: ["x-forwarded-for"] },
   },
   databaseHooks: {
+    session: {
+      create: {
+        after: async (session, context) => {
+          const headers = context?.request?.headers ?? null;
+          const facts = {
+            userId: session.userId,
+            userAgent: session.userAgent ?? null,
+            ip: session.ipAddress ?? null,
+            city: geoHeader(headers, "x-vercel-ip-city"),
+            region: geoHeader(headers, "x-vercel-ip-country-region"),
+          };
+          runInBackground("sign-in alert", () => recordSignIn(facts));
+        },
+      },
+    },
     user: {
       create: {
         before: async (user) => {

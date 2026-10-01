@@ -2,6 +2,7 @@
 
 import { after } from "next/server";
 import { activity } from "@/lib/activity";
+import { runInBackground } from "@/lib/background";
 import { defineAction } from "@/lib/actions/action";
 import { actionFail, actionInvalid, actionOk } from "@/lib/actions/errors";
 import { isCurrencyCode } from "@/lib/currency";
@@ -9,6 +10,7 @@ import { db } from "@/lib/db";
 import type { PersonId } from "@/lib/domain/ids";
 import { canAddBill } from "@/lib/domain/permissions";
 import type { Cents } from "@/lib/money";
+import { notifyBillShares } from "@/lib/notifications/events/bills";
 import { broadcastBill } from "@/lib/realtime/broadcast";
 import { refreshGroup } from "@/lib/revalidate";
 import { createPendingGuests } from "@/lib/members/guests";
@@ -116,6 +118,7 @@ export const createBill = defineAction(createBillSchema, async (input, { person 
 
   if (input.receiptScanId) after(() => keepReceipt(input.receiptScanId ?? "", bill.saved.id));
   refreshGroup(input.groupId);
+  runInBackground("bill added", () => notifyBillShares(bill.saved.id, actor, "added"));
   return actionOk<CreatedBill>({ id: bill.saved.id, slug: bill.saved.slug, groupId: input.groupId, title: input.title, total: total.data });
 });
 
@@ -233,6 +236,7 @@ export const updateBill = defineAction(updateBillSchema, async ({ billId, ...inp
   refreshGroup(groupId);
   const code = bill.claimCode;
   if (claiming && code) after(() => broadcastBill(code, finalizing ? "status" : "claims"));
+  if (finalizing) runInBackground("bill split", () => notifyBillShares(bill.id, person.id, "split"));
   return actionOk(result);
 });
 

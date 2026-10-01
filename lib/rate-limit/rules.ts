@@ -38,6 +38,9 @@ export const rateRules = {
     ],
   },
   claimRemind: { person: [{ seconds: HOUR, max: 6 }] },
+  notifyPref: { person: [{ seconds: MINUTE, max: 60 }] },
+  unsubscribe: { ip: [{ seconds: MINUTE, max: 20 }] },
+  lockAccount: { ip: [{ seconds: MINUTE, max: 6 }] },
   scanStart: {
     person: [
       { seconds: MINUTE, max: 6 },

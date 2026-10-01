@@ -1,33 +1,56 @@
 import type { Metadata } from "next";
-import { Avatar } from "@/components/ui/avatar";
+import { getAllowance } from "@/lib/ai/allowance";
 import { routes } from "@/lib/auth/rules";
 import { requireAppContext } from "@/lib/auth/session";
-import { settingsCopy } from "./_data";
+import { buddyShapeFor } from "@/lib/design-system/buddies";
+import { getNotificationPrefs } from "@/lib/notifications/prefs";
+import { cookieTimeZone } from "@/lib/time-zone";
+import { NOTIFICATIONS_ANCHOR, settingsCopy } from "./_data";
+import { AppearanceRow } from "./_components/appearance-row";
+import { NotificationsSection } from "./_components/notifications-section";
+import { PlanSection } from "./_components/plan-section";
+import { ProfileSection } from "./_components/profile-section";
+import { SettingsSection } from "./_components/settings-section";
 import { SignOutButton } from "./_components/sign-out-button";
 
 export const metadata: Metadata = { title: settingsCopy.metaTitle };
 
+const FALLBACK_TIME_ZONE = "UTC";
+
 export default async function SettingsPage() {
   const { session, person } = await requireAppContext(routes.settings);
   const { user } = session;
+  const timeZone = (await cookieTimeZone()) ?? FALLBACK_TIME_ZONE;
+  const [prefs, allowance] = await Promise.all([getNotificationPrefs(person.id), getAllowance(person.id, timeZone)]);
+  const { sections } = settingsCopy;
 
   return (
-    <div className="grid gap-8 px-5 pt-7 pb-10">
+    <div className="grid gap-7 px-5 pt-7 pb-10">
       <h1 className="m-0 text-heading">{settingsCopy.title}</h1>
-      <section className="flex items-center gap-4 rounded-card bg-surface p-5">
-        <Avatar name={person.displayName} tint={person.tint} buddy={person.buddy} size="2xl" />
-        <span className="grid min-w-0">
-          <span className="truncate text-title">{person.displayName}</span>
-          <span className="truncate text-small text-text-2">
-            {user.username ? `@${user.username} · ` : ""}
-            {user.email}
-          </span>
-        </span>
-      </section>
-      <p className="m-0 text-small text-text-2">{settingsCopy.more}</p>
-      <div>
+      <SettingsSection copy={sections.profile}>
+        <ProfileSection
+          initial={{
+            displayName: person.displayName,
+            buddy: buddyShapeFor(person.displayName, person.buddy),
+            tint: person.tint,
+          }}
+          username={user.username ?? null}
+          email={user.email}
+          verified={user.emailVerified}
+        />
+      </SettingsSection>
+      <SettingsSection copy={sections.plan}>
+        <PlanSection allowance={allowance} />
+      </SettingsSection>
+      <SettingsSection copy={sections.notifications} id={NOTIFICATIONS_ANCHOR} rows>
+        <NotificationsSection initial={prefs} />
+      </SettingsSection>
+      <SettingsSection copy={sections.preferences} rows>
+        <AppearanceRow />
+      </SettingsSection>
+      <SettingsSection copy={sections.account} rows>
         <SignOutButton />
-      </div>
+      </SettingsSection>
     </div>
   );
 }

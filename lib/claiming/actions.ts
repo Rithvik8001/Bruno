@@ -7,6 +7,7 @@ import { activity } from "@/lib/activity";
 import { defineAction, definePublicAction } from "@/lib/actions/action";
 import { actionFail, actionInvalid, actionOk, actionRateLimited } from "@/lib/actions/errors";
 import { routes } from "@/lib/auth/rules";
+import { runInBackground } from "@/lib/background";
 import { billMessages } from "@/lib/bills/messages";
 import {
   admitGuests,
@@ -26,7 +27,6 @@ import { formatMoney, isCurrencyCode } from "@/lib/currency";
 import { db } from "@/lib/db";
 import { canAddBill, canClaim } from "@/lib/domain/permissions";
 import { groupId as toGroupId, personId as toPersonId } from "@/lib/domain/ids";
-import { sendEmail } from "@/lib/email/send";
 import { issueGuestToken } from "@/lib/members/guest-token";
 import { createGuestMember, createPendingGuests } from "@/lib/members/guests";
 import { resolveGuests } from "@/lib/members/pending";
@@ -34,12 +34,16 @@ import { activeMemberCount } from "@/lib/members/queries";
 import { MAX_GROUP_MEMBERS } from "@/lib/members/types";
 import { memberMessages } from "@/lib/members/messages";
 import { cents } from "@/lib/money";
+import { deliverAll } from "@/lib/notifications/deliver";
+import { notifyBillShares, notifyClaimingOpened, notifyClaimsComplete } from "@/lib/notifications/events/bills";
+import { emailRecipients } from "@/lib/notifications/recipients";
 import { firstNameOf } from "@/lib/people/defaults";
-import { personSelect, toPersonView } from "@/lib/people/person";
+import { personSelect } from "@/lib/people/person";
 import { consumeRate } from "@/lib/rate-limit/limiter";
 import { broadcastBill } from "@/lib/realtime/broadcast";
 import type { BillEvent, ClaimSignal } from "@/lib/realtime/topics";
 import { refreshGroup } from "@/lib/revalidate";
+import { categoryLabel, categoryTint } from "@/lib/scans/categories";
 import { consumeScan, keepReceipt, ScanGoneError } from "@/lib/scans/consume";
 import { scanMessages } from "@/lib/scans/messages";
 import { consumeTellDraft, TellGoneError } from "@/lib/tell/consume";
@@ -156,6 +160,7 @@ export const startClaiming = defineAction(createBillSchema, async (input, { pers
 
   if (input.receiptScanId) after(() => keepReceipt(input.receiptScanId ?? "", bill.id));
   refreshGroup(input.groupId);
+  runInBackground("claim invite", () => notifyClaimingOpened(bill.id, person.id));
   return actionOk<StartedClaiming>({ code, title: draft.title });
 });
 
@@ -218,6 +223,7 @@ export const toggleClaim = definePublicAction(toggleClaimSchema, async ({ code, 
     on,
     joined: joining,
   });
+  if (on) runInBackground("claims complete", () => notifyClaimsComplete(bill.id, person));
   return actionOk<ToggledClaim>({ joined: joining });
 });
 
@@ -352,6 +358,7 @@ export const finishClaiming = defineAction(billIdRefSchema, async ({ billId }, {
   if (!outcome.ok) return actionFail("conflict");
 
   settle(bill.groupId, bill.claimCode, "status");
+  runInBackground("bill split", () => notifyBillShares(bill.id, person.id, "split"));
   return actionOk({ slug: (await db.bill.findUniqueOrThrow({ where: { id: bill.id }, select: { slug: true } })).slug });
 });
 
@@ -397,22 +404,24 @@ export const remindClaimers = defineAction(billIdRefSchema, async ({ billId }, {
   const [members, items, group] = await Promise.all([
     db.groupMember.findMany({
       where: { groupId: bill.groupId, leftAt: null },
-      select: { person: { select: { ...personSelect, user: { select: { email: true } } } } },
+      select: { person: { select: personSelect } },
     }),
     db.lineItem.findMany({
       where: { billId: bill.id },
       orderBy: { position: "asc" },
-      select: { name: true, priceCents: true, claims: { select: { personId: true } } },
+      select: { name: true, priceCents: true, category: true, claims: { select: { personId: true } } },
     }),
     db.group.findUniqueOrThrow({ where: { id: bill.groupId }, select: { name: true } }),
   ]);
   const claimed = new Set(items.flatMap((item) => item.claims.map((c) => c.personId)));
-  const targets = members.flatMap(({ person: member }) =>
-    member.user && member.id !== person.id && member.id !== bill.payerId && !claimed.has(member.id)
-      ? [{ view: toPersonView(member), email: member.user.email }]
-      : [],
+  const unclaimedPeople = members
+    .map(({ person: member }) => member)
+    .filter((member) => member.id !== person.id && member.id !== bill.payerId && !claimed.has(member.id));
+  const recipients = await emailRecipients(
+    unclaimedPeople.map((member) => member.id),
+    "bills",
   );
-  if (targets.length === 0) return actionOk<Reminded>({ count: 0, names: [] });
+  if (recipients.length === 0) return actionOk<Reminded>({ count: 0, names: [] });
 
   const props = {
     senderName: firstNameOf(person.displayName),
@@ -422,21 +431,28 @@ export const remindClaimers = defineAction(billIdRefSchema, async ({ billId }, {
     totalPeople: members.length,
     unclaimed: items
       .filter((item) => item.claims.length === 0 && item.priceCents > 0)
-      .map((item) => ({ name: item.name, price: formatMoney(cents(item.priceCents), currency) })),
+      .map((item) => ({
+        name: item.name,
+        price: formatMoney(cents(item.priceCents), currency),
+        category: item.category ? { label: categoryLabel[item.category], tint: categoryTint[item.category] } : null,
+      })),
     claimUrl: appUrl(routes.claimBill(code)),
   };
   const stamp = new Date().toISOString().slice(0, 13);
-  await Promise.all(
-    targets.map((target) =>
-      sendEmail({
-        to: target.email,
+  const sent = await deliverAll(
+    recipients.map((recipient) => ({
+      kind: "claimReminder" as const,
+      recipient,
+      dedupeKey: `claim-reminder/${bill.id}/${recipient.personId}/${stamp}`,
+      build: (chrome) => ({
         subject: claimReminderSubject(props),
-        react: ClaimReminderEmail(props),
-        text: claimReminderText(props),
-        idempotencyKey: `claim-reminder/${bill.id}/${target.view.id}/${stamp}`,
+        react: ClaimReminderEmail({ ...props, chrome }),
+        text: claimReminderText({ ...props, chrome }),
       }),
-    ),
+    })),
   );
+  if (sent === 0) return actionOk<Reminded>({ count: 0, names: [] });
+  const targets = recipients.map((recipient) => ({ view: { id: recipient.personId, displayName: recipient.displayName } }));
   const draft = activity("CLAIMS_REMINDED", { title: bill.title, personIds: targets.map((t) => t.view.id) });
   await db.activityEvent.create({
     data: { groupId: bill.groupId, billId: bill.id, actorId: person.id, type: draft.type, payload: draft.payload },

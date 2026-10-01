@@ -1,8 +1,12 @@
 import { redirect } from "next/navigation";
+import { TimeZoneCookie } from "@/components/patterns/time-zone-cookie";
 import { signInPath } from "@/lib/auth/redirect";
 import { routes } from "@/lib/auth/rules";
 import { getAppContext } from "@/lib/auth/session";
+import { runInBackground } from "@/lib/background";
 import { hasUnreadActivity } from "@/lib/feed/queries";
+import { rememberTimeZone } from "@/lib/people/time-zone";
+import { cookieTimeZone } from "@/lib/time-zone";
 import { AppHeader } from "./_components/app-header";
 import { TabBar } from "./_components/dock/tab-bar";
 
@@ -10,7 +14,8 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   const context = await getAppContext();
   if (!context) redirect(signInPath());
   if (!context.person.onboarded) redirect(routes.welcome);
-  const unread = await hasUnreadActivity(context.person.id);
+  const [unread, timeZone] = await Promise.all([hasUnreadActivity(context.person.id), cookieTimeZone()]);
+  if (timeZone) runInBackground("time zone", () => rememberTimeZone(context.person.id, timeZone));
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -19,6 +24,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         <div className="mx-auto max-w-app">{children}</div>
       </main>
       <TabBar unread={unread} />
+      <TimeZoneCookie serverTimeZone={timeZone} />
     </div>
   );
 }

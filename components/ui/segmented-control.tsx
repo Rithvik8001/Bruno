@@ -22,6 +22,12 @@ interface SegmentedBaseProps<T extends string> {
 }
 
 type Size = "sm" | "md" | "lg";
+type Tone = "surface" | "bg";
+
+const toneClass = {
+  surface: { track: "bg-surface", thumb: "bg-bg" },
+  bg: { track: "bg-bg", thumb: "bg-surface" },
+} as const satisfies Record<Tone, { track: string; thumb: string }>;
 
 const trackClass = {
   sm: "inline-flex",
@@ -50,7 +56,8 @@ function SegmentGroup<T extends string>({
   className,
   size,
   role,
-}: SegmentedBaseProps<T> & { size: Size; role: "radiogroup" | "tablist" }) {
+  tone = "surface",
+}: SegmentedBaseProps<T> & { size: Size; role: "radiogroup" | "tablist"; tone?: Tone }) {
   const values = options.map((o) => o.value);
   const thumbId = useId();
   const select = (next: T) => {
@@ -65,7 +72,7 @@ function SegmentGroup<T extends string>({
       role={role}
       aria-label={label}
       onKeyDown={onKeyDown}
-      className={cn("isolate gap-0.5 rounded-control bg-surface p-0.75", trackClass[size], className)}
+      className={cn("isolate gap-0.5 rounded-control p-0.75", toneClass[tone].track, trackClass[size], className)}
     >
       {options.map((o) => {
         const selected = o.value === value;
@@ -87,7 +94,7 @@ function SegmentGroup<T extends string>({
                 layoutId={thumbId}
                 aria-hidden
                 transition={SOFT_SPRING}
-                className="absolute inset-0 -z-10 rounded-sm bg-bg shadow-thumb"
+                className={cn("absolute inset-0 -z-10 rounded-sm shadow-thumb", toneClass[tone].thumb)}
               />
             )}
             {o.label}
@@ -100,6 +107,7 @@ function SegmentGroup<T extends string>({
 
 export interface SegmentedControlProps<T extends string> extends SegmentedBaseProps<T> {
   size?: Exclude<Size, "md">;
+  tone?: Tone;
 }
 
 export function SegmentedControl<T extends string>({ size = "lg", ...props }: SegmentedControlProps<T>) {

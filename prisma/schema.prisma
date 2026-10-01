@@ -20,6 +20,7 @@ model User {
   sessions        Session[]
   accounts        Account[]
   person          Person?
+  knownDevices    KnownDevice[]
 
   @@map("user")
 }
@@ -190,6 +191,12 @@ model Person {
   onboardedAt    DateTime?
   activitySeenAt DateTime?
   plan           Plan      @default(FREE)
+  timeZone       String?
+  notifyBills    Boolean   @default(true)
+  notifyClaims   Boolean   @default(true)
+  notifyPayments Boolean   @default(true)
+  notifyWeekly   Boolean   @default(true)
+  notifyMonthly  Boolean   @default(true)
   mergedIntoId   String?
   mergedInto     Person?   @relation("PersonMerge", fields: [mergedIntoId], references: [id], onDelete: Restrict)
   mergedFrom     Person[]  @relation("PersonMerge")
@@ -212,6 +219,7 @@ model Person {
   receiptScans       ReceiptScan[]
   tellDrafts         TellDraft[]
   askQuestions       AskQuestion[]
+  emailLogs          EmailLog[]
 
   @@index([mergedIntoId])
   @@map("person")
@@ -494,4 +502,28 @@ model AskQuestion {
   @@index([personId, threadId, createdAt])
   @@index([status, createdAt])
   @@map("ask_question")
+}
+
+model EmailLog {
+  id        String   @id @default(cuid())
+  personId  String
+  person    Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+  kind      String
+  dedupeKey String   @unique
+  createdAt DateTime @default(now())
+
+  @@index([personId, createdAt])
+  @@map("email_log")
+}
+
+model KnownDevice {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fingerprint String
+  firstSeenAt DateTime @default(now())
+  lastSeenAt  DateTime @default(now())
+
+  @@unique([userId, fingerprint])
+  @@map("known_device")
 }

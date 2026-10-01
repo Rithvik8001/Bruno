@@ -23,6 +23,7 @@ const serverEnvSchema = z.object({
   GOOGLE_CLIENT_SECRET: optionalString,
   RESEND_API_KEY: optionalString,
   EMAIL_FROM: z.string().min(1).default("Bruno <onboarding@resend.dev>"),
+  CRON_SECRET: optionalString,
   SUPABASE_SECRET_KEY: optionalString,
   OPENAI_API_KEY: optionalString,
   CLOUDINARY_CLOUD_NAME: optionalString,

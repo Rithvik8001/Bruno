@@ -19,6 +19,7 @@ import { RollingNumber } from "@/components/ui/rolling-number";
 import { SegmentedControl, Tabs, type SegmentOption } from "@/components/ui/segmented-control";
 import { Sheet, SheetContent, sheetBodyClassName, sheetPanelClassName } from "@/components/ui/sheet";
 import { Stepper } from "@/components/ui/stepper";
+import { Switch } from "@/components/ui/switch";
 import { ToastView, useToast } from "@/components/ui/toast";
 import { Icon } from "@/components/icons/icon";
 import { formatMoney } from "@/lib/currency";
@@ -60,6 +61,18 @@ const splitModes: readonly SegmentOption<SplitMode>[] = [
 export function SegmentedDemo() {
   const [mode, setMode] = useState<SplitMode>("amount");
   return <SegmentedControl label="Split by" options={splitModes} value={mode} onValueChange={setMode} />;
+}
+
+export function SwitchDemo() {
+  const [on, setOn] = useState(true);
+  return (
+    <Switch checked={on} onCheckedChange={setOn}>
+      <span className="grid gap-0.5">
+        <span className="font-medium">Weekly nudge</span>
+        <span className="text-footnote text-text-2">Sunday summary of what you still owe.</span>
+      </span>
+    </Switch>
+  );
 }
 
 type BillTab = "items" | "people" | "activity";

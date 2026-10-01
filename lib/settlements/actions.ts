@@ -1,6 +1,7 @@
 "use server";
 
 import { activity } from "@/lib/activity";
+import { runInBackground } from "@/lib/background";
 import { defineAction } from "@/lib/actions/action";
 import { actionFail, actionInvalid, actionOk } from "@/lib/actions/errors";
 import { formatMoney, isCurrencyCode } from "@/lib/currency";
@@ -11,6 +12,7 @@ import { openAmount, pairBalance, pendingBetween, settleRole } from "@/lib/ledge
 import type { SettlementStatus } from "@/lib/ledger/rules";
 import { canConfirm, canDecline, canUndo, initialSettlement, type SettlementState } from "@/lib/ledger/settlements";
 import { cents } from "@/lib/money";
+import { notifySettlementChanged, notifySettlementRecorded } from "@/lib/notifications/events/payments";
 import { refreshGroup } from "@/lib/revalidate";
 import { settlementMessages } from "./messages";
 import { stateOf } from "./rows";
@@ -94,6 +96,7 @@ export const recordSettlement = defineAction(recordSettlementSchema, async (inpu
   });
 
   refreshGroup(input.groupId);
+  runInBackground("payment recorded", () => notifySettlementRecorded(created.id));
   return actionOk<RecordedSettlement>({ id: created.id, status: created.status });
 });
 
@@ -110,9 +113,10 @@ type Transition = {
   readonly allowed: (state: SettlementState, actor: PersonId, now: Date) => boolean;
   readonly denied: string;
   readonly next: "CONFIRMED" | "CANCELLED";
+  readonly update: "confirmed" | "declined" | "cancelled";
 };
 
-function transition({ allowed, denied, next }: Transition) {
+function transition({ allowed, denied, next, update }: Transition) {
   return defineAction(settlementRefSchema, async ({ settlementId }, { person }) => {
     const loaded = await loadSettlement(settlementId);
     if (!loaded) return actionFail("notFound", settlementMessages.gone);
@@ -134,12 +138,13 @@ function transition({ allowed, denied, next }: Transition) {
     });
 
     refreshGroup(loaded.groupId);
+    runInBackground("payment update", () => notifySettlementChanged(loaded.id, person.id, update));
     return actionOk<SettlementChange>({ id: loaded.id, groupId: loaded.groupId });
   });
 }
 
-export const confirmSettlement = transition({ allowed: canConfirm, denied: settlementMessages.cantConfirm, next: "CONFIRMED" });
+export const confirmSettlement = transition({ allowed: canConfirm, denied: settlementMessages.cantConfirm, next: "CONFIRMED", update: "confirmed" });
 
-export const declineSettlement = transition({ allowed: canDecline, denied: settlementMessages.cantDecline, next: "CANCELLED" });
+export const declineSettlement = transition({ allowed: canDecline, denied: settlementMessages.cantDecline, next: "CANCELLED", update: "declined" });
 
-export const undoSettlement = transition({ allowed: canUndo, denied: settlementMessages.cantUndo, next: "CANCELLED" });
+export const undoSettlement = transition({ allowed: canUndo, denied: settlementMessages.cantUndo, next: "CANCELLED", update: "cancelled" });

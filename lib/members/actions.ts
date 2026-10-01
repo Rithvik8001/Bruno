@@ -4,9 +4,11 @@ import { activity } from "@/lib/activity";
 import { defineAction } from "@/lib/actions/action";
 import { actionFail, actionOk, actionRateLimited } from "@/lib/actions/errors";
 import { routes } from "@/lib/auth/rules";
+import { runInBackground } from "@/lib/background";
 import { db } from "@/lib/db";
 import { appUrl } from "@/lib/site";
 import { groupMessages } from "@/lib/groups/messages";
+import { notifyAddedToGroup } from "@/lib/notifications/events/members";
 import { personSelect, toPersonView, type PersonView } from "@/lib/people/person";
 import { consumeRate } from "@/lib/rate-limit/limiter";
 import { refreshGroup } from "@/lib/revalidate";
@@ -58,6 +60,7 @@ export const addMember = defineAction(addFoundSchema, async ({ groupId, ticket }
     await tx.activityEvent.create({ data: { groupId, actorId: person.id, type: draft.type, payload: draft.payload } });
   });
   refreshGroup(groupId);
+  runInBackground("added to group", () => notifyAddedToGroup(groupId, target.id, person.id));
   return actionOk({ person: view, added: true });
 });
 

@@ -1,9 +1,12 @@
-import { Button, Column, Row, Section, Text } from "react-email";
-import { EmailShell, emailTokens } from "./_components/email-shell";
+import { Card, Chip, CtaButton, Gap, Lead, Note, Rows, Title } from "./_components/blocks";
+import { previewChrome, type EmailChrome } from "./_components/chrome";
+import { EmailShell } from "./_components/shell";
+import type { EmailTint } from "./_components/tokens";
 
 export interface ClaimReminderItem {
   name: string;
   price: string;
+  category: { label: string; tint: EmailTint } | null;
 }
 
 export interface ClaimReminderEmailProps {
@@ -14,6 +17,7 @@ export interface ClaimReminderEmailProps {
   totalPeople: number;
   unclaimed: ClaimReminderItem[];
   claimUrl: string;
+  chrome: EmailChrome;
 }
 
 export const claimReminderSubject = ({ senderName, billTitle }: Pick<ClaimReminderEmailProps, "senderName" | "billTitle">) =>
@@ -22,82 +26,52 @@ export const claimReminderSubject = ({ senderName, billTitle }: Pick<ClaimRemind
 const progressLine = ({ senderName, claimedPeople, totalPeople }: ClaimReminderEmailProps) =>
   `${senderName} added the receipt. ${claimedPeople} of ${totalPeople} people have claimed, and the bill can’t be split until everyone’s claimed.`;
 
+const leftover = (senderName: string) => `Anything left unclaimed is split evenly when ${senderName} finishes the bill.`;
+
 export function claimReminderText(props: ClaimReminderEmailProps): string {
   const items = props.unclaimed.map((item) => `- ${item.name} · ${item.price}`).join("\n");
   return [
     `Tap what you had at ${props.billTitle}.`,
     progressLine(props),
     items ? `Still unclaimed:\n${items}` : "",
-    `Claim your items: ${props.claimUrl}`,
-    `You're a member of the group "${props.groupName}" on Bruno.`,
+    `Claim my items: ${props.claimUrl}`,
+    leftover(props.senderName),
   ]
     .filter(Boolean)
     .join("\n\n");
 }
 
 export default function ClaimReminderEmail(props: ClaimReminderEmailProps) {
-  const { billTitle, groupName, unclaimed, claimUrl } = props;
+  const { senderName, billTitle, groupName, unclaimed, claimUrl, chrome } = props;
   return (
     <EmailShell
       preview={`${unclaimed.length} ${unclaimed.length === 1 ? "item" : "items"} still unclaimed on the ${billTitle} bill. It takes about 20 seconds.`}
-      title={`Tap what you had at ${billTitle}`}
+      chrome={chrome}
+      reason={`You’re a member of the group “${groupName}” on Bruno.`}
     >
-      <Text
-        style={{
-          display: "inline-block",
-          margin: "0 0 16px",
-          padding: "3px 9px",
-          borderRadius: 7,
-          backgroundColor: "#FFF0E0",
-          color: "#A84B00",
-          fontSize: 13,
-          lineHeight: "18px",
-          fontWeight: 600,
-        }}
-      >
-        ● Claiming
-      </Text>
-      <Text style={{ margin: "0 0 28px", fontSize: 15, lineHeight: "24px", color: emailTokens.text2 }}>
-        {progressLine(props)}
-      </Text>
+      <Chip tint="orange">Claiming</Chip>
+      <Gap size={16} />
+      <Title>Tap what you had at {billTitle}</Title>
+      <Gap size={12} />
+      <Lead>{progressLine(props)}</Lead>
+      <Gap size={28} />
       {unclaimed.length > 0 && (
-        <Section style={{ backgroundColor: emailTokens.surface, borderRadius: 20, padding: 24, margin: "0 0 28px" }}>
-          <Text style={{ margin: "0 0 4px", fontSize: 13, lineHeight: "18px", fontWeight: 500, color: emailTokens.muted }}>
-            Still unclaimed
-          </Text>
-          {unclaimed.map((item, index) => (
-            <Row key={`${item.name}-${index}`}>
-              <Column style={{ padding: "10px 0 0", fontSize: 14, lineHeight: "20px", color: emailTokens.text }}>
-                {item.name}
-              </Column>
-              <Column
-                align="right"
-                style={{ padding: "10px 0 0", fontSize: 14, lineHeight: "20px", fontWeight: 500, color: emailTokens.text }}
-              >
-                {item.price}
-              </Column>
-            </Row>
-          ))}
-        </Section>
+        <>
+          <Card label="Still unclaimed">
+            <Rows
+              rows={unclaimed.map((item) => ({
+                label: item.name,
+                value: item.price,
+                chip: item.category ?? undefined,
+              }))}
+            />
+          </Card>
+          <Gap size={28} />
+        </>
       )}
-      <Button
-        href={claimUrl}
-        style={{
-          display: "inline-block",
-          backgroundColor: emailTokens.brand,
-          color: "#FFFFFF",
-          fontSize: 15,
-          fontWeight: 600,
-          borderRadius: 10,
-          padding: "14px 24px",
-          textDecoration: "none",
-        }}
-      >
-        Claim your items
-      </Button>
-      <Text style={{ margin: "24px 0 0", fontSize: 13, lineHeight: "20px", color: emailTokens.muted }}>
-        You&apos;re a member of the group “{groupName}” on Bruno.
-      </Text>
+      <CtaButton href={claimUrl}>Claim my items</CtaButton>
+      <Gap size={16} />
+      <Note>{leftover(senderName)}</Note>
     </EmailShell>
   );
 }
@@ -109,9 +83,11 @@ ClaimReminderEmail.PreviewProps = {
   claimedPeople: 3,
   totalPeople: 5,
   unclaimed: [
-    { name: "Negroni × 2", price: "$28.00" },
-    { name: "Cacio e pepe", price: "$24.00" },
-    { name: "Tiramisu", price: "$12.00" },
+    { name: "Negroni × 2", price: "$28.00", category: { label: "Drinks", tint: "pink" } },
+    { name: "Cacio e pepe", price: "$24.00", category: { label: "Main", tint: "orange" } },
+    { name: "Tiramisu", price: "$12.00", category: { label: "Dessert", tint: "violet" } },
+    { name: "Sparkling water", price: "$7.00", category: null },
   ],
   claimUrl: "http://localhost:3000/b/abcdefgh2345",
+  chrome: previewChrome,
 } satisfies ClaimReminderEmailProps;
