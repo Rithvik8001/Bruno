@@ -69,27 +69,28 @@ export async function countUsed(
   now: Date = new Date(),
 ): Promise<number> {
   const startedAt = { gte: window.start, lt: window.end };
-  const [scans, drafts] = await Promise.all([
-    tx.receiptScan.count({
-      where: {
-        personId,
-        startedAt,
-        OR: [{ status: { in: ["SUCCEEDED", "CONSUMED", "DISCARDED"] } }, { status: "EXTRACTING", startedAt: { gt: new Date(now.getTime() - EXTRACT_STALE_MS) } }],
-      },
-    }),
-    tx.tellDraft.count({
-      where: {
-        personId,
-        startedAt,
-        OR: [{ status: { in: ["SUCCEEDED", "CONSUMED", "DISCARDED"] } }, { status: "DRAFTING", startedAt: { gt: new Date(now.getTime() - TELL_STALE_MS) } }],
-      },
-    }),
-  ]);
+  const scans = await tx.receiptScan.count({
+    where: {
+      personId,
+      startedAt,
+      OR: [{ status: { in: ["SUCCEEDED", "CONSUMED", "DISCARDED"] } }, { status: "EXTRACTING", startedAt: { gt: new Date(now.getTime() - EXTRACT_STALE_MS) } }],
+    },
+  });
+  const drafts = await tx.tellDraft.count({
+    where: {
+      personId,
+      startedAt,
+      OR: [{ status: { in: ["SUCCEEDED", "CONSUMED", "DISCARDED"] } }, { status: "DRAFTING", startedAt: { gt: new Date(now.getTime() - TELL_STALE_MS) } }],
+    },
+  });
   return scans + drafts;
 }
 
-export async function countTellAttempts(tx: Prisma.TransactionClient, personId: string, window: DayWindow): Promise<number> {
-  return tx.tellDraft.count({ where: { personId, startedAt: { gte: window.start, lt: window.end } } });
+export async function countAttempts(tx: Prisma.TransactionClient, personId: string, window: DayWindow): Promise<number> {
+  const where = { personId, startedAt: { gte: window.start, lt: window.end } };
+  const scans = await tx.receiptScan.count({ where });
+  const drafts = await tx.tellDraft.count({ where });
+  return scans + drafts;
 }
 
 export function quotaOf(used: number, plan: Plan): ScanQuota {

@@ -24,6 +24,7 @@ export const newBillCopy = {
     dropActive: "Drop it",
     dropSub: "JPG, PNG, HEIC or PDF. AI reads every line, quantity and price.",
     choose: "Choose file",
+    wait: (seconds: number) => `Try again in ${seconds}s`,
     fileLabel: "Receipt file",
     unavailable: "Receipt scanning isn't switched on for this build yet. Type the bill in below.",
     quota: {
@@ -37,7 +38,12 @@ export const newBillCopy = {
     failed: {
       title: "Couldn't read that one.",
       body: (reason: string) => `${reason} Try a clearer file, or type the items in. This didn't count against your daily limit.`,
+      service: {
+        title: "Bruno’s AI didn’t answer.",
+        body: "That’s on our side, not your receipt. Try again in a moment, or type the items in. This didn’t count against your daily limit.",
+      },
       again: "Upload another",
+      againIn: (seconds: number) => `Try again in ${seconds}s`,
       type: "Type it in",
     },
     done: {

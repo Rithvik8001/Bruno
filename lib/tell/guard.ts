@@ -1,4 +1,4 @@
-import { TELL_MIN_LETTERS, TELL_MIN_WORDS, TELL_RETRY_GAP_MAX_MS, TELL_RETRY_GAP_MS } from "./rules";
+import { TELL_MIN_LETTERS, TELL_MIN_WORDS } from "./rules";
 
 const CONTROL = /\p{Cc}/gu;
 const INVISIBLE = /\p{Cf}/gu;
@@ -77,9 +77,4 @@ export function saidLabel(label: string, text: string): boolean {
 export function saidName(mention: string, text: string): boolean {
   const name = mention.trim().toLowerCase();
   return name !== "" && text.toLowerCase().includes(name);
-}
-
-export function retryGapMs(consecutiveFailures: number): number {
-  if (consecutiveFailures <= 0) return 0;
-  return Math.min(TELL_RETRY_GAP_MAX_MS, TELL_RETRY_GAP_MS * 2 ** (consecutiveFailures - 1));
 }

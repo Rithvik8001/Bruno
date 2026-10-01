@@ -9,12 +9,13 @@ import { newBillCopy } from "../_data";
 
 export interface DropzoneProps {
   disabled: boolean;
+  waitSeconds?: number;
   onFile: (file: File) => void;
 }
 
 const ACCEPT = "image/*,.heic,.heif,application/pdf";
 
-export function Dropzone({ disabled, onFile }: DropzoneProps) {
+export function Dropzone({ disabled, waitSeconds = 0, onFile }: DropzoneProps) {
   const copy = newBillCopy.scan;
   const input = useRef<HTMLInputElement>(null);
   const [over, setOver] = useState(false);
@@ -68,7 +69,9 @@ export function Dropzone({ disabled, onFile }: DropzoneProps) {
           <span className="text-lead font-semibold">{over ? copy.dropActive : copy.dropTitle}</span>
           <span className="text-small text-text-2">{copy.dropSub}</span>
         </span>
-        <span className="inline-flex h-10 items-center rounded-control bg-bg px-4 text-small font-semibold shadow-float">{copy.choose}</span>
+        <span className="inline-flex h-10 items-center rounded-control bg-bg px-4 text-small font-semibold shadow-float">
+          {waitSeconds > 0 ? copy.wait(waitSeconds) : copy.choose}
+        </span>
       </span>
     </motion.label>
   );

@@ -39,8 +39,14 @@ export const rateRules = {
   },
   claimRemind: { person: [{ seconds: HOUR, max: 6 }] },
   scanStart: {
-    person: [{ seconds: MINUTE, max: 6 }],
-    ip: [{ seconds: MINUTE, max: 12 }],
+    person: [
+      { seconds: MINUTE, max: 6 },
+      { seconds: HOUR, max: 25 },
+    ],
+    ip: [
+      { seconds: MINUTE, max: 12 },
+      { seconds: HOUR, max: 80 },
+    ],
   },
   tellStart: {
     person: [

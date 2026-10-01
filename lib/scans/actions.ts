@@ -1,6 +1,9 @@
 "use server";
 
 import { defineAction } from "@/lib/actions/action";
+import { aiMessages } from "@/lib/ai/messages";
+import { AI_FREE_MISSES, AI_UPSTREAM_FAILURES } from "@/lib/ai/rules";
+import { aiCooldown, breakerCooldown } from "@/lib/ai/throttle";
 import {
   actionFail,
   actionInvalid,
@@ -21,6 +24,7 @@ import { scanMessages } from "./messages";
 import { normalizeExtraction } from "./normalize";
 import type { ScanResult } from "./result";
 import {
+  countAttempts,
   countUsed,
   dailyLimit,
   localDayWindow,
@@ -44,6 +48,7 @@ import {
 import { maybeSweep } from "./sweep";
 
 const MIB = 1024 * 1024;
+const upstreamFailures: readonly ScanFailure[] = AI_UPSTREAM_FAILURES;
 
 const toJson = (value: ScanResult): Prisma.InputJsonValue =>
   JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
@@ -81,6 +86,9 @@ export const createScanUpload = defineAction(
     const verdict = await consumeRate("scanStart", person.id);
     if (!verdict.ok)
       return actionRateLimited(verdict.retryAfter, scanMessages.rateLimited);
+    const cooling = await aiCooldown(person.id);
+    if (cooling !== null)
+      return actionRateLimited(cooling, aiMessages.cooling(cooling));
     const max = maxBytesFor(contentType);
     if (byteSize > max)
       return actionInvalid(
@@ -93,8 +101,11 @@ export const createScanUpload = defineAction(
       select: { plan: true },
     });
     const limit = dailyLimit(plan.plan);
-    const used = await countUsed(db, person.id, localDayWindow(timeZone));
+    const day = localDayWindow(timeZone);
+    const used = await countUsed(db, person.id, day);
     if (used >= limit) return actionFail("conflict", scanMessages.quota(limit));
+    if ((await countAttempts(db, person.id, day)) >= limit + AI_FREE_MISSES)
+      return actionFail("conflict", aiMessages.tooManyTries);
 
     const objectKey = scanPublicId(person.id);
     const scan = await db.receiptScan.create({
@@ -160,19 +171,30 @@ export const extractScan = defineAction(
       );
     }
 
+    const cooling = await aiCooldown(person.id);
+    if (cooling !== null)
+      return actionRateLimited(cooling, aiMessages.cooling(cooling));
+
     const limit = dailyLimit(scan.person.plan);
     const window = localDayWindow(timeZone);
     const reserved = await db.$transaction(async (tx) => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${person.id}))`;
-      const used = await countUsed(tx, person.id, window);
-      if (used >= limit) return false;
+      if ((await countUsed(tx, person.id, window)) >= limit) return "quota";
+      if ((await countAttempts(tx, person.id, window)) >= limit + AI_FREE_MISSES)
+        return "tries";
       await tx.receiptScan.update({
         where: { id: scan.id },
         data: { status: "EXTRACTING", startedAt: new Date() },
       });
-      return true;
+      return "ok";
     });
-    if (!reserved) return actionFail("conflict", scanMessages.quota(limit));
+    if (reserved !== "ok")
+      return actionFail(
+        "conflict",
+        reserved === "quota"
+          ? scanMessages.quota(limit)
+          : aiMessages.tooManyTries,
+      );
 
     const files = await fetchForModel(scan.objectKey, storedMime, stored.pages);
     if (!files) {
@@ -182,13 +204,23 @@ export const extractScan = defineAction(
 
     const outcome = await runExtraction(files, currency).catch(
       (error: unknown) => {
-        console.error("[scan] extraction failed", error);
+        console.error(
+          "[scan] extraction failed",
+          error instanceof Error ? `${error.name}: ${error.message}` : "unknown error",
+        );
         return { ok: false as const, failure: "failed" as const };
       },
     );
     if (!outcome.ok) {
       await markFailed(scan.id, outcome.failure);
-      return actionFail("conflict", failureMessage(outcome.failure));
+      if (!upstreamFailures.includes(outcome.failure))
+        return actionFail("conflict", failureMessage(outcome.failure));
+      return actionFail(
+        "unknown",
+        (await breakerCooldown()) === null
+          ? failureMessage(outcome.failure)
+          : aiMessages.busy,
+      );
     }
 
     const result = normalizeExtraction(outcome.extraction, currency);

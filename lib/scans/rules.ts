@@ -69,6 +69,7 @@ export const FLAG_CONFIDENCE = 0.75;
 export const MAX_GUESSES = 3;
 export const EXTRACT_STALE_MS = 3 * 60 * 1000;
 export const EXTRACT_TIMEOUT_MS = 45_000;
+export const EXTRACT_MAX_OUTPUT_TOKENS = 8000;
 export const DUPLICATE_WINDOW_DAYS = 3;
 export const SCAN_ITEMS_MAX = BILL_ITEMS_MAX;
 export const SCAN_MODEL = "gpt-5.6-luna";

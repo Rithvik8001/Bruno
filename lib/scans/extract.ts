@@ -9,7 +9,7 @@ import {
   type Extraction,
 } from "./extraction";
 import type { ScanFailure } from "./messages";
-import { EXTRACT_TIMEOUT_MS, SCAN_MODEL } from "./rules";
+import { EXTRACT_MAX_OUTPUT_TOKENS, EXTRACT_TIMEOUT_MS, SCAN_MODEL } from "./rules";
 import type { ModelFile } from "./storage";
 
 export interface ExtractionUsage {
@@ -63,6 +63,8 @@ export async function runExtraction(
       providerOptions: {
         openai: { reasoningEffort: "none", strictJsonSchema: true },
       },
+      maxRetries: 0,
+      maxOutputTokens: EXTRACT_MAX_OUTPUT_TOKENS,
       abortSignal: AbortSignal.timeout(EXTRACT_TIMEOUT_MS),
     });
     return {

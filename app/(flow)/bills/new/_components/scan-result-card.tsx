@@ -35,25 +35,26 @@ export function ScanDoneCard({ summary, pending, onReview }: ScanDoneCardProps) 
 }
 
 export interface ScanFailedCardProps {
-  reason: string;
+  reason: string | null;
   manualHref: string;
+  retryIn: number;
   onRetry: () => void;
 }
 
-export function ScanFailedCard({ reason, manualHref, onRetry }: ScanFailedCardProps) {
+export function ScanFailedCard({ reason, manualHref, retryIn, onRetry }: ScanFailedCardProps) {
   const copy = newBillCopy.scan.failed;
   return (
     <Rise className="grid gap-4 rounded-card bg-surface p-6">
       <div className="flex items-start gap-3.5">
         <MomentTile icon="warning" tint="red" size="md" />
         <span className="grid gap-1">
-          <span className="font-semibold">{copy.title}</span>
-          <span className="text-small text-text-2">{copy.body(reason)}</span>
+          <span className="font-semibold">{reason === null ? copy.service.title : copy.title}</span>
+          <span className="text-small text-text-2">{reason === null ? copy.service.body : copy.body(reason)}</span>
         </span>
       </div>
       <div className="flex flex-wrap gap-2">
-        <Button size="md" onClick={onRetry}>
-          {copy.again}
+        <Button size="md" disabled={retryIn > 0} onClick={onRetry}>
+          {retryIn > 0 ? copy.againIn(retryIn) : copy.again}
         </Button>
         <PressLink href={manualHref} className={cn(buttonVariants({ variant: "elevated", size: "md" }), "text-small")}>
           {copy.type}

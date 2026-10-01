@@ -19,7 +19,8 @@ import { firstNameOf } from "@/lib/people/defaults";
 import { scanQuota } from "@/lib/scans/actions";
 import type { ScanQuota } from "@/lib/scans/quota";
 import { answerTell, discardTell, draftBill } from "@/lib/tell/actions";
-import { TELL_RETRY_GAP_MS, TELL_TEXT_MAX } from "@/lib/tell/rules";
+import { AI_RETRY_GAP_MS } from "@/lib/ai/rules";
+import { TELL_TEXT_MAX } from "@/lib/tell/rules";
 import { GroupChips } from "../../_components/group-chips";
 import { QuotaChip } from "../../_components/quota-chip";
 import { browserTimeZone } from "../../_lib/upload";
@@ -35,7 +36,7 @@ import { TellWorking } from "./tell-working";
 
 const TOAST_MS = 6000;
 const KEYBOARD_SETTLE_MS = 300;
-const RETRY_GAP_SECONDS = TELL_RETRY_GAP_MS / 1000;
+const RETRY_GAP_SECONDS = AI_RETRY_GAP_MS / 1000;
 
 export interface TellScreenProps {
   composer: BillComposer;
@@ -76,8 +77,8 @@ export function TellScreen({ composer, groups, you, quota: initialQuota, initial
   const failure = phase.kind === "compose" ? phase.failure : null;
 
   const refreshQuota = useCallback(async () => {
-    const result = await scanQuota({ timeZone: browserTimeZone() });
-    if (result.ok) setQuota(result.data);
+    const result = await scanQuota({ timeZone: browserTimeZone() }).catch(() => null);
+    if (result?.ok) setQuota(result.data);
   }, []);
 
   const toCompose = (next: TellFailureKind | null) => {
@@ -95,7 +96,7 @@ export function TellScreen({ composer, groups, you, quota: initialQuota, initial
     creep.start();
     const result = await draftBill({ groupId: composer.id, text, timeZone: browserTimeZone() }).catch(() => null);
     if (cancelledRef.current) {
-      if (result?.ok) await discardTell({ draftId: result.data.draftId });
+      if (result?.ok) await discardTell({ draftId: result.data.draftId }).catch(() => null);
       void refreshQuota();
       return;
     }
@@ -154,9 +155,9 @@ export function TellScreen({ composer, groups, you, quota: initialQuota, initial
 
   const submitAnswers = (draftId: string) =>
     startNavigation(async () => {
-      const saved = await answerTell({ draftId, answers: toAnswers(clarify) });
-      if (!saved.ok) {
-        toast({ message: saved.error.message, duration: TOAST_MS });
+      const saved = await answerTell({ draftId, answers: toAnswers(clarify) }).catch(() => null);
+      if (!saved?.ok) {
+        toast({ message: saved?.error.message ?? copy.failed.network.title, duration: TOAST_MS });
         toCompose(null);
         return;
       }

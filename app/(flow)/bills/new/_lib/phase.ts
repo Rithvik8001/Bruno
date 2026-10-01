@@ -8,7 +8,7 @@ export type ScanPhase =
   | { readonly kind: "extracting"; readonly scanId: string }
   | { readonly kind: "revealing"; readonly summary: ScanSummary }
   | { readonly kind: "done"; readonly summary: ScanSummary }
-  | { readonly kind: "failed"; readonly reason: string };
+  | { readonly kind: "failed"; readonly reason: string | null };
 
 export const UPLOAD_UNTIL = 12;
 export const EXTRACT_UNTIL = 70;

@@ -1,6 +1,9 @@
 "use server";
 
 import { defineAction } from "@/lib/actions/action";
+import { aiMessages } from "@/lib/ai/messages";
+import { AI_FREE_MISSES } from "@/lib/ai/rules";
+import { aiCooldown, breakerCooldown } from "@/lib/ai/throttle";
 import { actionFail, actionOk, actionRateLimited } from "@/lib/actions/errors";
 import { minorUnitsOf } from "@/lib/currency";
 import { db } from "@/lib/db";
@@ -10,17 +13,16 @@ import { getBillComposer } from "@/lib/groups/queries";
 import { normalizeName } from "@/lib/members/names";
 import { consumeRate } from "@/lib/rate-limit/limiter";
 import { scanMessages } from "@/lib/scans/messages";
-import { countTellAttempts, countUsed, dailyLimit, localDayWindow } from "@/lib/scans/quota";
+import { countAttempts, countUsed, dailyLimit, localDayWindow } from "@/lib/scans/quota";
 import { isTellConfigured } from "./config";
 import { runTell } from "./extract";
 import { tellFailureMessage, tellMessages, type TellFailure } from "./messages";
 import { hasSubstance } from "./guard";
 import { normalizeTell, type TellRoster } from "./normalize";
 import { parseTellResult, type TellAnswers, type TellResult } from "./result";
-import { TELL_FREE_MISSES, TELL_ROSTER_NAME_MAX } from "./rules";
+import { TELL_ROSTER_NAME_MAX } from "./rules";
 import { answerTellSchema, draftBillSchema, tellRefSchema } from "./schema";
 import { maybeSweepTell } from "./sweep";
-import { breakerCooldown, personCooldown } from "./throttle";
 
 const toJson = (value: TellResult | TellAnswers): Prisma.InputJsonValue =>
   JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
@@ -49,8 +51,8 @@ export const draftBill = defineAction(draftBillSchema, async ({ groupId, text, t
   if (!verdict.ok) return actionRateLimited(verdict.retryAfter, tellMessages.rateLimited);
 
   if (!hasSubstance(text)) return actionFail("invalid", tellFailureMessage("vague"));
-  const cooling = (await personCooldown(person.id)) ?? (await breakerCooldown());
-  if (cooling !== null) return actionRateLimited(cooling, tellMessages.cooling(cooling));
+  const cooling = await aiCooldown(person.id);
+  if (cooling !== null) return actionRateLimited(cooling, aiMessages.cooling(cooling));
 
   const plan = await db.person.findUniqueOrThrow({ where: { id: person.id }, select: { plan: true } });
   const limit = dailyLimit(plan.plan);
@@ -58,14 +60,14 @@ export const draftBill = defineAction(draftBillSchema, async ({ groupId, text, t
   const reserved = await db.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${person.id}))`;
     if ((await countUsed(tx, person.id, window)) >= limit) return { ok: false as const, reason: "quota" as const };
-    if ((await countTellAttempts(tx, person.id, window)) >= limit + TELL_FREE_MISSES) return { ok: false as const, reason: "tries" as const };
+    if ((await countAttempts(tx, person.id, window)) >= limit + AI_FREE_MISSES) return { ok: false as const, reason: "tries" as const };
     const created = await tx.tellDraft.create({
       data: { personId: person.id, groupId, text, timeZone, status: "DRAFTING", startedAt: new Date() },
       select: { id: true },
     });
     return { ok: true as const, id: created.id };
   });
-  if (!reserved.ok) return actionFail("conflict", reserved.reason === "quota" ? scanMessages.quota(limit) : tellMessages.tooManyTries);
+  if (!reserved.ok) return actionFail("conflict", reserved.reason === "quota" ? scanMessages.quota(limit) : aiMessages.tooManyTries);
   const draft = { id: reserved.id };
   maybeSweepTell();
 
@@ -86,7 +88,7 @@ export const draftBill = defineAction(draftBillSchema, async ({ groupId, text, t
   if (!outcome.ok) {
     await markFailed(draft.id, outcome.failure);
     if (outcome.failure === "vague") return actionFail("invalid", tellFailureMessage(outcome.failure));
-    return actionFail("unknown", (await breakerCooldown()) === null ? tellFailureMessage(outcome.failure) : tellMessages.busy);
+    return actionFail("unknown", (await breakerCooldown()) === null ? tellFailureMessage(outcome.failure) : aiMessages.busy);
   }
 
   const usage = { model: outcome.model, inputTokens: outcome.usage.inputTokens, outputTokens: outcome.usage.outputTokens };

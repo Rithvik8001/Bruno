@@ -7,6 +7,8 @@ import type { ScanLine } from "@/components/patterns/receipt-scan";
 import { useToast } from "@/components/ui/toast";
 import { routes } from "@/lib/auth/rules";
 import type { CurrencyCode } from "@/lib/currency";
+import { AI_RETRY_GAP_MS } from "@/lib/ai/rules";
+import { useCooldown } from "@/lib/hooks/use-cooldown";
 import { useTimeline } from "@/lib/hooks/use-timeline";
 import { buzz, HAPTICS } from "@/lib/motion/haptics";
 import { createScanUpload, discardScan, extractScan, scanQuota, type ScanSummary } from "@/lib/scans/actions";
@@ -30,6 +32,7 @@ import { ScanProgress } from "./scan-progress";
 import { ScanDoneCard, ScanFailedCard } from "./scan-result-card";
 
 const TOAST_MS = 6000;
+const RETRY_GAP_SECONDS = AI_RETRY_GAP_MS / 1000;
 
 export interface ScanScreenProps {
   groupId: string;
@@ -71,21 +74,22 @@ export function ScanScreen({ groupId, currency, configured, quota, onQuota, chil
   const [navigating, startNavigation] = useTransition();
   const creep = useTimeline(EXTRACT_CREEP);
   const reveal = useTimeline(REVEAL);
+  const cooldown = useCooldown(RETRY_GAP_SECONDS, false);
   const abortRef = useRef<(() => void) | null>(null);
   const cancelledRef = useRef(false);
   const ghosts = useMemo(() => ghostLines(), []);
 
   const refreshQuota = useCallback(async () => {
-    const result = await scanQuota({ timeZone: browserTimeZone() });
-    if (result.ok) onQuota(result.data);
+    const result = await scanQuota({ timeZone: browserTimeZone() }).catch(() => null);
+    if (result?.ok) onQuota(result.data);
   }, [onQuota]);
 
   const fail = useCallback(
-    (reason: string, scanId?: string) => {
+    (reason: string | null, scanId?: string) => {
       buzz(HAPTICS.error);
       setPhase({ kind: "failed", reason });
       creep.reset();
-      if (scanId) void discardScan({ scanId });
+      if (scanId) void discardScan({ scanId }).catch(() => undefined);
     },
     [creep],
   );
@@ -99,10 +103,17 @@ export function ScanScreen({ groupId, currency, configured, quota, onQuota, chil
     }
     cancelledRef.current = false;
     const timeZone = browserTimeZone();
-    const started = await createScanUpload({ groupId, contentType: check.mime, byteSize: check.size, timeZone });
+    const started = await createScanUpload({ groupId, contentType: check.mime, byteSize: check.size, timeZone }).catch(() => null);
+    if (started === null) {
+      buzz(HAPTICS.error);
+      cooldown.restart();
+      toast({ message: copy.errors.upload, duration: TOAST_MS });
+      return;
+    }
     if (!started.ok) {
       if (started.error.code === "conflict") await refreshQuota();
-      toast({ message: started.error.message });
+      if (started.error.code === "rateLimited") cooldown.restart(started.error.retryAfter ?? RETRY_GAP_SECONDS);
+      toast({ message: started.error.message, duration: TOAST_MS });
       return;
     }
     const { scanId, uploadUrl, fields } = started.data;
@@ -118,18 +129,36 @@ export function ScanScreen({ groupId, currency, configured, quota, onQuota, chil
     }
     setPhase({ kind: "extracting", scanId });
     creep.start();
-    const extracted = await extractScan({ scanId, timeZone });
+    const extracted = await extractScan({ scanId, timeZone }).catch(() => null);
     if (cancelledRef.current) {
-      void discardScan({ scanId });
+      void discardScan({ scanId }).catch(() => undefined);
       return;
     }
     creep.reset();
+    if (extracted === null) {
+      cooldown.restart();
+      fail(null);
+      return;
+    }
     if (!extracted.ok) {
       await refreshQuota();
       if (extracted.error.code === "invalid") {
         buzz(HAPTICS.error);
         toast({ message: extracted.error.message, duration: TOAST_MS });
         setPhase({ kind: "idle" });
+        return;
+      }
+      if (extracted.error.code === "rateLimited") {
+        cooldown.restart(extracted.error.retryAfter ?? RETRY_GAP_SECONDS);
+        buzz(HAPTICS.error);
+        toast({ message: extracted.error.message, duration: TOAST_MS });
+        void discardScan({ scanId }).catch(() => undefined);
+        setPhase({ kind: "idle" });
+        return;
+      }
+      if (extracted.error.code === "unknown") {
+        cooldown.restart();
+        fail(null);
         return;
       }
       fail(extracted.error.message);
@@ -151,7 +180,7 @@ export function ScanScreen({ groupId, currency, configured, quota, onQuota, chil
     abortRef.current?.();
     creep.reset();
     const scanId = phase.kind === "uploading" || phase.kind === "extracting" ? phase.scanId : null;
-    if (scanId && phase.kind === "uploading") void discardScan({ scanId });
+    if (scanId && phase.kind === "uploading") void discardScan({ scanId }).catch(() => undefined);
     setPhase({ kind: "idle" });
   };
 
@@ -180,7 +209,7 @@ export function ScanScreen({ groupId, currency, configured, quota, onQuota, chil
       )}
       {phase.kind === "idle" && (
         <>
-          <Dropzone disabled={exhausted || !configured} onFile={(file) => void onFile(file)} />
+          <Dropzone disabled={exhausted || !configured || cooldown.active} waitSeconds={cooldown.remaining} onFile={(file) => void onFile(file)} />
           {exhausted && configured && <QuotaBanner limit={quota.limit} />}
           {children}
         </>
@@ -215,7 +244,7 @@ export function ScanScreen({ groupId, currency, configured, quota, onQuota, chil
       {phase.kind === "done" && <ScanDoneCard summary={phase.summary} pending={navigating} onReview={() => review(phase.summary)} />}
       {phase.kind === "failed" && (
         <>
-          <ScanFailedCard reason={phase.reason} manualHref={manualHref} onRetry={() => setPhase({ kind: "idle" })} />
+          <ScanFailedCard reason={phase.reason} manualHref={manualHref} retryIn={cooldown.remaining} onRetry={() => setPhase({ kind: "idle" })} />
           {children}
         </>
       )}
