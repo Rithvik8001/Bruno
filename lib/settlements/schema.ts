@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { PAYMENT_METHODS } from "@/lib/ledger/rules";
 import { settlementMessages } from "./messages";
 
 export const SETTLEMENT_NOTE_MAX = 60;
@@ -13,7 +12,6 @@ export const recordSettlementSchema = z.object({
   personId: idSchema,
   direction: z.enum(SETTLE_DIRECTIONS),
   amountCents: z.number().int().min(1, settlementMessages.amountMissing).max(999_999_999),
-  method: z.enum(PAYMENT_METHODS),
   note: z
     .string()
     .trim()

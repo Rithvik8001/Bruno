@@ -15,7 +15,7 @@ import type { PersonId } from "@/lib/domain/ids";
 import { firstNameOf } from "@/lib/people/defaults";
 import type { PersonView } from "@/lib/people/person";
 import { confirmSettlement, declineSettlement, undoSettlement } from "@/lib/settlements/actions";
-import { paymentMethodLabels } from "@/lib/settlements/messages";
+import { CASH_PAYMENT_LABEL } from "@/lib/settlements/messages";
 import type { SettlementCard } from "@/lib/settlements/rows";
 import { groupDetailCopy } from "../_data";
 
@@ -66,7 +66,7 @@ export function PaymentsList({ settlements, you }: PaymentsListProps) {
                     {copy.line(nameOf(s.from), nameOf(s.to), formatMoney(s.amount, s.currency))}
                   </span>
                   <span className="truncate text-small text-text-2">
-                    {copy.caption(paymentMethodLabels[s.method], relativeDay(s.createdAt, now))}
+                    {copy.caption(CASH_PAYMENT_LABEL, relativeDay(s.createdAt, now))}
                     {s.note ? ` · ${s.note}` : ""}
                   </span>
                 </span>

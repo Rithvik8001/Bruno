@@ -239,8 +239,8 @@ export const settlePreview = {
   name: "Sam Okafor",
   firstName: "Sam",
   amount: cents(1240),
-  method: "Venmo",
-} as const satisfies { name: string; firstName: string; amount: Cents; method: string };
+  caption: "Cash payment · just now",
+} as const satisfies { name: string; firstName: string; amount: Cents; caption: string };
 
 export interface Group {
   readonly name: string;

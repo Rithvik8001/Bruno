@@ -1,7 +1,7 @@
 import "server-only";
 import { isCurrencyCode, DEFAULT_CURRENCY, type CurrencyCode } from "@/lib/currency";
 import { personId, settlementId, type PersonId, type SettlementId } from "@/lib/domain/ids";
-import type { PaymentMethod, SettlementStatus } from "@/lib/ledger/rules";
+import type { SettlementStatus } from "@/lib/ledger/rules";
 import { canConfirm, canDecline, canUndo, countsTowardBalance, type SettlementState } from "@/lib/ledger/settlements";
 import { cents, type Cents } from "@/lib/money";
 import { personSelect, toPersonView, type PersonRow, type PersonView } from "@/lib/people/person";
@@ -11,7 +11,6 @@ export const settlementSelect = {
   groupId: true,
   currency: true,
   amountCents: true,
-  method: true,
   note: true,
   status: true,
   autoConfirmAt: true,
@@ -30,7 +29,6 @@ export interface SettlementRow {
   readonly groupId: string | null;
   readonly currency: string;
   readonly amountCents: number;
-  readonly method: PaymentMethod;
   readonly note: string | null;
   readonly status: SettlementStatus;
   readonly autoConfirmAt: Date | null;
@@ -57,7 +55,6 @@ export interface SettlementCard {
   readonly recordedBy: PersonId;
   readonly currency: CurrencyCode;
   readonly amount: Cents;
-  readonly method: PaymentMethod;
   readonly note: string | null;
   readonly status: SettlementStatus;
   readonly counts: boolean;
@@ -87,7 +84,6 @@ export function toSettlementCard(row: SettlementRow, you: PersonId, now: Date): 
     recordedBy: state.recordedBy,
     currency: isCurrencyCode(row.currency) ? row.currency : DEFAULT_CURRENCY,
     amount: cents(row.amountCents),
-    method: row.method,
     note: row.note,
     status: row.status,
     counts: countsTowardBalance(state, now),

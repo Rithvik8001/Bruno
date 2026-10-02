@@ -2,7 +2,6 @@ import "server-only";
 import { z } from "zod";
 import { routes } from "@/lib/auth/rules";
 import { BILL_TITLE_MAX } from "@/lib/bills/schema";
-import type { PaymentMethod } from "@/lib/ledger/rules";
 import { SETTLE_DIRECTIONS } from "@/lib/settlements/schema";
 import { cleanTellText, numbersSaid } from "@/lib/tell/guard";
 import type { AskContext } from "../account";
@@ -29,17 +28,6 @@ export type ProposeInput = z.output<typeof proposeSchema>;
 export type Grounded = { readonly kind: "intent"; readonly intent: AskIntent } | { readonly kind: "note"; readonly note: AskNote };
 
 const DELETE_WORDS = /\b(delete|deletes|deleting|remove|removing|trash|scrap|erase|bin|get rid)\b/i;
-
-const METHOD_WORDS: readonly (readonly [RegExp, PaymentMethod])[] = [
-  [/\bcash\b/i, "CASH"],
-  [/\bvenmo\b/i, "VENMO"],
-  [/\bpaypal\b/i, "PAYPAL"],
-  [/\b(bank|transfer|wire|upi|imps|neft)\b/i, "BANK"],
-];
-
-export function methodSaid(text: string): PaymentMethod {
-  return METHOD_WORDS.find(([pattern]) => pattern.test(text))?.[1] ?? "OTHER";
-}
 
 function titleSaid(title: string | null, question: string): string | null {
   const wanted = cleanTellText(title ?? "").slice(0, BILL_TITLE_MAX);
@@ -82,7 +70,6 @@ export function groundProposal(ctx: AskContext, question: string, input: Propose
       direction: input.action === "recordPayment" ? input.direction : null,
       amount: amountSaid(input.amount, question),
       portion: input.whole ? "all" : null,
-      method: methodSaid(question),
       title,
       date: input.action === "changeDate" ? dayOrNull(input.date) : null,
     },

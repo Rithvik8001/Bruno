@@ -11,7 +11,6 @@ export interface PaymentUpdateEmailProps {
   otherName: string;
   amount: string;
   groupName: string;
-  method: string;
   date: string;
   actionUrl: string;
   chrome: EmailChrome;
@@ -79,12 +78,12 @@ export function paymentUpdateText(props: PaymentUpdateEmailProps): string {
   return [
     `${c.title(props.otherName)}.`,
     c.lead(props.otherName, props.amount),
-    `${props.groupName} · via ${props.method} · ${props.date}`,
+    `${props.groupName} · ${props.date}`,
     `${c.cta}: ${props.actionUrl}`,
   ].join("\n\n");
 }
 
-export default function PaymentUpdateEmail({ update, otherName, amount, groupName, method, date, actionUrl, chrome }: PaymentUpdateEmailProps) {
+export default function PaymentUpdateEmail({ update, otherName, amount, groupName, date, actionUrl, chrome }: PaymentUpdateEmailProps) {
   const c = copy[update];
   return (
     <EmailShell preview={c.lead(otherName, amount)} chrome={chrome} reason={c.reason}>
@@ -103,7 +102,6 @@ export default function PaymentUpdateEmail({ update, otherName, amount, groupNam
           rows={[
             { label: "With", value: otherName },
             { label: "For", value: groupName },
-            { label: "Via", value: method },
             { label: "Date", value: date },
           ]}
         />
@@ -119,7 +117,6 @@ PaymentUpdateEmail.PreviewProps = {
   otherName: "Priya",
   amount: "$23.60",
   groupName: "Lisbon trip",
-  method: "Bank transfer",
   date: "28 Sep, 21:41",
   actionUrl: "http://localhost:3000/groups/preview/settle/preview",
   chrome: previewChrome,

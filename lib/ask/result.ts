@@ -3,7 +3,6 @@ import type { SpendBucket } from "@/lib/bills/buckets";
 import type { BillGroupRef } from "@/lib/bills/queries";
 import type { CurrencyCode } from "@/lib/currency";
 import type { FeedItem } from "@/lib/feed/types";
-import type { PaymentMethod } from "@/lib/ledger/rules";
 import type { Cents } from "@/lib/money";
 import type { PersonView } from "@/lib/people/person";
 import type { ActionBill, AskActionView, AskDenied, AskNote } from "./actions/card";
@@ -49,7 +48,6 @@ export interface AskPayment {
   readonly amount: Cents;
   readonly currency: CurrencyCode;
   readonly at: string;
-  readonly method: PaymentMethod;
   readonly group: BillGroupRef;
 }
 

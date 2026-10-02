@@ -159,14 +159,6 @@ enum TipKind {
   AMOUNT
 }
 
-enum PaymentMethod {
-  VENMO
-  CASH
-  PAYPAL
-  BANK
-  OTHER
-}
-
 enum SettlementStatus {
   PENDING
   CONFIRMED
@@ -402,7 +394,6 @@ model Settlement {
   to            Person           @relation("SettlementTo", fields: [toId], references: [id], onDelete: Restrict)
   currency      String           @db.Char(3)
   amountCents   Int
-  method        PaymentMethod
   note          String?
   recordedById  String
   recordedBy    Person           @relation("SettlementRecorder", fields: [recordedById], references: [id], onDelete: Restrict)

@@ -2,7 +2,6 @@ import { allowanceCopy, assistNames } from "@/lib/ai/messages";
 import { askMessages } from "@/lib/ask/messages";
 import { ASK_TEXT_MAX } from "@/lib/ask/rules";
 import type { SpendBucket } from "@/lib/bills/buckets";
-import type { PaymentMethod } from "@/lib/ledger/rules";
 
 const plural = (count: number, one: string, many: string = `${one}s`) => `${count} ${count === 1 ? one : many}`;
 
@@ -10,14 +9,6 @@ const places = (groups: readonly string[]) => {
   const [first] = groups;
   return groups.length === 1 && first !== undefined ? first : `${groups.length} groups`;
 };
-
-const methodLabel = {
-  VENMO: "Venmo",
-  CASH: "Cash",
-  PAYPAL: "PayPal",
-  BANK: "Bank transfer",
-  OTHER: "Paid",
-} as const satisfies Record<PaymentMethod, string>;
 
 const bucketHint: Partial<Record<SpendBucket, string>> = {
   DRINKS: "Bar tabs might be hiding inside Food.",
@@ -38,7 +29,6 @@ export const askCopy = {
   someone: "Someone",
   plural,
   places,
-  methodLabel,
   allGroups: "all groups",
   yourGroups: "Your groups",
   scope: { label: "Looking at", all: "All groups", nav: "Groups to ask about" },
@@ -163,7 +153,6 @@ export const askCopy = {
     titles: (titles: readonly string[], more: number) => `${titles.join(" and ")}${more > 0 ? ` and ${more} more` : ""}`,
     together: (bills: number) => `${plural(bills, "bill")} together`,
     paid: (from: string, to: string, amount: string) => `${from} paid ${to} ${amount}`,
-    paidSub: (day: string, method: string) => `${day} · ${method}`,
     settle: (amount: string, name: string) => `Settle ${amount} with ${name}`,
     open: (group: string) => `Open ${group}`,
     folded: { owesYou: (name: string, amount: string) => `${name} owes you ${amount}`, youOwe: (name: string, amount: string) => `You owe ${name} ${amount}`, square: (name: string) => `All square with ${name}` },
@@ -330,7 +319,6 @@ export const askCopy = {
     total: "Total",
     afterThis: "After this",
     ifConfirm: "If you confirm",
-    method: "How",
     stillUnclaimed: "Still unclaimed",
     even: "Even",
     people: (count: number) => plural(count, "person", "people"),
@@ -427,7 +415,7 @@ export const askCopy = {
     pending: {
       eyebrow: "Confirm a payment",
       title: (name: string, amount: string) => `${name} says they paid you ${amount}`,
-      sub: (name: string, when: string, method: string | null) => `${name} recorded it ${when}${method ? `, by ${method}` : ""}. Check it arrived before you confirm.`,
+      sub: (name: string, when: string) => `${name} recorded it ${when}. Check it arrived before you confirm.`,
       note: (name: string) => `If it didn’t arrive, decline it. ${name} gets a note to check, and nothing moves.`,
       primary: (amount: string) => `Confirm ${amount}`,
       decline: "Decline",

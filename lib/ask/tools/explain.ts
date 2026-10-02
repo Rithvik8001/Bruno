@@ -33,7 +33,7 @@ function toEntry(ctx: AskContext, entry: PairEntry, group: AskGroup, a: PersonVi
     const to = entry.from === a.id ? b : a;
     return {
       kind: "payment",
-      payment: { from, to, amount: settlement.amount, currency: settlement.currency, at: facts.at.toISOString(), method: facts.method, group: group.ref },
+      payment: { from, to, amount: settlement.amount, currency: settlement.currency, at: facts.at.toISOString(), group: group.ref },
       delta: entry.delta,
       running: entry.running,
     };

@@ -151,7 +151,6 @@ async function loadPayments(scope: readonly ExportScopeGroup[], window: ExportWi
       recordedById: true,
       currency: true,
       amountCents: true,
-      method: true,
       note: true,
       status: true,
       autoConfirmAt: true,

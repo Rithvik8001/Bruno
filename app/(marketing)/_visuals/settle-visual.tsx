@@ -24,7 +24,7 @@ export function SettleVisual() {
           </span>
           <span className="grid">
             <span className="font-semibold">Settled with {settlePreview.firstName}</span>
-            <span className="text-footnote text-text-2">Paid by {settlePreview.method} · just now</span>
+            <span className="text-footnote text-text-2">{settlePreview.caption}</span>
           </span>
         </div>
       </div>

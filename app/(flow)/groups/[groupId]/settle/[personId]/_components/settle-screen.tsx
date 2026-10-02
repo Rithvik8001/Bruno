@@ -20,19 +20,18 @@ import { useToast } from "@/components/ui/toast";
 import type { ActionResult } from "@/lib/actions/errors";
 import { formatMoney } from "@/lib/currency";
 import { inlineDay } from "@/lib/dates";
-import type { PaymentMethod } from "@/lib/ledger/rules";
 import { ZERO_CENTS, type Cents } from "@/lib/money";
 import { firstNameOf } from "@/lib/people/defaults";
 import { confirmSettlement, declineSettlement, recordSettlement, undoSettlement } from "@/lib/settlements/actions";
 import { SETTLEMENT_NOTE_MAX } from "@/lib/settlements/schema";
 import type { SettleUpView } from "@/lib/settlements/queries";
 import { cn } from "@/lib/utils/cn";
-import { DEFAULT_METHOD, methodLabels, settleCopy, settleStatusTint, type SettleStatus } from "../_data";
+import { settleCopy, settleStatusTint, type SettleStatus } from "../_data";
 import { breakdownText, remainingText, type BackKind } from "../_lib/view";
-import { MethodChips } from "./method-chips";
+import { CashPaymentLine } from "./cash-payment-line";
 
 type Done =
-  | { readonly kind: "recorded"; readonly id: string; readonly amount: Cents; readonly method: PaymentMethod; readonly left: string | null; readonly pending: boolean }
+  | { readonly kind: "recorded"; readonly id: string; readonly amount: Cents; readonly left: string | null; readonly pending: boolean }
   | { readonly kind: "confirmed" }
   | { readonly kind: "declined" };
 
@@ -59,7 +58,6 @@ export function SettleScreen({ view: live, backHref, backKind }: SettleScreenPro
   const max = confirming && view.pending ? view.pending.amount : view.openAmount;
 
   const [amount, setAmount] = useState<Cents | null>(max > 0 ? max : null);
-  const [method, setMethod] = useState<PaymentMethod>(view.pending?.method ?? DEFAULT_METHOD);
   const [note, setNote] = useState(view.pending?.note ?? "");
   const [done, setDone] = useState<Done | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -69,7 +67,6 @@ export function SettleScreen({ view: live, backHref, backKind }: SettleScreenPro
     const next = live.role === "confirm" && live.pending ? live.pending.amount : live.openAmount;
     setSeenRole(live.role);
     setAmount(next > 0 ? next : null);
-    setMethod(live.pending?.method ?? DEFAULT_METHOD);
     setNote(live.pending?.note ?? "");
   }
 
@@ -109,10 +106,10 @@ export function SettleScreen({ view: live, backHref, backKind }: SettleScreenPro
     if (!valid || amount === null) return;
     const direction = role === "recipient" ? "received" : "paid";
     run(
-      () => recordSettlement({ groupId: view.group.id, personId: view.them.id, direction, amountCents: amount, method, note: note || null }),
+      () => recordSettlement({ groupId: view.group.id, personId: view.them.id, direction, amountCents: amount, note: note || null }),
       (data) => {
         const pending = data.status === "PENDING";
-        setDone({ kind: "recorded", id: data.id, amount, method, left, pending });
+        setDone({ kind: "recorded", id: data.id, amount, left, pending });
         toast({
           message: pending ? copy.payer.toast(name) : left ? copy.recipient.toastPartial(name) : copy.recipient.toastFull(name),
         });
@@ -178,7 +175,7 @@ export function SettleScreen({ view: live, backHref, backKind }: SettleScreenPro
         <div className="grid gap-1.5">
           <h1 className="m-0 text-heading">{role === "awaiting" ? copy.awaiting.title(name) : copy.square.title(name)}</h1>
           <p className="m-0 text-text-2">
-            {pending ? copy.awaiting.body(money(pending.amount), methodLabels[pending.method]) : copy.square.body}
+            {pending ? copy.awaiting.body(money(pending.amount)) : copy.square.body}
           </p>
         </div>
         {pending && (
@@ -189,7 +186,7 @@ export function SettleScreen({ view: live, backHref, backKind }: SettleScreenPro
         {(pending?.actions.undo || recent) && (
           <div className="flex items-center gap-3 rounded-tile bg-surface py-3 pr-2 pl-4 text-small">
             <span className="min-w-0 flex-1">
-              {recent ? copy.square.recent(money(recent.amount), methodLabels[recent.method]) : copy.awaiting.mistake}
+              {recent ? copy.square.recent(money(recent.amount)) : copy.awaiting.mistake}
             </span>
             <Button variant="elevated" size="sm" loading={busy} onClick={() => undo(recent?.id ?? pending?.id ?? "")}>
               {copy.undo}
@@ -230,8 +227,8 @@ export function SettleScreen({ view: live, backHref, backKind }: SettleScreenPro
     done?.kind === "declined"
       ? copy.confirm.declinedSub(name)
       : done?.kind === "recorded" && done.pending
-        ? copy.payer.doneSub(methodLabels[done.method], name)
-        : copy.doneSub(methodLabels[done?.kind === "recorded" ? done.method : method], done?.kind === "recorded" ? done.left : null);
+        ? copy.payer.doneSub(name)
+        : copy.doneSub(done?.kind === "recorded" ? done.left : null);
 
   return (
     <div className="grid gap-6 px-5 pt-5 pb-10">
@@ -320,7 +317,7 @@ export function SettleScreen({ view: live, backHref, backKind }: SettleScreenPro
             ) : null
           }
         />
-        <MethodChips value={method} onValueChange={setMethod} disabled={locked} />
+        <CashPaymentLine />
         <TextField
           label={copy.note.label}
           placeholder={copy.note.placeholder}

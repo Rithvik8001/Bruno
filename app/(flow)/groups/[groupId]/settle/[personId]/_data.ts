@@ -1,10 +1,5 @@
-import type { PaymentMethod } from "@/lib/ledger/rules";
-import { paymentMethodLabels } from "@/lib/settlements/messages";
+import { CASH_PAYMENT_LABEL } from "@/lib/settlements/messages";
 import type { PaletteTint } from "@/lib/design-system/tokens";
-
-export const DEFAULT_METHOD: PaymentMethod = "VENMO";
-
-export const methodLabels = paymentMethodLabels;
 
 export const SETTLE_STATUSES = ["open", "partial", "settled", "awaiting"] as const;
 export type SettleStatus = (typeof SETTLE_STATUSES)[number];
@@ -25,8 +20,7 @@ export const settleCopy = {
   amount: "Amount",
   partial: (left: string) => `Partial · ${left} left`,
   over: (max: string) => `Most is ${max}`,
-  methodTitle: "How did the money move?",
-  methodLabel: "Payment method",
+  cashPayment: "Record a cash payment",
   note: { label: "Note (optional)", placeholder: "e.g. Lupa + taxi" },
   recipient: {
     title: (name: string) => `Settle with ${name}`,
@@ -44,7 +38,7 @@ export const settleCopy = {
     cta: (amount: string) => `I’ve paid ${amount}`,
     fine: (name: string) => `${name} confirms it here. The balance clears when they do, or in 3 days automatically.`,
     done: "Marked as paid",
-    doneSub: (method: string, name: string) => `${method} · waiting for ${name}`,
+    doneSub: (name: string) => `${CASH_PAYMENT_LABEL} · waiting for ${name}`,
     toast: (name: string) => `Logged. ${name} just needs to confirm.`,
   },
   confirm: {
@@ -61,16 +55,16 @@ export const settleCopy = {
   },
   awaiting: {
     title: (name: string) => `Waiting for ${name}`,
-    body: (amount: string, method: string) => `You marked ${amount} as paid by ${method}.`,
+    body: (amount: string) => `You recorded a ${amount} cash payment.`,
     note: (name: string) => `Waiting for ${name} to confirm. The balance updates the moment they do, or in 3 days automatically.`,
     mistake: "Marked it by mistake?",
   },
   square: {
     title: (name: string) => `All square with ${name}`,
     body: "Nothing to settle between you two right now.",
-    recent: (amount: string, method: string) => `You recorded ${amount} by ${method}.`,
+    recent: (amount: string) => `You recorded a ${amount} cash payment.`,
   },
-  doneSub: (method: string, left: string | null) => (left ? `${method} · just now · ${left} still open` : `${method} · just now`),
+  doneSub: (left: string | null) => (left ? `${CASH_PAYMENT_LABEL} · just now · ${left} still open` : `${CASH_PAYMENT_LABEL} · just now`),
   undo: "Undo",
   undone: "Undone. The payment is back to unpaid.",
   backTo: { home: "Back to home", bill: "Back to the bill", group: "Back to the group", ask: "Back to Ask Bruno" },

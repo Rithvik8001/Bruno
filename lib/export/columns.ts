@@ -1,4 +1,3 @@
-import { paymentMethodLabels } from "@/lib/settlements/messages";
 import { categoryLabel } from "@/lib/scans/categories";
 import { amountCell, EMPTY_CELL, numberCell, textCell, type Column } from "./csv";
 import { exportSplitLabels } from "./messages";
@@ -42,7 +41,6 @@ export const paymentColumns: readonly Column<PaymentRow>[] = [
   { header: "To", value: (row) => textCell(row.to) },
   { header: "Currency", value: (row) => textCell(row.currency) },
   { header: "Amount", value: (row) => amountCell(row.amount, row.currency) },
-  { header: "Method", value: (row) => textCell(paymentMethodLabels[row.method]) },
   { header: "Status", value: (row) => textCell(row.status) },
   { header: "Note", value: (row) => textCell(row.note) },
   { header: "Recorded by", value: (row) => textCell(row.recordedBy) },

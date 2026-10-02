@@ -77,7 +77,6 @@ export const recordSettlement = defineAction(recordSettlementSchema, async (inpu
         toId: to,
         currency: group.currency,
         amountCents: input.amountCents,
-        method: input.method,
         note: input.note,
         recordedById: you,
         ...initial.value,
@@ -90,7 +89,6 @@ export const recordSettlement = defineAction(recordSettlementSchema, async (inpu
       toId: to,
       amount: cents(input.amountCents),
       currency: scope.currency,
-      method: input.method,
     });
     await tx.activityEvent.create({
       data: { groupId: input.groupId, actorId: you, type: draft.type, payload: draft.payload },

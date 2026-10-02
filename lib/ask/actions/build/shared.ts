@@ -9,7 +9,6 @@ import type { AskClarifyQuestion } from "../../result";
 import type { AskActionCard, AskDenied, AskNote } from "../card";
 import type { AskIntent } from "../intent";
 import type { UpdateBillInput } from "@/lib/bills/schema";
-import type { PaymentMethod } from "@/lib/ledger/rules";
 import type { Cents } from "@/lib/money";
 import type { SettleDirection } from "@/lib/settlements/schema";
 
@@ -26,7 +25,6 @@ export type ExecPlan =
       readonly groupId: string;
       readonly personId: string;
       readonly direction: SettleDirection;
-      readonly method: PaymentMethod;
       readonly max: Cents;
     }
   | { readonly do: "settlePending"; readonly settlementId: string }

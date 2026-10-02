@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { currencyCodeSchema } from "./currency";
-import { PAYMENT_METHODS } from "./ledger/rules";
 
 const cents = z.number().int().nonnegative();
 const id = z.string().min(1);
@@ -30,7 +29,6 @@ export const activityPayloadSchemas = {
     toId: id,
     amount: cents,
     currency: currencyCodeSchema,
-    method: z.enum(PAYMENT_METHODS),
   }),
   SETTLEMENT_CONFIRMED: z.object({ settlementId: id, auto: z.boolean() }),
   SETTLEMENT_CANCELLED: z.object({ settlementId: id }),

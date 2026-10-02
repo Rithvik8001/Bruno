@@ -2,7 +2,6 @@ import type { Allowance } from "@/lib/ai/rules";
 import type { BillGroupRef } from "@/lib/bills/queries";
 import type { SplitMethod } from "@/lib/bills/types";
 import type { CurrencyCode } from "@/lib/currency";
-import type { PaymentMethod } from "@/lib/ledger/rules";
 import type { Cents } from "@/lib/money";
 import type { PersonView } from "@/lib/people/person";
 import type { SettleDirection } from "@/lib/settlements/schema";
@@ -67,7 +66,6 @@ export interface RecordPaymentCard {
   readonly currency: CurrencyCode;
   readonly owed: Cents;
   readonly amount: Cents | null;
-  readonly method: PaymentMethod;
   readonly needsConfirm: boolean;
 }
 
@@ -78,7 +76,6 @@ export interface SettlePendingCard {
   readonly group: BillGroupRef;
   readonly currency: CurrencyCode;
   readonly amount: Cents;
-  readonly method: PaymentMethod;
   readonly at: string;
   readonly after: Cents;
 }

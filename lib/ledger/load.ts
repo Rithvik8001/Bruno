@@ -8,7 +8,6 @@ import { db } from "@/lib/db";
 import { billId, groupId, lineItemId, personId, settlementId, type BillId, type GroupId, type PersonId, type SettlementId } from "@/lib/domain/ids";
 import { cents, type Cents } from "@/lib/money";
 import { billDebts, type Debt, type SettlementEntry } from "./balances";
-import type { PaymentMethod } from "./rules";
 
 export interface BillTotalsEntry {
   readonly billId: BillId;
@@ -37,7 +36,6 @@ export interface BillSpendEntry {
 
 export interface PaymentFacts {
   readonly at: Date;
-  readonly method: PaymentMethod;
 }
 
 export interface DetailedLedger extends Ledger {
@@ -89,7 +87,6 @@ export async function loadDetailedLedger(groupIds: readonly string[]): Promise<D
         amountCents: true,
         status: true,
         autoConfirmAt: true,
-        method: true,
         createdAt: true,
       },
     }),
@@ -154,6 +151,6 @@ export async function loadDetailedLedger(groupIds: readonly string[]): Promise<D
     settlements: entries,
     bills: computed.map((c) => c.totals),
     spend: new Map(computed.map((c) => [c.totals.billId, c.spend])),
-    payments: new Map(settlements.map((s) => [settlementId(s.id), { at: s.createdAt, method: s.method }])),
+    payments: new Map(settlements.map((s) => [settlementId(s.id), { at: s.createdAt }])),
   };
 }

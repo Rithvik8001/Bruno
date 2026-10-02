@@ -4,7 +4,7 @@ import { computeShares } from "@/lib/bills/split";
 import type { ItemCategory, SplitMethod } from "@/lib/bills/types";
 import type { CurrencyCode } from "@/lib/currency";
 import { lineItemId, personId, type PersonId } from "@/lib/domain/ids";
-import type { PaymentMethod, SettlementStatus } from "@/lib/ledger/rules";
+import type { SettlementStatus } from "@/lib/ledger/rules";
 import { countsTowardBalance } from "@/lib/ledger/settlements";
 import { cents, sumCents, ZERO_CENTS, type Cents } from "@/lib/money";
 import { exportStatusLabels } from "./messages";
@@ -35,7 +35,6 @@ export interface PaymentSource {
   readonly toId: string;
   readonly recordedById: string;
   readonly amountCents: number;
-  readonly method: PaymentMethod;
   readonly note: string | null;
   readonly status: SettlementStatus;
   readonly autoConfirmAt: Date | null;
@@ -77,7 +76,6 @@ export interface PaymentRow {
   readonly to: string;
   readonly currency: CurrencyCode;
   readonly amount: Cents;
-  readonly method: PaymentMethod;
   readonly status: string;
   readonly note: string;
   readonly recordedBy: string;
@@ -158,7 +156,6 @@ export function paymentRows(payments: readonly PaymentSource[], names: Names, no
     to: nameOf(names, payment.toId),
     currency: payment.currency,
     amount: cents(payment.amountCents),
-    method: payment.method,
     status: statusOf(payment, now),
     note: payment.note ?? "",
     recordedBy: nameOf(names, payment.recordedById),

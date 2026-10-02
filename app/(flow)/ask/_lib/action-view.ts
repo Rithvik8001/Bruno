@@ -10,7 +10,6 @@ import type { PersonId } from "@/lib/domain/ids";
 import { cents, type Cents } from "@/lib/money";
 import { firstNameOf } from "@/lib/people/defaults";
 import type { PersonView } from "@/lib/people/person";
-import { paymentMethodLabels } from "@/lib/settlements/messages";
 import { askCopy } from "../_data";
 import { dayDate } from "./period";
 
@@ -294,7 +293,6 @@ export function actionView(card: AskActionCard, edit: ActionEdit, ctx: ActionCon
         },
         facts: [
           { label: copy.group, value: card.group.name, good: false, group: card.group },
-          ...(card.method === "OTHER" ? [] : [{ label: copy.method, value: paymentMethodLabels[card.method], good: false, group: null }]),
           ...(over || amount === null ? [] : [{ label: copy.afterThis, value: after.text, good: after.good, group: null }]),
         ],
         note: paid ? (card.needsConfirm ? copy.pay.noteConfirm(name) : copy.pay.noteGuest) : copy.pay.noteReceived(name),
@@ -305,7 +303,6 @@ export function actionView(card: AskActionCard, edit: ActionEdit, ctx: ActionCon
     case "settlePending": {
       const name = first(card.other);
       const amount = money(card.amount, card.currency);
-      const method = card.method === "OTHER" ? null : paymentMethodLabels[card.method];
       const when = new Date(card.at);
       const after = afterPending(card);
       return {
@@ -313,12 +310,12 @@ export function actionView(card: AskActionCard, edit: ActionEdit, ctx: ActionCon
         icon: "check-circle",
         eyebrow: copy.pending.eyebrow,
         title: copy.pending.title(name, amount),
-        sub: copy.pending.sub(name, inlineDay(when, ctx.now), method),
+        sub: copy.pending.sub(name, inlineDay(when, ctx.now)),
         pay: {
           from: card.other,
           to: card.you,
           line: copy.pay.lineReceived(card.other.displayName),
-          meta: [method, momentLabel(when, ctx.now)].filter(Boolean).join(" · "),
+          meta: momentLabel(when, ctx.now),
           currency: card.currency,
           editable: false,
           amount: card.amount,

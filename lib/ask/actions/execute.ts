@@ -51,7 +51,7 @@ export async function executeAction(viewer: PersonId, ready: Ready, edits: AskAc
         const message = settlementMessages.tooMuch(formatMoney(exec.max, card.currency));
         return actionInvalid({ amountCents: message }, message);
       }
-      const result = await recordSettlement({ groupId: exec.groupId, personId: exec.personId, direction: exec.direction, amountCents: amount, method: exec.method, note: null });
+      const result = await recordSettlement({ groupId: exec.groupId, personId: exec.personId, direction: exec.direction, amountCents: amount, note: null });
       if (!result.ok) return result;
       return done(ready, { amount: cents(amount), pending: result.data.status === "PENDING", canUndo: true }, result.data.id);
     }

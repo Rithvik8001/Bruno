@@ -134,12 +134,11 @@ export async function buildRecordPayment(viewer: PersonId, intent: AskIntent, en
       currency: state.group.currency,
       owed: state.open,
       amount,
-      method: intent.method,
       needsConfirm: direction === "paid" && member?.hasAccount === true,
     },
     fingerprint: fingerprintOf({ group: state.group.id, other: other.id, direction, owed: state.open }),
     intent: resolved,
-    exec: { do: "recordPayment", groupId: state.group.id, personId: other.id, direction, method: intent.method, max: state.open },
+    exec: { do: "recordPayment", groupId: state.group.id, personId: other.id, direction, max: state.open },
   };
 }
 
@@ -149,7 +148,6 @@ const pendingSelect = {
   fromId: true,
   amountCents: true,
   currency: true,
-  method: true,
   createdAt: true,
   from: { select: personSelect },
   group: { select: { id: true, name: true, tint: true, art: true } },
@@ -206,7 +204,6 @@ export async function buildSettlePending(viewer: PersonId, intent: AskIntent, en
       group: group.ref,
       currency: row.currency,
       amount: cents(row.amountCents),
-      method: row.method,
       at: row.createdAt.toISOString(),
       after: cents(balance - row.amountCents),
     },

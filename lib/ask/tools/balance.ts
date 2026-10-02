@@ -47,7 +47,7 @@ function lastPaymentOf(ctx: AskContext, groups: readonly AskGroup[], settlements
   const to = ctx.everyone.get(latest.s.to);
   const group = groups.find((g) => g.id === latest.s.groupId);
   if (!from || !to || !group) return null;
-  return { from, to, amount: latest.s.amount, currency: latest.s.currency, at: latest.facts.at.toISOString(), method: latest.facts.method, group: group.ref };
+  return { from, to, amount: latest.s.amount, currency: latest.s.currency, at: latest.facts.at.toISOString(), group: group.ref };
 }
 
 function openOf(ctx: AskContext, a: PersonView, b: PersonView, line: BalanceLine, group: AskGroup): BalanceOpenLine[] {

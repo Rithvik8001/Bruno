@@ -1,12 +1,4 @@
-import type { PaymentMethod } from "@/lib/ledger/rules";
-
-export const paymentMethodLabels = {
-  VENMO: "Venmo",
-  CASH: "Cash",
-  PAYPAL: "PayPal",
-  BANK: "Bank",
-  OTHER: "Other",
-} as const satisfies Record<PaymentMethod, string>;
+export const CASH_PAYMENT_LABEL = "Cash payment";
 
 export const settlementMessages = {
   notMember: "You’re not in this group any more. Ask a member for the invite link.",

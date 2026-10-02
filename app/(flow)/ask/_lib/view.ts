@@ -288,7 +288,7 @@ function balanceView(card: BalanceCard, ctx: ViewContext): CardView {
             key: "payment",
             lead: { kind: "payment" },
             title: copy.balance.paid(names.subject(card.lastPayment.from), names.object(card.lastPayment.to), money(card.lastPayment.amount, card.lastPayment.currency)),
-            sub: copy.balance.paidSub(capital(inlineDay(new Date(card.lastPayment.at), ctx.now)), copy.methodLabel[card.lastPayment.method]),
+            sub: capital(inlineDay(new Date(card.lastPayment.at), ctx.now)),
             amount: money(card.lastPayment.amount, card.lastPayment.currency),
             tone: "plain",
             run: "",
@@ -385,7 +385,7 @@ function whyView(card: WhyCard, ctx: ViewContext): CardView {
           key: `payment-${index}`,
           lead: { kind: "payment" },
           title: copy.balance.paid(names.subject(entry.payment.from), names.object(entry.payment.to), money(entry.payment.amount, entry.payment.currency)),
-          sub: copy.balance.paidSub(shortDay(new Date(entry.payment.at), ctx.now), copy.methodLabel[entry.payment.method]),
+          sub: shortDay(new Date(entry.payment.at), ctx.now),
           href: routes.groupTab(card.group.id, "balances"),
         };
       }

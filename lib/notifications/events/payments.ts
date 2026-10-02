@@ -6,7 +6,6 @@ import { formatMoney, isCurrencyCode } from "@/lib/currency";
 import { db } from "@/lib/db";
 import { cents } from "@/lib/money";
 import { firstNameOf } from "@/lib/people/defaults";
-import { paymentMethodLabels } from "@/lib/settlements/messages";
 import { appUrl } from "@/lib/site";
 import { deliver } from "../deliver";
 import { emailDay, emailMoment } from "../format";
@@ -23,7 +22,6 @@ async function loadSettlement(settlementId: string) {
       recordedById: true,
       amountCents: true,
       currency: true,
-      method: true,
       status: true,
       autoConfirmAt: true,
       createdAt: true,
@@ -38,7 +36,6 @@ async function loadSettlement(settlementId: string) {
     groupId: row.groupId,
     groupName: row.group.name,
     amount: formatMoney(cents(row.amountCents), row.currency),
-    method: paymentMethodLabels[row.method],
     balancesUrl: appUrl(routes.groupTab(row.groupId, "balances")),
   };
 }
@@ -55,7 +52,6 @@ async function sendUpdate(settlement: LoadedSettlement, update: PaymentUpdate, t
     otherName: firstNameOf(other.displayName),
     amount: settlement.amount,
     groupName: settlement.groupName,
-    method: settlement.method,
     date: emailMoment(settlement.createdAt, recipient.timeZone),
     actionUrl: update === "declined" ? appUrl(routes.settle(settlement.groupId, otherId)) : settlement.balancesUrl,
   };
@@ -85,7 +81,6 @@ export async function notifySettlementRecorded(settlementId: string): Promise<vo
     fromName: firstNameOf(settlement.from.displayName),
     amount: settlement.amount,
     groupName: settlement.groupName,
-    method: settlement.method,
     date: emailMoment(settlement.createdAt, recipient.timeZone),
     confirmsOn: pending && settlement.autoConfirmAt ? emailDay(settlement.autoConfirmAt, recipient.timeZone) : null,
     actionUrl: pending ? appUrl(routes.settle(settlement.groupId, settlement.fromId)) : settlement.balancesUrl,

@@ -6,7 +6,6 @@ export interface PaymentReceivedEmailProps {
   fromName: string;
   amount: string;
   groupName: string;
-  method: string;
   date: string;
   confirmsOn: string | null;
   actionUrl: string;
@@ -25,7 +24,7 @@ const pendingNote = (confirmsOn: string) =>
 export function paymentReceivedText(props: PaymentReceivedEmailProps): string {
   return [
     `${headline(props)}.`,
-    `${props.amount} · ${props.groupName} · via ${props.method} · ${props.date}`,
+    `${props.amount} · ${props.groupName} · ${props.date}`,
     props.confirmsOn ? pendingNote(props.confirmsOn) : "",
     `${props.confirmsOn ? "Confirm the payment" : "View balances"}: ${props.actionUrl}`,
   ]
@@ -34,7 +33,7 @@ export function paymentReceivedText(props: PaymentReceivedEmailProps): string {
 }
 
 export default function PaymentReceivedEmail(props: PaymentReceivedEmailProps) {
-  const { fromName, amount, groupName, method, date, confirmsOn, actionUrl, chrome } = props;
+  const { fromName, amount, groupName, date, confirmsOn, actionUrl, chrome } = props;
   return (
     <EmailShell
       preview={`${amount} from ${fromName} in ${groupName}${confirmsOn ? ". Confirm it when it lands." : "."}`}
@@ -54,7 +53,6 @@ export default function PaymentReceivedEmail(props: PaymentReceivedEmailProps) {
           rows={[
             { label: "From", value: fromName },
             { label: "For", value: groupName },
-            { label: "Via", value: method },
             { label: "Date", value: date },
           ]}
         />
@@ -75,7 +73,6 @@ PaymentReceivedEmail.PreviewProps = {
   fromName: "Sam",
   amount: "$52.40",
   groupName: "Friends",
-  method: "Venmo",
   date: "28 Sep, 21:41",
   confirmsOn: "1 Oct",
   actionUrl: "http://localhost:3000/groups/preview/settle/preview",
