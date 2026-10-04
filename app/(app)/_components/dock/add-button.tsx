@@ -28,7 +28,7 @@ export function AddButton({ rest }: { rest: TargetAndTransition }) {
       animate={rest}
       whileTap={{ scale: 0.86, transition: { duration: 0.13, ease: "easeOut" } }}
       transition={SPRING}
-      className="pointer-events-auto relative grid size-14.5 place-items-center rounded-full bg-brand text-on-brand no-underline shadow-[0_12px_26px_-8px_color-mix(in_oklab,var(--brand)_70%,transparent),inset_0_1px_0_rgba(255,255,255,.35),inset_0_-2px_0_rgba(0,0,0,.12)] transition-colors hover:bg-brand-hover hover:text-on-brand"
+      className="pointer-events-auto relative grid size-14.5 place-items-center rounded-full bg-brand text-on-brand no-underline shadow-[0_0_0_4px_var(--tray),0_0_0_5px_var(--tray-rim),0_12px_26px_-8px_color-mix(in_oklab,var(--brand)_70%,transparent),inset_0_1px_0_rgba(255,255,255,.35),inset_0_-2px_0_rgba(0,0,0,.12)] transition-colors hover:bg-brand-hover hover:text-on-brand"
     >
       {!reduce && (
         <motion.span
