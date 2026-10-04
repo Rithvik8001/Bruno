@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { Sheet } from "@/components/ui/sheet";
 import { Spinner } from "@/components/ui/spinner";
+import { inputClassName } from "@/components/ui/text-field";
 import { useCooldown } from "@/lib/hooks/use-cooldown";
 import { addGuest, addMember, lookupPerson } from "@/lib/members/actions";
 import { guessName } from "@/lib/members/names";
@@ -21,6 +22,7 @@ import { SHAKE } from "@/lib/motion/keyframes";
 import { SPRING } from "@/lib/motion/tokens";
 import type { PersonView } from "@/lib/people/person";
 import { firstNameOf } from "@/lib/people/defaults";
+import { cn } from "@/lib/utils/cn";
 import { groupDetailCopy } from "../../_data";
 import { CopyLinkButton } from "@/components/patterns/copy-link-button";
 import { FoundCard, type FoundState } from "./found-card";
@@ -214,11 +216,11 @@ function AddPeopleBody({ groupId, groupName, inviteUrl, inviteLabel, onOpenChang
 
       {mode === "lookup" ? (
         <div className="grid gap-4">
-          <form onSubmit={find} noValidate className="grid gap-1.5">
+          <form onSubmit={find} noValidate className="grid gap-2">
             <label htmlFor="add-people-query" className="text-small font-medium">
               {copy.queryLabel}
             </label>
-            <div ref={field} className="flex gap-2">
+            <div ref={field} className="flex gap-3">
               <input
                 id="add-people-query"
                 value={query}
@@ -231,7 +233,7 @@ function AddPeopleBody({ groupId, groupName, inviteUrl, inviteLabel, onOpenChang
                 inputMode="email"
                 enterKeyHint="search"
                 maxLength={254}
-                className="h-12 min-w-0 flex-1 rounded-control border border-transparent bg-surface px-3.5 text-body outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-standard placeholder:text-muted focus:border-brand focus:bg-bg focus:shadow-[0_0_0_3px_var(--brand-tint)]"
+                className={cn(inputClassName, "min-w-0 flex-1")}
               />
               <Button type="submit" size="lg" disabled={rateLimited} loading={looking} className="min-w-0 px-4">
                 {copy.find}

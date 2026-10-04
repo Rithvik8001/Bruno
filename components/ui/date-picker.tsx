@@ -187,10 +187,10 @@ export function DatePicker({ label, value, today, onValueChange, align = "end", 
             aria-expanded={open}
             onClick={() => setOpen((current) => !current)}
             className={cn(
-              "flex h-12 w-full min-w-0 cursor-pointer items-center gap-2 rounded-control border pr-3 pl-3.5 text-left text-body font-medium text-text outline-none",
+              "flex h-12 w-full min-w-0 cursor-pointer items-center gap-2 rounded-btn border pr-3 pl-3.5 text-left text-body font-medium text-text outline-none",
               "transition-[background-color,border-color,box-shadow] duration-150 ease-standard",
-              "focus-visible:border-brand focus-visible:shadow-[0_0_0_3px_var(--brand-tint)]",
-              open ? "border-brand bg-bg shadow-[0_0_0_3px_var(--brand-tint)]" : "border-transparent bg-surface hover:bg-surface-2",
+              "focus-visible:border-brand focus-visible:shadow-field-focus",
+              open ? "border-brand bg-bg shadow-field-focus" : "border-field-rim bg-field shadow-field hover:border-border",
               className,
             )}
           >

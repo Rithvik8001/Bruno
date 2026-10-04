@@ -96,6 +96,7 @@ export function DeleteAccountSheet({ open, onOpenChange, status, onStatus, expor
       <Sheet
         open={open}
         onOpenChange={close}
+        actionsIn="card"
         className="sm:max-w-100"
         icon="alert"
         tint="red"
@@ -136,6 +137,7 @@ export function DeleteAccountSheet({ open, onOpenChange, status, onStatus, expor
       <Sheet
         open={open}
         onOpenChange={close}
+        actionsIn="card"
         className="sm:max-w-100"
         icon="trash"
         tint="red"
@@ -185,7 +187,7 @@ export function DeleteAccountSheet({ open, onOpenChange, status, onStatus, expor
                 disabled={!matched || limited}
                 aria-busy={working || undefined}
                 onClick={() => void submit()}
-                className={cn("transition-[background-color,color] duration-200", matched && !limited && "bg-red text-bg hover:bg-red hover:text-bg")}
+                className={cn("transition-[background-color,color] duration-200", matched && !limited && "bg-red bg-none! text-bg shadow-none hover:bg-red hover:text-bg")}
               >
                 {working && <Spinner label={words.working} />}
                 {working ? words.working : phase === "failed" ? words.retry : words.submit}

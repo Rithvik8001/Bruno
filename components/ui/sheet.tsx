@@ -17,6 +17,7 @@ import { Icon3d } from "./icon-3d";
 import { attachToastHost } from "./toast";
 
 export type SheetSize = "auto" | "full";
+export type SheetActionsPlacement = "tray" | "card";
 
 export interface SheetContentProps {
   title: ReactNode;
@@ -73,20 +74,27 @@ export function SheetContent({
 }: SheetContentProps) {
   return (
     <>
-      <div
-        aria-hidden
-        className="mx-auto mb-5 h-1 w-9 rounded-full bg-border sm:hidden"
-      />
-      <SheetHeader {...header} />
-      {children && <div className={cn("mt-5 grid gap-5")}>{children}</div>}
-      {actions && <div className="mt-5 grid gap-1">{actions}</div>}
+      <div className={cn(sheetCardClassName, "px-5.5 pt-3 pb-6 sm:pt-6")}>
+        <div
+          aria-hidden
+          className="mx-auto mb-5 h-1 w-9 rounded-full bg-border sm:hidden"
+        />
+        <SheetHeader {...header} />
+        {children && <div className="mt-5 grid gap-5">{children}</div>}
+      </div>
+      {actions && (
+        <div className={cn(sheetActionsClassName, "pb-3")}>{actions}</div>
+      )}
     </>
   );
 }
 
 export const sheetPanelClassName =
-  "w-full rounded-t-card bg-bg shadow-float sm:max-w-90 sm:rounded-card";
-export const sheetBodyClassName = "px-5 pt-3 pb-5 sm:pt-5";
+  "w-full rounded-t-[28px] border border-b-0 border-tray-rim bg-tray p-1.5 shadow-float sm:max-w-95 sm:rounded-[28px] sm:border-b";
+export const sheetCardClassName =
+  "rounded-[22px] border border-card-rim bg-bg shadow-[0_1px_2px_rgb(26_25_23/.05)]";
+export const sheetActionsClassName =
+  "flex flex-wrap items-center justify-end gap-2 px-1 pt-2.5";
 
 export interface SheetProps extends Omit<
   SheetContentProps,
@@ -95,6 +103,7 @@ export interface SheetProps extends Omit<
   open: boolean;
   onOpenChange: (open: boolean) => void;
   size?: SheetSize;
+  actionsIn?: SheetActionsPlacement;
   className?: string;
 }
 
@@ -102,6 +111,7 @@ export function Sheet({
   open,
   onOpenChange,
   size = "auto",
+  actionsIn = "tray",
   className,
   actions,
   children,
@@ -195,41 +205,55 @@ export function Sheet({
               tabIndex={-1}
               className={cn(
                 sheetPanelClassName,
-                "flex min-h-0 flex-col outline-none sm:max-h-[calc(100dvh-48px)]",
+                "flex min-h-0 flex-col text-text outline-none sm:max-h-[calc(100dvh-48px)]",
                 size === "full" && "h-[calc(100dvh-24px)] sm:h-auto",
                 className,
               )}
             >
-              <div className="shrink-0 pt-3 pb-1 sm:hidden">
-                <div
-                  aria-hidden
-                  className="mx-auto h-1 w-9 cursor-grab touch-none rounded-full bg-border"
-                />
-              </div>
               <div
                 className={cn(
-                  "min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pt-3 sm:pt-5",
-                  actions
-                    ? "pb-5"
-                    : "pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:pb-5",
+                  sheetCardClassName,
+                  "flex min-h-0 flex-1 flex-col overflow-hidden",
                 )}
               >
-                <SheetHeader
-                  {...header}
-                  titleId={titleId}
-                  descriptionId={descriptionId}
-                />
-                {children && <div className="mt-5 grid gap-5">{children}</div>}
-              </div>
-              {actions && (
+                <div className="shrink-0 pt-3 pb-1 sm:hidden">
+                  <div
+                    aria-hidden
+                    className="mx-auto h-1 w-9 cursor-grab touch-none rounded-full bg-border"
+                  />
+                </div>
                 <div
                   className={cn(
-                    "grid shrink-0 gap-1 bg-bg px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:rounded-b-card sm:pb-5",
-                    children ? "border-t border-line pt-3" : "pt-0",
+                    "min-h-0 flex-1 overflow-y-auto overscroll-contain px-5.5 pt-3 sm:pt-6",
+                    actions && actionsIn === "card" ? "pb-4" : "pb-6",
+                  )}
+                >
+                  <SheetHeader
+                    {...header}
+                    titleId={titleId}
+                    descriptionId={descriptionId}
+                  />
+                  {children && (
+                    <div className="mt-5 grid gap-5">{children}</div>
+                  )}
+                </div>
+                {actions && actionsIn === "card" && (
+                  <div className="grid shrink-0 gap-1 px-5.5 pb-5">
+                    {actions}
+                  </div>
+                )}
+              </div>
+              {actions && actionsIn === "tray" ? (
+                <div
+                  className={cn(
+                    sheetActionsClassName,
+                    "shrink-0 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-3",
                   )}
                 >
                   {actions}
                 </div>
+              ) : (
+                <div aria-hidden className="shrink-0 pb-safe sm:hidden" />
               )}
             </motion.div>
           )}

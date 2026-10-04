@@ -108,7 +108,7 @@ export function WhoAreYouSheet({
         <label htmlFor="claim-guest-name" className="text-footnote font-medium text-text-2">
           {hasGuests ? copy.someoneElse : copy.nameLabel}
         </label>
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <input
             id="claim-guest-name"
             value={name}

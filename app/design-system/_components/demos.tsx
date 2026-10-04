@@ -17,7 +17,7 @@ import { OtpInput } from "@/components/ui/otp-input";
 import { Receipt, ReceiptHeader, ReceiptLine, ReceiptRow, ReceiptSummary } from "@/components/ui/receipt";
 import { RollingNumber } from "@/components/ui/rolling-number";
 import { SegmentedControl, Tabs, type SegmentOption } from "@/components/ui/segmented-control";
-import { Sheet, SheetContent, sheetBodyClassName, sheetPanelClassName } from "@/components/ui/sheet";
+import { Sheet, SheetContent, sheetPanelClassName } from "@/components/ui/sheet";
 import { Stepper } from "@/components/ui/stepper";
 import { Switch } from "@/components/ui/switch";
 import { ToastView, useToast } from "@/components/ui/toast";
@@ -187,20 +187,18 @@ export function SheetDemo() {
   } as const;
 
   const actions = (
-    <>
-      <Button size="lg" fullWidth onClick={() => setOpen(false)}>
-        Yes, settled
-      </Button>
-      <Button variant="tertiary" fullWidth className="h-11" onClick={() => setOpen(false)}>
+    <div className="flex flex-wrap items-center justify-end gap-2">
+      <Button variant="tertiary" onClick={() => setOpen(false)}>
         Not yet
       </Button>
-    </>
+      <Button onClick={() => setOpen(false)}>Yes, settled</Button>
+    </div>
   );
 
   return (
     <div className="grid gap-4">
       <div className="flex justify-center overflow-hidden rounded-card bg-surface-2 px-4 pt-7">
-        <div role="presentation" className={cn(sheetPanelClassName, "rounded-b-none sm:rounded-b-none", sheetBodyClassName)}>
+        <div role="presentation" className={cn(sheetPanelClassName, "max-w-95 rounded-b-none border-b-0 sm:rounded-b-none sm:border-b-0")}>
           <SheetContent {...content} actions={actions} />
         </div>
       </div>

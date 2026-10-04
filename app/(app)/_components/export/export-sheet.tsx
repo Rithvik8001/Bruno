@@ -137,7 +137,7 @@ export function ExportSheet({ open, onOpenChange, groups, today, group = ALL_GRO
           ? copy.actions.retry
           : copy.actions.download(kinds.length);
 
-  const footerClass = "flex flex-col-reverse gap-1 sm:flex-row sm:justify-end sm:gap-2";
+  const footerClass = "flex flex-col-reverse gap-1 border-t border-line pt-4 sm:flex-row sm:justify-end sm:gap-2";
 
   const formActions = (
     <div className={footerClass}>
@@ -200,6 +200,7 @@ export function ExportSheet({ open, onOpenChange, groups, today, group = ALL_GRO
     <Sheet
       open={open}
       onOpenChange={(next) => (next ? onOpenChange(true) : close())}
+      actionsIn="card"
       className="sm:max-w-120"
       title={state.view === "done" ? <ExportDoneTitle /> : state.view === "picker" ? pickerTitle : copy.title}
       description={state.view === "done" ? copy.done.body : state.view === "picker" ? undefined : copy.body}

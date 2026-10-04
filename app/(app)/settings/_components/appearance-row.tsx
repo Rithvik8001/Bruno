@@ -20,7 +20,7 @@ export function AppearanceRow() {
         <span className="font-medium">{copy.label}</span>
         <span className="text-footnote text-text-2">{copy.sub}</span>
       </span>
-      <SegmentedControl size="sm" tone="bg" label={copy.label} options={options} value={preference} onValueChange={setPreference} />
+      <SegmentedControl size="sm" label={copy.label} options={options} value={preference} onValueChange={setPreference} />
     </div>
   );
 }

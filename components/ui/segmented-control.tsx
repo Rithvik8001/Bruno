@@ -22,12 +22,6 @@ interface SegmentedBaseProps<T extends string> {
 }
 
 type Size = "sm" | "md" | "lg";
-type Tone = "surface" | "bg";
-
-const toneClass = {
-  surface: { track: "bg-surface", thumb: "bg-bg" },
-  bg: { track: "bg-bg", thumb: "bg-surface" },
-} as const satisfies Record<Tone, { track: string; thumb: string }>;
 
 const trackClass = {
   sm: "inline-flex",
@@ -36,14 +30,14 @@ const trackClass = {
 } as const satisfies Record<Size, string>;
 
 const itemClass = {
-  sm: "h-7.5 px-3 text-footnote pointer-coarse:h-9",
+  sm: "h-8 px-3 text-footnote pointer-coarse:h-9",
   md: "h-9 px-3.5 text-small pointer-coarse:h-10",
   lg: "flex-1 text-small",
 } as const satisfies Record<Size, string>;
 
 const thumbClass = (selected: boolean, size: Size) =>
   cn(
-    "relative cursor-pointer rounded-sm bg-transparent font-medium transition-colors duration-150 ease-standard",
+    "relative cursor-pointer rounded-control bg-transparent font-medium transition-colors duration-150 ease-standard",
     itemClass[size],
     selected ? "text-text" : "text-text-2 hover:text-text",
   );
@@ -56,8 +50,7 @@ function SegmentGroup<T extends string>({
   className,
   size,
   role,
-  tone = "surface",
-}: SegmentedBaseProps<T> & { size: Size; role: "radiogroup" | "tablist"; tone?: Tone }) {
+}: SegmentedBaseProps<T> & { size: Size; role: "radiogroup" | "tablist" }) {
   const values = options.map((o) => o.value);
   const thumbId = useId();
   const select = (next: T) => {
@@ -72,7 +65,7 @@ function SegmentGroup<T extends string>({
       role={role}
       aria-label={label}
       onKeyDown={onKeyDown}
-      className={cn("isolate gap-0.5 rounded-control p-0.75", toneClass[tone].track, trackClass[size], className)}
+      className={cn("isolate gap-1 rounded-btn bg-tray p-1 shadow-track", trackClass[size], className)}
     >
       {options.map((o) => {
         const selected = o.value === value;
@@ -94,7 +87,7 @@ function SegmentGroup<T extends string>({
                 layoutId={thumbId}
                 aria-hidden
                 transition={SOFT_SPRING}
-                className={cn("absolute inset-0 -z-10 rounded-sm shadow-thumb", toneClass[tone].thumb)}
+                className="absolute inset-0 -z-10 rounded-control bg-thumb shadow-card-thumb"
               />
             )}
             {o.label}
@@ -107,7 +100,6 @@ function SegmentGroup<T extends string>({
 
 export interface SegmentedControlProps<T extends string> extends SegmentedBaseProps<T> {
   size?: Exclude<Size, "md">;
-  tone?: Tone;
 }
 
 export function SegmentedControl<T extends string>({ size = "lg", ...props }: SegmentedControlProps<T>) {

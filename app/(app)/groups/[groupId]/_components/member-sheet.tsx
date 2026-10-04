@@ -70,10 +70,11 @@ export function MemberSheet({ groupId, target, canManage, onClose }: MemberSheet
       actions={
         confirming ? (
           <>
+            <Button variant="tertiary" onClick={() => setConfirm(null)}>
+              {copy.cancel}
+            </Button>
             <Button
               variant="danger"
-              size="lg"
-              fullWidth
               loading={pending}
               onClick={() =>
                 confirm === "leave"
@@ -83,17 +84,25 @@ export function MemberSheet({ groupId, target, canManage, onClose }: MemberSheet
             >
               {confirm === "leave" ? copy.confirmLeaveCta : copy.confirmRemoveCta}
             </Button>
-            <Button variant="tertiary" fullWidth className="h-11" onClick={() => setConfirm(null)}>
-              {copy.cancel}
-            </Button>
           </>
         ) : (
           <>
+            <Button variant="tertiary" onClick={close}>
+              {copy.cancel}
+            </Button>
+            {canManage && !target.isYou && (
+              <Button variant="danger" onClick={() => setConfirm("remove")}>
+                {copy.remove}
+              </Button>
+            )}
+            {target.isYou && (
+              <Button variant="danger" onClick={() => setConfirm("leave")}>
+                {copy.leave}
+              </Button>
+            )}
             {canManage && !target.isYou && (
               <Button
                 variant="secondary"
-                size="lg"
-                fullWidth
                 loading={pending}
                 onClick={() =>
                   run(async () => {
@@ -107,19 +116,6 @@ export function MemberSheet({ groupId, target, canManage, onClose }: MemberSheet
                 {target.role === "ADMIN" ? copy.makeMember : copy.makeAdmin}
               </Button>
             )}
-            {canManage && !target.isYou && (
-              <Button variant="danger" size="lg" fullWidth onClick={() => setConfirm("remove")}>
-                {copy.remove}
-              </Button>
-            )}
-            {target.isYou && (
-              <Button variant="danger" size="lg" fullWidth onClick={() => setConfirm("leave")}>
-                {copy.leave}
-              </Button>
-            )}
-            <Button variant="tertiary" fullWidth className="h-11" onClick={close}>
-              {copy.cancel}
-            </Button>
           </>
         )
       }

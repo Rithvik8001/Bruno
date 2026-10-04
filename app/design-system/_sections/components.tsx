@@ -56,7 +56,7 @@ export function ComponentsSection() {
 
       <Demo
         title="Button"
-        description="Primary is brand; secondary is surface grey; tertiary is text. Sizes 32 / 40 / 48. Press scales to .95 (.985 when wider than 260px) in 110ms and springs back, with a 5ms haptic. Loading hides the label, keeps width and spins a 16px ring. Focus: 2px brand ring, 2px offset."
+        description="Primary and secondary are tactile keys: soft vertical gradient, 1px rim, top gloss, bottom lip, tinted drop shadow. Tertiary is text; disabled is flat. One size everywhere: 44px tall, 16px sides, 15/600 label, 14px radius. Press scales to 0.98. Loading keeps width. Focus: 2px brand ring, 2px offset."
       >
         <div className="flex flex-wrap items-center gap-3">
           <LoadingButtonDemo />
@@ -85,7 +85,7 @@ export function ComponentsSection() {
         </Demo>
         <Demo
           title="Input"
-          description="Grey surface, no border at rest. Focus: white with brand ring. Error and success below the field in tint colour."
+          description="A white field card in a grey tray ring, 14px radius. Focus turns the ring brand; error turns it red. Label sits 8px above."
         >
           <div className="grid gap-3.5">
             <TextField label="Email" type="email" placeholder="you@example.com" />
@@ -113,7 +113,7 @@ export function ComponentsSection() {
           <MoneyInputDemo />
         </Demo>
         <div className="grid gap-6">
-          <Demo title="Segmented control" description="Grey track, white floating thumb that glides on a soft spring. 2–4 options. Arrow keys move the selection.">
+          <Demo title="Segmented control" description="Tray track, white card thumb. 2–4 options. Arrow keys move the selection.">
             <SegmentedDemo />
           </Demo>
           <Demo title="Select">
@@ -123,7 +123,7 @@ export function ComponentsSection() {
       </DemoGrid>
 
       <DemoGrid>
-        <Demo title="Checkbox" description="22px, radius 7. Checked fills brand in 150ms, pops .7 → 1.12 → 1 and draws its check. Whole row is the target.">
+        <Demo title="Checkbox" description="22px, radius 7. Checked fills brand. Whole row is the target.">
           <div className="grid gap-0.5">
             <Checkbox defaultChecked>Include tip in the split</Checkbox>
             <Checkbox disabled>Round to nearest dollar</Checkbox>
@@ -193,7 +193,7 @@ export function ComponentsSection() {
         </Demo>
         <Demo
           title="Sheet / dialog"
-          description="Bottom sheet on mobile, centred from 640px. White, 20px radius, shadow. Title, one paragraph, one primary, one text dismiss. Focus trapped; Esc closes."
+          description="A white card sitting in a grey tray. Tray: 28px radius, 1px rim, 6px padding, shadow. Card: 22px radius, 1px rim, holds title, body and fields. Actions sit in the tray below the card, right-aligned: text dismiss, then primary. Bottom sheet on mobile, centred from 640px. Focus trapped; Esc closes."
         >
           <SheetDemo />
         </Demo>

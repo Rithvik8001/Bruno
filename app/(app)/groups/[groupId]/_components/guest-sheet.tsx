@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { Sheet } from "@/components/ui/sheet";
+import { inputClassName } from "@/components/ui/text-field";
 import { routes } from "@/lib/auth/rules";
 import { formatMoney, type CurrencyCode } from "@/lib/currency";
 import { buddyShapeFor, buddyShapes } from "@/lib/design-system/buddies";
@@ -169,14 +170,14 @@ function GuestSheetBody({ groupId, groupName, currency, target, onClose }: Guest
       <div className="grid rounded-card bg-surface px-1 [&>*+*]:border-t [&>*+*]:border-line">
         <ActionRow icon="pencil" title={copy.rename} sub={copy.renameSub} expanded={panel === "rename"} onClick={() => setPanel(panel === "rename" ? null : "rename")} />
         <Collapse open={panel === "rename"}>
-          <form onSubmit={rename} className="flex gap-2 px-3 pb-3">
+          <form onSubmit={rename} className="flex gap-3 px-3 pt-1.5 pb-3">
             <input
               aria-label={copy.renameLabel}
               value={renameValue}
               maxLength={24}
               autoComplete="off"
               onChange={(e) => setRenameValue(e.target.value)}
-              className="h-11 min-w-0 flex-1 rounded-control border border-transparent bg-bg px-3 outline-none focus:border-brand focus:shadow-[0_0_0_3px_var(--brand-tint)]"
+              className={cn(inputClassName, "h-11 min-w-0 flex-1 px-3")}
             />
             <Button type="submit" size="md" loading={pending && panel === "rename"} className="h-11">
               {copy.save}

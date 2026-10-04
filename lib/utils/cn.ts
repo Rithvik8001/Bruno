@@ -9,7 +9,7 @@ const twMerge = extendTailwindMerge({
     theme: {
       text: keys(typeScale),
       radius: keys(radii),
-      shadow: ["float", "thumb"],
+      shadow: ["float", "thumb", "card-thumb", "track", "field", "field-focus", "field-error", "key", "key-primary"],
       ease: keys(easings),
       animate: ["pulse-soft", "rise", "pop-in", "print-in"],
     },

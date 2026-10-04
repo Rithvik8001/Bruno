@@ -124,31 +124,31 @@ export function BillActions({ billId, title, shareText, editHref, splitHref, can
           actions={
             sheet === "confirm" ? (
               <>
-                <Button variant="danger" size="lg" fullWidth loading={pending} onClick={remove}>
-                  {copy.deleteSheet.confirm}
-                </Button>
-                <Button variant="tertiary" fullWidth className="h-11" onClick={() => setSheet("menu")}>
+                <Button variant="tertiary" onClick={() => setSheet("menu")}>
                   {copy.deleteSheet.cancel}
+                </Button>
+                <Button variant="danger" loading={pending} onClick={remove}>
+                  {copy.deleteSheet.confirm}
                 </Button>
               </>
             ) : (
               <>
-                {canReopen && (
-                  <Button variant="secondary" size="lg" fullWidth loading={pending} onClick={reopen}>
-                    {copy.actions.reopen}
-                  </Button>
-                )}
+                <Button variant="tertiary" onClick={close}>
+                  {copy.actions.cancel}
+                </Button>
+                <Button variant="danger" onClick={() => setSheet("confirm")}>
+                  {copy.actions.delete}
+                </Button>
                 {splitHref && (
-                  <PressLink wide href={splitHref} className={cn(buttonVariants({ variant: "secondary", size: "lg", fullWidth: true }))}>
+                  <PressLink href={splitHref} className={cn(buttonVariants({ variant: "secondary" }))}>
                     {copy.actions.changeSplit}
                   </PressLink>
                 )}
-                <Button variant="danger" size="lg" fullWidth onClick={() => setSheet("confirm")}>
-                  {copy.actions.delete}
-                </Button>
-                <Button variant="tertiary" fullWidth className="h-11" onClick={close}>
-                  {copy.actions.cancel}
-                </Button>
+                {canReopen && (
+                  <Button variant="secondary" loading={pending} onClick={reopen}>
+                    {copy.actions.reopen}
+                  </Button>
+                )}
               </>
             )
           }

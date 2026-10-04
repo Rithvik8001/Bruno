@@ -36,15 +36,15 @@ export function Switch({ checked, onCheckedChange, children, disabled = false, c
       <span
         aria-hidden
         className={cn(
-          "relative h-6.5 w-11 shrink-0 rounded-full transition-colors duration-200 ease-standard",
-          checked ? "bg-brand" : "bg-border",
+          "relative h-6.5 w-11 shrink-0 rounded-full transition-[background-color,box-shadow] duration-200 ease-standard",
+          checked ? "bg-brand skin-key-primary shadow-key-primary" : "bg-tray shadow-track",
         )}
       >
         <motion.span
           initial={false}
           animate={{ x: checked ? KNOB_TRAVEL : 0 }}
           transition={SPRING}
-          className="absolute top-0.75 left-0.75 size-5 rounded-full bg-white shadow-thumb"
+          className="absolute top-0.75 left-0.75 size-5 rounded-full bg-thumb shadow-card-thumb"
         />
       </span>
     </button>

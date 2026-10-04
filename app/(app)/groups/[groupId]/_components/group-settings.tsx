@@ -88,11 +88,11 @@ export function GroupSettings({ groupId, initial, currencyLocked, canDelete, ope
 
   const confirmActions = (label: string, onConfirm: () => void) => (
     <>
-      <Button variant="danger" size="lg" fullWidth loading={pending} onClick={onConfirm}>
-        {label}
-      </Button>
-      <Button variant="tertiary" fullWidth className="h-11" onClick={() => setView("form")}>
+      <Button variant="tertiary" onClick={() => setView("form")}>
         {copy.cancel}
+      </Button>
+      <Button variant="danger" loading={pending} onClick={onConfirm}>
+        {label}
       </Button>
     </>
   );
@@ -113,21 +113,20 @@ export function GroupSettings({ groupId, initial, currencyLocked, canDelete, ope
             confirmActions(copy.delete, remove)
           ) : (
             <>
-              <Button size="lg" fullWidth loading={pending} onClick={save}>
-                {copy.save}
-              </Button>
-              <Button variant="secondary" fullWidth className="h-11" onClick={() => setView("reset")}>
-                {copy.reset}
-              </Button>
               <Button
                 variant="tertiary"
-                fullWidth
-                className="h-11 text-red hover:text-red"
+                className="text-red hover:text-red"
                 disabled={!canDelete}
                 title={canDelete ? undefined : copy.deleteBlocked}
                 onClick={() => setView("delete")}
               >
                 {copy.delete}
+              </Button>
+              <Button variant="secondary" onClick={() => setView("reset")}>
+                {copy.reset}
+              </Button>
+              <Button loading={pending} onClick={save}>
+                {copy.save}
               </Button>
             </>
           )

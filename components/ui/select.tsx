@@ -46,8 +46,8 @@ export function Select<T extends string>({
               if (v !== undefined) onValueChange?.(v);
             }}
             className={cn(
-              "h-12 w-full cursor-pointer appearance-none rounded-control bg-surface pr-10 pl-3.5 text-body font-medium",
-              "transition-[background-color] duration-150 ease-standard hover:bg-surface-2",
+              "h-12 w-full cursor-pointer appearance-none rounded-btn border border-field-rim bg-field pr-10 pl-3.5 text-body font-medium shadow-field",
+              "transition-[border-color] duration-150 ease-standard hover:border-border",
               className,
             )}
           >

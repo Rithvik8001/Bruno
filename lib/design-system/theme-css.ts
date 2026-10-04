@@ -31,6 +31,14 @@ function paletteDecls(p: ThemePalette): Declarations {
   for (const [k, v] of Object.entries(p.buddy)) out[`--buddy-${k}`] = v;
   out["--elevation"] = p.shadow;
   out["--elevation-thumb"] = p.shadowThumb;
+  const { primary, secondary, ...skin } = p.skin;
+  for (const [k, v] of Object.entries(skin)) out[`--${k}`] = v;
+  out["--btn-p-bg"] = primary.bg;
+  out["--btn-p-bg-h"] = primary.hover;
+  out["--btn-p-sh"] = primary.shadow;
+  out["--btn-2-bg"] = secondary.bg;
+  out["--btn-2-bg-h"] = secondary.hover;
+  out["--btn-2-sh"] = secondary.shadow;
   return out;
 }
 

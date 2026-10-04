@@ -5,10 +5,10 @@ import { cn } from "@/lib/utils/cn";
 import { Field, type FieldFeedback } from "./field";
 
 export const inputClassName = cn(
-  "h-12 w-full rounded-control border border-transparent bg-surface px-3.5 text-body font-normal outline-none",
+  "h-12 w-full rounded-btn border border-field-rim bg-field px-3.5 text-body font-normal shadow-field outline-none",
   "transition-[background-color,border-color,box-shadow] duration-150 ease-standard",
-  "focus:border-brand focus:bg-bg focus:shadow-[0_0_0_3px_var(--brand-tint)]",
-  "aria-invalid:border-red aria-invalid:bg-bg",
+  "focus:border-brand focus:bg-bg focus:shadow-field-focus",
+  "aria-invalid:border-red aria-invalid:shadow-field-error aria-invalid:focus:border-red aria-invalid:focus:shadow-field-error",
   "disabled:cursor-not-allowed disabled:text-muted",
 );
 

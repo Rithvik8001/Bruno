@@ -119,9 +119,9 @@ export function OtpInput({
           className={cn(
             "h-13 w-11 rounded-[12px] border p-0 text-center text-[1.5rem] font-semibold outline-none sm:h-14 sm:w-12",
             "transition-[background-color,border-color,box-shadow] duration-150 ease-standard",
-            "focus:border-brand focus:bg-bg focus:shadow-[0_0_0_3px_var(--brand-tint)]",
+            "focus:border-brand focus:bg-bg focus:shadow-field-focus",
             "disabled:cursor-not-allowed disabled:text-muted",
-            invalid ? "border-red bg-bg text-red" : digit ? "border-transparent bg-tint-bg text-tint" : "border-transparent bg-surface",
+            invalid ? "border-red bg-field text-red shadow-field-error" : digit ? "border-transparent bg-tint-bg text-tint" : "border-field-rim bg-field shadow-field",
           )}
         />
       ))}

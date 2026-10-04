@@ -50,11 +50,11 @@ export function NewGroupSheet({ defaultCurrency, open, onOpenChange }: NewGroupS
       description={copy.description}
       actions={
         <>
-          <Button size="lg" fullWidth loading={pending} onClick={submit}>
-            {copy.create(value.name.trim())}
-          </Button>
-          <Button variant="tertiary" fullWidth className="h-11" onClick={() => onOpenChange(false)}>
+          <Button variant="tertiary" onClick={() => onOpenChange(false)}>
             {copy.cancel}
+          </Button>
+          <Button loading={pending} onClick={submit} className="min-w-0 shrink">
+            <span className="truncate">{copy.create(value.name.trim())}</span>
           </Button>
         </>
       }

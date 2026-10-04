@@ -15,6 +15,18 @@
 @utility min-w-touch {
   min-width: var(--hit-target);
 }
+@utility skin-key {
+  background-image: var(--btn-2-bg);
+  &:hover:not(:disabled) {
+    background-image: var(--btn-2-bg-h);
+  }
+}
+@utility skin-key-primary {
+  background-image: var(--btn-p-bg);
+  &:hover:not(:disabled) {
+    background-image: var(--btn-p-bg-h);
+  }
+}
 @utility scrollbar-none {
   scrollbar-width: none;
   &::-webkit-scrollbar {
@@ -63,6 +75,13 @@
   --color-buddy-ink: var(--buddy-ink);
   --color-buddy-blush: var(--buddy-blush);
 
+  --color-tray: var(--tray);
+  --color-tray-rim: var(--tray-rim);
+  --color-card-rim: var(--card-rim);
+  --color-field: var(--field-bg);
+  --color-field-rim: var(--field-rim);
+  --color-thumb: var(--thumb-bg);
+
   --color-tint: var(--tint, var(--text-2));
   --color-tint-bg: var(--tint-bg, var(--surface-2));
 
@@ -101,11 +120,19 @@
   --radius-sm: var(--r-sm);
   --radius-control: var(--r-control);
   --radius-tile: var(--r-tile);
+  --radius-btn: var(--r-btn);
   --radius-card: var(--r-card);
 
   --shadow-*: initial;
   --shadow-float: var(--elevation);
   --shadow-thumb: var(--elevation-thumb);
+  --shadow-card-thumb: var(--thumb-shadow);
+  --shadow-track: inset 0 0 0 1px var(--tray-rim);
+  --shadow-field: var(--field-shadow), 0 0 0 4px var(--tray), 0 0 0 5px var(--tray-rim);
+  --shadow-field-focus: 0 0 0 4px var(--brand-tint), 0 0 0 5px var(--brand);
+  --shadow-field-error: 0 0 0 4px var(--red-bg), 0 0 0 5px var(--red);
+  --shadow-key: var(--btn-2-sh);
+  --shadow-key-primary: var(--btn-p-sh);
 
   --ease-standard: var(--motion-ease-standard);
   --ease-spring: var(--motion-ease-spring);

@@ -61,6 +61,25 @@ export interface BuddyColours {
   readonly blush: Hex;
 }
 
+export interface ButtonSkin {
+  readonly bg: string;
+  readonly hover: string;
+  readonly shadow: string;
+}
+
+export interface SkinTokens {
+  readonly tray: Hex;
+  readonly "tray-rim": Hex;
+  readonly "card-rim": Hex;
+  readonly "field-bg": Hex;
+  readonly "field-rim": Hex;
+  readonly "thumb-bg": Hex;
+  readonly "field-shadow": string;
+  readonly "thumb-shadow": string;
+  readonly primary: ButtonSkin;
+  readonly secondary: ButtonSkin;
+}
+
 export interface ThemePalette {
   readonly neutral: Readonly<Record<NeutralKey, Hex>>;
   readonly brand: BrandScale;
@@ -68,6 +87,7 @@ export interface ThemePalette {
   readonly buddy: BuddyColours;
   readonly shadow: string;
   readonly shadowThumb: string;
+  readonly skin: SkinTokens;
 }
 
 export const palettes = {
@@ -102,6 +122,28 @@ export const palettes = {
     buddy: { face: "#FFF6EC", ink: "#221F2E", blush: "#FF7E9D" },
     shadow: "0 1px 2px rgb(26 25 23 / .04), 0 8px 24px rgb(26 25 23 / .08)",
     shadowThumb: "0 1px 3px rgb(0 0 0 / .1)",
+    skin: {
+      tray: "#F4F4F2",
+      "tray-rim": "#DADAD6",
+      "card-rim": "#E4E4E1",
+      "field-bg": "#FFFFFF",
+      "field-rim": "#E4E4E1",
+      "thumb-bg": "#FFFFFF",
+      "field-shadow": "0 1px 2px rgb(26 25 23 / .05)",
+      "thumb-shadow": "0 0 0 1px #E4E4E1, 0 1px 2px rgb(26 25 23 / .08), 0 2px 6px rgb(26 25 23 / .06)",
+      primary: {
+        bg: "linear-gradient(180deg, #8B66FB 0%, #6D3CF5 60%, #6534EE 100%)",
+        hover: "linear-gradient(180deg, #9677FC 0%, #7748F7 60%, #6D3CF5 100%)",
+        shadow:
+          "0 0 0 1px #4F24C7, inset 0 1px 0 rgb(255 255 255 / .32), inset 0 -2px 0 rgb(30 0 90 / .14), 0 2px 4px rgb(79 36 199 / .22), 0 6px 16px rgb(109 60 245 / .24)",
+      },
+      secondary: {
+        bg: "linear-gradient(180deg, #FFFFFF 0%, #F6F6F4 100%)",
+        hover: "linear-gradient(180deg, #FFFFFF 0%, #EFEFEC 100%)",
+        shadow:
+          "0 0 0 1px #E2E2DF, inset 0 1px 0 #FFFFFF, inset 0 -2px 0 rgb(26 25 23 / .05), 0 1px 2px rgb(26 25 23 / .06), 0 4px 10px rgb(26 25 23 / .05)",
+      },
+    },
   },
   dark: {
     neutral: {
@@ -134,6 +176,28 @@ export const palettes = {
     buddy: { face: "#F6EBDD", ink: "#221F2E", blush: "#FF7E9D" },
     shadow: "0 1px 2px rgb(0 0 0 / .4), 0 8px 24px rgb(0 0 0 / .5)",
     shadowThumb: "0 1px 3px rgb(0 0 0 / .4)",
+    skin: {
+      tray: "#0E0E0E",
+      "tray-rim": "#262626",
+      "card-rim": "#222222",
+      "field-bg": "#000000",
+      "field-rim": "#2A2A2A",
+      "thumb-bg": "#222222",
+      "field-shadow": "0 1px 2px rgb(0 0 0 / .4)",
+      "thumb-shadow": "0 0 0 1px #2E2E2E, 0 1px 2px rgb(0 0 0 / .6)",
+      primary: {
+        bg: "linear-gradient(180deg, #A483FF 0%, #8B5CFF 60%, #7E4DF7 100%)",
+        hover: "linear-gradient(180deg, #B094FF 0%, #9468FF 60%, #8B5CFF 100%)",
+        shadow:
+          "0 0 0 1px #5A2FD0, inset 0 1px 0 rgb(255 255 255 / .3), inset 0 -2px 0 rgb(20 0 60 / .25), 0 2px 4px rgb(0 0 0 / .5), 0 6px 16px rgb(109 60 245 / .3)",
+      },
+      secondary: {
+        bg: "linear-gradient(180deg, #232323 0%, #171717 100%)",
+        hover: "linear-gradient(180deg, #2A2A2A 0%, #1C1C1C 100%)",
+        shadow:
+          "0 0 0 1px #2E2E2E, inset 0 1px 0 rgb(255 255 255 / .07), inset 0 -2px 0 rgb(0 0 0 / .3), 0 2px 4px rgb(0 0 0 / .5)",
+      },
+    },
   },
 } as const satisfies Record<ThemeName, ThemePalette>;
 
@@ -165,6 +229,7 @@ export const radii = {
   sm: 8,
   control: 10,
   tile: 14,
+  btn: 14,
   card: 20,
 } as const satisfies Record<string, number>;
 export type RadiusKey = keyof typeof radii;

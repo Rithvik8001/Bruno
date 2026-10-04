@@ -15,7 +15,7 @@ export function CheckIndicator({ checked, className }: { checked: boolean; class
       transition={{ duration: 0.42, ease: SPRING_CURVE }}
       className={cn(
         "grid size-5.5 shrink-0 place-items-center rounded-[7px] border-[1.5px] transition-[background-color,border-color] duration-150 ease-standard",
-        checked ? "border-brand bg-brand" : "border-border bg-transparent",
+        checked ? "border-brand bg-brand skin-key-primary" : "border-tray-rim bg-tray",
         className,
       )}
     >

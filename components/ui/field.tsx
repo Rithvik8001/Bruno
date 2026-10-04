@@ -34,7 +34,7 @@ export function Field({ label, feedback, hint, className, children }: FieldProps
   const describedBy = feedback ? feedbackId : showHint ? hintId : undefined;
 
   return (
-    <div className={cn("grid gap-1.5", className)}>
+    <div className={cn("grid gap-2", className)}>
       <label htmlFor={id} className="text-small font-medium">
         {label}
       </label>
