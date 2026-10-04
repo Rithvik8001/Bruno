@@ -24,10 +24,14 @@ export interface CommandMenuProps {
   className?: string;
 }
 
-function matches(item: CommandItem, q: string): boolean {
-  if (!q) return true;
-  const hay = [item.label, item.group, ...(item.keywords ?? [])].join(" ").toLowerCase();
-  return hay.includes(q);
+function rank(item: CommandItem, q: string): number {
+  if (!q) return 1;
+  const label = item.label.toLowerCase();
+  if (label.startsWith(q)) return 4;
+  if (label.split(/\s+/).some((word) => word.startsWith(q))) return 3;
+  if (label.includes(q)) return 2;
+  const rest = [item.group, ...(item.keywords ?? [])].join(" ").toLowerCase();
+  return rest.includes(q) ? 1 : 0;
 }
 
 export function CommandMenu({
@@ -43,7 +47,11 @@ export function CommandMenu({
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return items.filter((i) => matches(i, q));
+    return items
+      .map((item, order) => ({ item, order, score: rank(item, q) }))
+      .filter((r) => r.score > 0)
+      .sort((a, b) => b.score - a.score || a.order - b.order)
+      .map((r) => r.item);
   }, [items, query]);
 
   const activeIndex = Math.min(active, Math.max(0, results.length - 1));

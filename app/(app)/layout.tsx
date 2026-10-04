@@ -8,6 +8,7 @@ import { hasUnreadActivity } from "@/lib/feed/queries";
 import { rememberTimeZone } from "@/lib/people/time-zone";
 import { cookieTimeZone } from "@/lib/time-zone";
 import { AppHeader } from "./_components/app-header";
+import { CommandPalette } from "./_components/command-palette";
 import { TabBar } from "./_components/dock/tab-bar";
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
@@ -24,6 +25,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         <div className="mx-auto max-w-app">{children}</div>
       </main>
       <TabBar unread={unread} />
+      <CommandPalette />
       <TimeZoneCookie serverTimeZone={timeZone} />
     </div>
   );

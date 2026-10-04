@@ -21,3 +21,14 @@ export const shellCopy = {
   mainNav: "Main",
   unread: "New activity",
 } as const;
+
+export const commandCopy = {
+  label: "Command menu",
+  groups: { actions: "Actions", go: "Go to", groups: "Groups", people: "People" },
+  addBill: "Add a bill",
+  ask: "Ask Bruno",
+  home: "Home",
+  groupsPage: "Groups",
+  activity: "Activity",
+  settings: "Settings",
+} as const;
