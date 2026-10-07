@@ -48,6 +48,7 @@ import { consumeScan, keepReceipt, ScanGoneError } from "@/lib/scans/consume";
 import { scanMessages } from "@/lib/scans/messages";
 import { consumeTellDraft, TellGoneError } from "@/lib/tell/consume";
 import { tellMessages } from "@/lib/tell/messages";
+import { pushMessages, pushTags } from "@/lib/push/messages";
 import { appUrl } from "@/lib/site";
 import { clearGuestSession, readGuestSession, setGuestSession } from "./guest-session";
 import { claimMessages } from "./messages";
@@ -450,6 +451,12 @@ export const remindClaimers = defineAction(billIdRefSchema, async ({ billId }, {
         subject: claimReminderSubject(props),
         react: ClaimReminderEmail({ ...props, chrome }),
         text: claimReminderText({ ...props, chrome }),
+      }),
+      push: () => ({
+        title: claimReminderSubject(props),
+        body: pushMessages.claimReminder(props.groupName),
+        path: routes.claimBill(code),
+        tag: pushTags.claim(bill.id),
       }),
     })),
   );

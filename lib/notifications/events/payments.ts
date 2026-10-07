@@ -6,6 +6,7 @@ import { formatMoney, isCurrencyCode } from "@/lib/currency";
 import { db } from "@/lib/db";
 import { cents } from "@/lib/money";
 import { firstNameOf } from "@/lib/people/defaults";
+import { pushMessages, pushTags } from "@/lib/push/messages";
 import { appUrl } from "@/lib/site";
 import { deliver } from "../deliver";
 import { emailDay, emailMoment } from "../format";
@@ -36,7 +37,7 @@ async function loadSettlement(settlementId: string) {
     groupId: row.groupId,
     groupName: row.group.name,
     amount: formatMoney(cents(row.amountCents), row.currency),
-    balancesUrl: appUrl(routes.groupTab(row.groupId, "balances")),
+    balancesPath: routes.groupTab(row.groupId, "balances"),
   };
 }
 
@@ -47,13 +48,14 @@ async function sendUpdate(settlement: LoadedSettlement, update: PaymentUpdate, t
   if (!recipient) return;
   const other = toPersonId === settlement.fromId ? settlement.to : settlement.from;
   const otherId = toPersonId === settlement.fromId ? settlement.toId : settlement.fromId;
+  const actionPath = update === "declined" ? routes.settle(settlement.groupId, otherId) : settlement.balancesPath;
   const props = {
     update,
     otherName: firstNameOf(other.displayName),
     amount: settlement.amount,
     groupName: settlement.groupName,
     date: emailMoment(settlement.createdAt, recipient.timeZone),
-    actionUrl: update === "declined" ? appUrl(routes.settle(settlement.groupId, otherId)) : settlement.balancesUrl,
+    actionUrl: appUrl(actionPath),
   };
   await deliver({
     kind: "paymentUpdate",
@@ -63,6 +65,12 @@ async function sendUpdate(settlement: LoadedSettlement, update: PaymentUpdate, t
       subject: paymentUpdateSubject(props),
       react: PaymentUpdateEmail({ ...props, chrome }),
       text: paymentUpdateText({ ...props, chrome }),
+    }),
+    push: () => ({
+      title: paymentUpdateSubject(props),
+      body: pushMessages.paymentUpdate(props.groupName),
+      path: actionPath,
+      tag: pushTags.settlement(settlement.id),
     }),
   });
 }
@@ -77,13 +85,14 @@ export async function notifySettlementRecorded(settlementId: string): Promise<vo
   const recipient = await emailRecipient(settlement.toId, "payments");
   if (!recipient) return;
   const pending = settlement.status === "PENDING" && settlement.autoConfirmAt !== null;
+  const actionPath = pending ? routes.settle(settlement.groupId, settlement.fromId) : settlement.balancesPath;
   const props = {
     fromName: firstNameOf(settlement.from.displayName),
     amount: settlement.amount,
     groupName: settlement.groupName,
     date: emailMoment(settlement.createdAt, recipient.timeZone),
     confirmsOn: pending && settlement.autoConfirmAt ? emailDay(settlement.autoConfirmAt, recipient.timeZone) : null,
-    actionUrl: pending ? appUrl(routes.settle(settlement.groupId, settlement.fromId)) : settlement.balancesUrl,
+    actionUrl: appUrl(actionPath),
   };
   await deliver({
     kind: "paymentReceived",
@@ -93,6 +102,12 @@ export async function notifySettlementRecorded(settlementId: string): Promise<vo
       subject: paymentReceivedSubject(props),
       react: PaymentReceivedEmail({ ...props, chrome }),
       text: paymentReceivedText({ ...props, chrome }),
+    }),
+    push: () => ({
+      title: paymentReceivedSubject(props),
+      body: pushMessages.paymentReceived(props.groupName, pending),
+      path: actionPath,
+      tag: pushTags.settlement(settlement.id),
     }),
   });
 }

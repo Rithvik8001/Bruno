@@ -37,6 +37,8 @@ export async function eraseAccount(owner: AccountOwner, plan: Pick<AccountInspec
     await tx.askQuestion.deleteMany({ where: { personId } });
     await tx.tellDraft.deleteMany({ where: { personId } });
     await tx.emailLog.deleteMany({ where: { personId } });
+    await tx.pushSubscription.deleteMany({ where: { personId } });
+    await tx.pushLog.deleteMany({ where: { personId } });
 
     const scans = await tx.receiptScan.findMany({
       where: { personId, status: { not: "CONSUMED" } },

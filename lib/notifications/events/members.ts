@@ -4,6 +4,7 @@ import WelcomeEmail, { welcomeSubject, welcomeText } from "@/emails/welcome";
 import { routes } from "@/lib/auth/rules";
 import { db } from "@/lib/db";
 import { firstNameOf } from "@/lib/people/defaults";
+import { pushMessages, pushTags } from "@/lib/push/messages";
 import { appUrl } from "@/lib/site";
 import { deliver } from "../deliver";
 import { emailPerson } from "../format";
@@ -47,6 +48,12 @@ export async function notifyAddedToGroup(groupId: string, personId: string, acto
       subject: addedToGroupSubject(props),
       react: AddedToGroupEmail({ ...props, chrome }),
       text: addedToGroupText({ ...props, chrome }),
+    }),
+    push: () => ({
+      title: addedToGroupSubject(props),
+      body: pushMessages.addedToGroup(props.groupName),
+      path: routes.group(groupId),
+      tag: pushTags.group(groupId),
     }),
   });
 }

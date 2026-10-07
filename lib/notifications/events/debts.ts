@@ -7,6 +7,7 @@ import { groupId as toGroupId, personId as toPersonId } from "@/lib/domain/ids";
 import { loadDetailedLedger } from "@/lib/ledger/load";
 import { sumCents } from "@/lib/money";
 import { firstNameOf } from "@/lib/people/defaults";
+import { pushMessages, pushTags } from "@/lib/push/messages";
 import { appUrl } from "@/lib/site";
 import { deliver } from "../deliver";
 import { openDebts, owedLines } from "../digests/weekly";
@@ -62,11 +63,12 @@ export async function notifyDebtReminder(creditorId: string, pair: DebtPair, now
   const matches = lines.length > 0 && sumCents(lines.map((line) => line.amount)) === entry.amount;
   const total = formatMoney(entry.amount, entry.currency);
   const sender = firstNameOf(creditor.person.displayName) || "Someone";
+  const settlePath = routes.settle(pair.groupId, creditorId);
   const props = {
     creditors: [{ label: sender, amount: total }],
     bills: matches ? lines.map((line) => ({ label: `${line.title} · ${group.name}`, amount: formatMoney(line.amount, entry.currency) })) : [{ label: group.name, amount: total }],
     total,
-    settleUrl: appUrl(routes.settle(pair.groupId, creditorId)),
+    settleUrl: appUrl(settlePath),
     sender,
   };
   return deliver({
@@ -77,6 +79,12 @@ export async function notifyDebtReminder(creditorId: string, pair: DebtPair, now
       subject: settleReminderSubject(props),
       react: SettleReminderEmail({ ...props, chrome }),
       text: settleReminderText({ ...props, chrome }),
+    }),
+    push: () => ({
+      title: settleReminderSubject(props),
+      body: pushMessages.debtReminder(group.name),
+      path: settlePath,
+      tag: pushTags.debt(pair.groupId, creditorId),
     }),
   });
 }

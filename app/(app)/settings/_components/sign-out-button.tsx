@@ -6,6 +6,7 @@ import { Icon } from "@/components/icons/icon";
 import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/lib/auth/client";
 import { routes } from "@/lib/auth/rules";
+import { disablePush } from "@/lib/push/client";
 import { settingsCopy } from "../_data";
 
 export function SignOutButton() {
@@ -14,6 +15,7 @@ export function SignOutButton() {
 
   const signOut = async () => {
     setLoading(true);
+    await disablePush().catch(() => undefined);
     await authClient.signOut();
     router.replace(routes.home);
     router.refresh();

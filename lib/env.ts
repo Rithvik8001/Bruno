@@ -29,6 +29,9 @@ const serverEnvSchema = z.object({
   CLOUDINARY_CLOUD_NAME: optionalString,
   CLOUDINARY_API_KEY: optionalString,
   CLOUDINARY_API_SECRET: optionalString,
+  NEXT_PUBLIC_VAPID_PUBLIC_KEY: optionalString,
+  VAPID_PRIVATE_KEY: optionalString,
+  VAPID_SUBJECT: optionalString,
   AI_DAILY_LIMIT_OVERRIDE: optionalString
     .transform((v) => (v === undefined ? undefined : Number(v)))
     .pipe(z.number().int().min(0).optional()),

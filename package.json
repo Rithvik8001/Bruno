@@ -4,8 +4,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "prisma generate && next build",
+    "dev": "bun run sw:build && next dev",
+    "build": "prisma generate && bun run sw:build && next build",
+    "sw:build": "bun build sw/sw.ts --outfile public/sw.js --target browser --minify",
+    "sw:check": "tsc --noEmit -p sw/tsconfig.json",
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate",
@@ -35,6 +37,7 @@
     "react-email": "^6.11.0",
     "resend": "^6.30.0",
     "tailwind-merge": "^3.7.0",
+    "web-push": "^3.6.7",
     "zod": "^4.6.5"
   },
   "devDependencies": {
@@ -42,6 +45,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/web-push": "^3.6.4",
     "eslint": "^9",
     "eslint-config-next": "16.3.6",
     "prisma": "7.10.0",

@@ -6,6 +6,8 @@ import { db } from "@/lib/db";
 import { emailChrome } from "@/lib/email/chrome";
 import { sendEmail } from "@/lib/email/send";
 import { Prisma } from "@/lib/generated/prisma/client";
+import type { PushContent, PushKind } from "@/lib/push/payload";
+import { deliverPush } from "@/lib/push/send";
 import { appUrl } from "@/lib/site";
 import { NOTIFICATION_KINDS, type NotificationKind } from "./kinds";
 import type { EmailRecipient } from "./recipients";
@@ -17,12 +19,16 @@ export interface BuiltEmail {
   readonly text: string;
 }
 
-export interface Delivery {
-  readonly kind: NotificationKind;
+interface EmailDelivery<K extends NotificationKind> {
+  readonly kind: K;
   readonly recipient: EmailRecipient;
   readonly dedupeKey: string;
   readonly build: (chrome: EmailChrome) => BuiltEmail;
 }
+
+type PushPart<K extends NotificationKind> = K extends PushKind ? { readonly push: () => PushContent } : { readonly push?: never };
+
+export type Delivery = { [K in NotificationKind]: EmailDelivery<K> & PushPart<K> }[NotificationKind];
 
 const SKIPPED_KIND = "skipped";
 
@@ -36,7 +42,32 @@ async function reserve(personId: string, kind: string, dedupeKey: string): Promi
   }
 }
 
+async function sendPush(delivery: Delivery): Promise<boolean> {
+  if (!delivery.push) return false;
+  const content = delivery.push;
+  const kind = delivery.kind as PushKind;
+  try {
+    return await deliverPush({
+      kind,
+      personId: delivery.recipient.personId,
+      dedupeKey: delivery.dedupeKey,
+      payload: () => {
+        const { title, body, path, tag } = content();
+        return { kind, title, body, url: path, tag };
+      },
+    });
+  } catch (error) {
+    console.error(`[push] ${kind} failed`, error);
+    return false;
+  }
+}
+
 export async function deliver(delivery: Delivery): Promise<boolean> {
+  const [emailed, pushed] = await Promise.all([sendEmailDelivery(delivery), sendPush(delivery)]);
+  return emailed || pushed;
+}
+
+async function sendEmailDelivery(delivery: Delivery): Promise<boolean> {
   const { kind, recipient, dedupeKey, build } = delivery;
   if (!(await reserve(recipient.personId, kind, dedupeKey))) return false;
   const category = NOTIFICATION_KINDS[kind];

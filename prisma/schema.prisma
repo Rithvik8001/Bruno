@@ -225,6 +225,8 @@ model Person {
   askQuestions       AskQuestion[]
   askActions         AskAction[]
   emailLogs          EmailLog[]
+  pushSubscriptions  PushSubscription[]
+  pushLogs           PushLog[]
 
   @@index([mergedIntoId])
   @@map("person")
@@ -539,6 +541,35 @@ model EmailLog {
 
   @@index([personId, createdAt])
   @@map("email_log")
+}
+
+model PushSubscription {
+  id            String    @id @default(cuid())
+  personId      String
+  person        Person    @relation(fields: [personId], references: [id], onDelete: Cascade)
+  endpoint      String    @unique
+  p256dh        String
+  auth          String
+  userAgent     String?
+  failures      Int       @default(0)
+  lastSuccessAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([personId])
+  @@map("push_subscription")
+}
+
+model PushLog {
+  id        String   @id @default(cuid())
+  personId  String
+  person    Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+  kind      String
+  dedupeKey String   @unique
+  createdAt DateTime @default(now())
+
+  @@index([personId, createdAt])
+  @@map("push_log")
 }
 
 model KnownDevice {

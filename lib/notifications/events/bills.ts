@@ -9,6 +9,7 @@ import { formatMoney, isCurrencyCode } from "@/lib/currency";
 import { db } from "@/lib/db";
 import { cents, sumCents, type Cents } from "@/lib/money";
 import { firstNameOf } from "@/lib/people/defaults";
+import { pushMessages, pushTags } from "@/lib/push/messages";
 import { appUrl } from "@/lib/site";
 import { deliver, deliverAll } from "../deliver";
 import { billDayLabel, emailPerson } from "../format";
@@ -51,6 +52,7 @@ export async function notifyBillShares(billId: string, actorId: string, variant:
   stakes.delete(actorId);
 
   const groupName = bill.group.name;
+  const billPath = routes.bill(bill.slug);
   const recipients = await emailRecipients([...stakes.keys()], "bills");
   await deliverAll(
     recipients.flatMap((recipient) => {
@@ -66,7 +68,7 @@ export async function notifyBillShares(billId: string, actorId: string, variant:
         total: formatMoney(split.value.totals.total, currency),
         payerName: recipient.personId === bill.payerId ? "You" : firstNameOf(bill.payer.displayName),
         date: billDayLabel(bill.occurredAt),
-        billUrl: appUrl(routes.bill(bill.slug)),
+        billUrl: appUrl(billPath),
       };
       return [
         {
@@ -77,6 +79,12 @@ export async function notifyBillShares(billId: string, actorId: string, variant:
             subject: billAddedSubject(props),
             react: BillAddedEmail({ ...props, chrome }),
             text: billAddedText({ ...props, chrome }),
+          }),
+          push: () => ({
+            title: billAddedSubject(props),
+            body: pushMessages.billAdded(groupName, props.total),
+            path: billPath,
+            tag: pushTags.bill(bill.id),
           }),
         },
       ];
@@ -115,6 +123,7 @@ export async function notifyClaimingOpened(billId: string, actorId: string): Pro
   if (!actor) return;
   const others = members.filter((member) => member.person.id !== actorId).map((member) => member.person);
   const claimed = new Set(bill.items.flatMap((item) => item.claims.map((claim) => claim.personId)));
+  const claimPath = routes.claimBill(bill.claimCode);
   const props = {
     senderName: firstNameOf(actor.displayName),
     billTitle: bill.title,
@@ -123,7 +132,7 @@ export async function notifyClaimingOpened(billId: string, actorId: string): Pro
     total: formatMoney(cents(bill.totalCents), bill.currency),
     totalPeople: members.length,
     claimedPeople: claimed.size,
-    claimUrl: appUrl(routes.claimBill(bill.claimCode)),
+    claimUrl: appUrl(claimPath),
   };
   const recipients = await emailRecipients(
     others.map((person) => person.id),
@@ -138,6 +147,12 @@ export async function notifyClaimingOpened(billId: string, actorId: string): Pro
         subject: claimInviteSubject(props),
         react: ClaimInviteEmail({ ...props, chrome }),
         text: claimInviteText({ ...props, chrome }),
+      }),
+      push: () => ({
+        title: claimInviteSubject(props),
+        body: pushMessages.claimInvite(props.groupName),
+        path: claimPath,
+        tag: pushTags.claim(bill.id),
       }),
     })),
   );
@@ -165,6 +180,12 @@ export async function notifyClaimsComplete(billId: string, actorId: string): Pro
       subject: claimsCompleteSubject(props.billTitle),
       react: ClaimsCompleteEmail({ ...props, chrome }),
       text: claimsCompleteText({ ...props, chrome }),
+    }),
+    push: () => ({
+      title: claimsCompleteSubject(props.billTitle),
+      body: pushMessages.claimsComplete(props.groupName),
+      path: routes.claimBill(bill.claimCode),
+      tag: pushTags.claim(bill.id),
     }),
   });
 }

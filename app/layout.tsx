@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { MotionProvider } from "@/components/motion/motion-provider";
+import { ServiceWorker } from "@/components/pwa/service-worker";
 import { ThemeHead } from "@/components/theme/theme-head";
 import { ThemeSync } from "@/components/theme/theme-sync";
 import { ToastProvider } from "@/components/ui/toast";
@@ -15,6 +16,8 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: { default: "Bruno", template: "%s · Bruno" },
   description: "Split the bill, not friendships.",
+  applicationName: "Bruno",
+  appleWebApp: { capable: true, title: "Bruno", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {
@@ -36,6 +39,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body className="min-h-dvh">
         <ThemeSync />
+        <ServiceWorker />
         <MotionProvider>
           <ToastProvider>{children}</ToastProvider>
         </MotionProvider>

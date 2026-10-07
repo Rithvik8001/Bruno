@@ -14,3 +14,10 @@ export function publicEnv(): PublicEnv | null {
   });
   return parsed.success ? parsed.data : null;
 }
+
+const pushPublicKeySchema = z.string().regex(/^[A-Za-z0-9_-]{80,}$/);
+
+export function pushPublicKey(): string | null {
+  const parsed = pushPublicKeySchema.safeParse(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY);
+  return parsed.success ? parsed.data : null;
+}

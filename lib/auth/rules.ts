@@ -28,6 +28,8 @@ export const routes = {
   ask: "/ask",
   askApi: "/api/ask",
   exportApi: "/api/export",
+  pushSubscriptionApi: "/api/push/subscription",
+  offline: "/offline",
   askAbout: (groupId?: string | null, listen?: boolean) => {
     const query = [groupId ? `group=${encodeURIComponent(groupId)}` : "", listen ? "listen=1" : ""].filter(Boolean).join("&");
     return query ? `/ask?${query}` : "/ask";

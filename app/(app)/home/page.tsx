@@ -12,7 +12,9 @@ export const metadata: Metadata = { title: homeCopy.metaTitle };
 
 function previewFrom(value: string | undefined): HomePreview | null {
   if (process.env.NODE_ENV === "production" || value === undefined) return null;
-  return (HOME_PREVIEWS as readonly string[]).includes(value) ? (value as HomePreview) : null;
+  return (HOME_PREVIEWS as readonly string[]).includes(value)
+    ? (value as HomePreview)
+    : null;
 }
 
 export default async function HomePage({ searchParams }: PageProps<"/home">) {
@@ -27,7 +29,11 @@ export default async function HomePage({ searchParams }: PageProps<"/home">) {
         skeleton
       ) : (
         <Suspense fallback={skeleton}>
-          <HomeContent personId={person.id} firstName={firstName} forceEmpty={preview === "empty"} />
+          <HomeContent
+            personId={person.id}
+            firstName={firstName}
+            forceEmpty={preview === "empty"}
+          />
         </Suspense>
       )}
     </div>

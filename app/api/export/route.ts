@@ -7,6 +7,7 @@ import { ALL_GROUPS, countRows, EXPORT_HEADERS, MAX_ROWS } from "@/lib/export/ru
 import { exportRequestSchema } from "@/lib/export/schema";
 import { exportWindow } from "@/lib/export/window";
 import { consumeRate } from "@/lib/rate-limit/limiter";
+import { isSameOrigin } from "@/lib/security/same-origin";
 
 export const maxDuration = 60;
 
@@ -14,18 +15,8 @@ const MINUTE_SECONDS = 60;
 
 const refuse = (status: number, error: ActionError) => Response.json({ ok: false, error }, { status, headers: { "cache-control": "no-store" } });
 
-function sameOrigin(request: Request): boolean {
-  const origin = request.headers.get("origin");
-  if (origin === null) return false;
-  try {
-    return new URL(origin).host === (request.headers.get("x-forwarded-host") ?? request.headers.get("host"));
-  } catch {
-    return false;
-  }
-}
-
 export async function POST(request: Request): Promise<Response> {
-  if (!sameOrigin(request)) return refuse(403, { code: "forbidden", message: exportMessages.badOrigin });
+  if (!isSameOrigin(request)) return refuse(403, { code: "forbidden", message: exportMessages.badOrigin });
   const context = await getAppContext();
   if (!context) return refuse(401, { code: "unauthorized", message: actionErrors.unauthorized });
   const body: unknown = await request.json().catch(() => null);
