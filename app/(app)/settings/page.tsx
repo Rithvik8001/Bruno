@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { InstallRow } from "@/components/pwa/install-row";
 import { getDeleteStatus } from "@/lib/account/queries";
 import { getAllowance } from "@/lib/ai/allowance";
 import { routes } from "@/lib/auth/rules";
@@ -59,6 +60,7 @@ export default async function SettingsPage() {
         <NotificationsSection initial={prefs} />
       </SettingsSection>
       <SettingsSection copy={sections.preferences} rows>
+        <InstallRow />
         <AppearanceRow />
         <CurrencyRow initial={currency} />
       </SettingsSection>

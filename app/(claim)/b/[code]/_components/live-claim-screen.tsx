@@ -16,6 +16,7 @@ import { AvatarStack } from "@/components/ui/avatar-stack";
 import { Button } from "@/components/ui/button";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { Chip } from "@/components/ui/chip";
+import { PushOptInCard } from "@/components/pwa/push-opt-in-card";
 import { GroupArtTile } from "@/components/ui/icon-3d";
 import { Receipt } from "@/components/ui/receipt";
 import { RollingNumber } from "@/components/ui/rolling-number";
@@ -38,6 +39,7 @@ import { buzz, HAPTICS } from "@/lib/motion/haptics";
 import { SOFT_SPRING } from "@/lib/motion/tokens";
 import { ZERO_CENTS } from "@/lib/money";
 import { firstNameOf } from "@/lib/people/defaults";
+import { optInCopy } from "@/lib/pwa/messages";
 import type { ClaimSignal } from "@/lib/realtime/topics";
 import { cn } from "@/lib/utils/cn";
 import { liveClaimCopy } from "../_data";
@@ -233,7 +235,7 @@ export function LiveClaimScreen({ bill, dayLabel }: LiveClaimScreenProps) {
   const body = manager ? copy.body.manager : guestView ? copy.body.guest : copy.body.member;
 
   return (
-    <div className={cn("grid gap-5 px-5 pb-10", manager ? "pt-5" : "pt-1")}>
+    <div className={cn("grid grid-cols-[minmax(0,1fr)] gap-5 px-5 pb-10", manager ? "pt-5" : "pt-1")}>
       <div className="flex min-h-9 items-center justify-between gap-3">
         {manager ? (
           <BackLink label={copy.back} href={routes.editBill(bill.slug, "items")} />
@@ -257,7 +259,7 @@ export function LiveClaimScreen({ bill, dayLabel }: LiveClaimScreenProps) {
         <p className="m-0 text-text-2 text-pretty">{body}</p>
       </div>
 
-      <div className="grid gap-2.5">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-2.5">
         <ShareBar url={bill.shareUrl} label={bill.shareLabel} place={bill.title} />
         <div className="grid gap-1.5 px-1">
           <PresenceRow people={channel.present} me={me} online={channel.connected} />
@@ -298,6 +300,8 @@ export function LiveClaimScreen({ bill, dayLabel }: LiveClaimScreenProps) {
           </AnimatePresence>
         </div>
       </div>
+
+      {manager && <PushOptInCard copy={optInCopy.claim} snoozeKey="optIn:claim" />}
 
       <Receipt bodyClassName="grid px-4 pt-2 pb-4">
         <div className="flex items-center justify-between gap-3 pt-1.5 pb-2.5">

@@ -113,6 +113,30 @@ export const iconRegistry = {
       </>
     ),
   },
+  share: {
+    node: (
+      <>
+        <path d="M12 3v12M8 7l4-4 4 4" />
+        <path d="M8 10H6a2 2 0 00-2 2v7a2 2 0 002 2h12a2 2 0 002-2v-7a2 2 0 00-2-2h-2" />
+      </>
+    ),
+  },
+  "add-square": {
+    node: (
+      <>
+        <rect x="4" y="4" width="16" height="16" rx="3.5" />
+        <path d="M12 8.5v7M8.5 12h7" />
+      </>
+    ),
+  },
+  tabs: {
+    node: (
+      <>
+        <rect x="4" y="7" width="13" height="13" rx="2.5" />
+        <path d="M8 4h9.5A2.5 2.5 0 0120 6.5V16" />
+      </>
+    ),
+  },
   copy: {
     node: (
       <>

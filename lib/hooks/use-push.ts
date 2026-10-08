@@ -6,14 +6,14 @@ import { disablePush, enablePush, readPushState, type PushState } from "@/lib/pu
 
 export interface PushControls {
   readonly state: PushState | null;
-  readonly busy: boolean;
+  readonly pending: boolean;
   readonly enable: () => Promise<ActionResult<PushState>>;
   readonly disable: () => Promise<ActionResult<PushState>>;
 }
 
 export function usePush(): PushControls {
   const [state, setState] = useState<PushState | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [pending, setPending] = useState(false);
 
   useEffect(() => {
     let live = true;
@@ -28,19 +28,19 @@ export function usePush(): PushControls {
   }, []);
 
   const run = useCallback(async (change: () => Promise<ActionResult<PushState>>) => {
-    setBusy(true);
+    setPending(true);
     try {
       const result = await change().catch((): ActionResult<PushState> => actionFail("unknown"));
       if (result.ok) setState(result.data);
       return result;
     } finally {
-      setBusy(false);
+      setPending(false);
     }
   }, []);
 
   return {
     state,
-    busy,
+    pending,
     enable: useCallback(() => run(enablePush), [run]),
     disable: useCallback(() => run(disablePush), [run]),
   };

@@ -2,6 +2,7 @@ import * as z from "zod/mini";
 
 export const PUSH_KINDS = [
   "addedToGroup",
+  "itemsClaimed",
   "claimInvite",
   "billAdded",
   "claimReminder",
@@ -18,10 +19,12 @@ export interface PushContent {
   readonly body: string;
   readonly path: string;
   readonly tag: string;
+  readonly action?: string;
 }
 
 const PATH_MAX = 512;
 const TEXT_MAX = 200;
+const ACTION_MAX = 30;
 
 export const pushPayloadSchema = z.object({
   kind: z.enum(PUSH_KINDS),
@@ -33,6 +36,7 @@ export const pushPayloadSchema = z.object({
     z.refine((path) => !path.startsWith("//")),
   ),
   tag: z.string().check(z.minLength(1), z.maxLength(TEXT_MAX)),
+  action: z.optional(z.string().check(z.minLength(1), z.maxLength(ACTION_MAX))),
 });
 
 export type PushPayload = z.infer<typeof pushPayloadSchema>;

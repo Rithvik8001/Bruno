@@ -1,4 +1,5 @@
 import { PressLink } from "@/components/motion/motion-link";
+import { PushOptInCard } from "@/components/pwa/push-opt-in-card";
 import { Avatar } from "@/components/ui/avatar";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { GroupArtTile, MomentTile } from "@/components/ui/icon-3d";
@@ -9,6 +10,7 @@ import type { FinishedBill } from "@/lib/claiming/queries";
 import { formatMoney } from "@/lib/currency";
 import { shortDay } from "@/lib/dates";
 import { firstNameOf } from "@/lib/people/defaults";
+import { optInCopy } from "@/lib/pwa/messages";
 import { cn } from "@/lib/utils/cn";
 import { liveClaimCopy } from "../_data";
 import { ClaimLinkState, StateButton } from "./claim-link-state";
@@ -89,6 +91,9 @@ export function FinishedCard({ bill }: { bill: FinishedBill }) {
         </div>
       )}
       {member && <StateButton href={routes.group(bill.group.id)}>{copy.openGroup(bill.group.name)}</StateButton>}
+      {member && paidByYou && bill.owers.length > 0 && (
+        <PushOptInCard copy={optInCopy.split(bill.owers.map((p) => firstNameOf(p.displayName)))} snoozeKey="optIn:split" />
+      )}
     </ClaimLinkState>
   );
 }

@@ -11,7 +11,7 @@ import { DesktopNav } from "./nav-links";
 
 export function AppHeader({ person, unread }: { person: PersonView; unread: boolean }) {
   return (
-    <header className="sticky top-0 z-20 bg-bg">
+    <header className="sticky top-0 z-20 bg-bg pt-safe">
       <div className="mx-auto flex h-16 max-w-app items-center gap-5 px-5">
         <LogoLink
           href={routes.app}

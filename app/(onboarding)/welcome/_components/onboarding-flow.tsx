@@ -104,7 +104,7 @@ export function OnboardingFlow({ person, defaultBuddy, defaultCurrency }: Onboar
     });
 
   return (
-    <div className="grid min-h-dvh grid-rows-[auto_1fr] pb-safe">
+    <div className="grid min-h-dvh grid-rows-[auto_1fr] pt-safe pb-safe">
       <header className="flex items-center justify-between gap-4 px-5 py-4">
         <span className="flex w-22 text-text">
           <LiveMark size={28} />

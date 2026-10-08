@@ -1,5 +1,6 @@
 import { askCopy } from "@/app/(flow)/ask/_data";
 import { AskBar } from "@/components/patterns/ask-bar";
+import { InstallCard } from "@/components/pwa/install-card";
 import { getAskBar } from "@/lib/ask/queries";
 import { routes } from "@/lib/auth/rules";
 import type { PersonId } from "@/lib/domain/ids";
@@ -76,6 +77,7 @@ export async function HomeContent({
           />
         )}
         {data.nextUp && <NextUpCard nextUp={data.nextUp} now={now} />}
+        <InstallCard className={data.nextUp ? "-mt-5" : undefined} />
         {data.people.length > 0 && (
           <PeopleSection people={data.people} meta={summary.peopleMeta} />
         )}

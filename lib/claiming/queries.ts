@@ -57,6 +57,7 @@ export interface FinishedBill extends LiveBase {
   readonly total: Cents;
   readonly yourShare: Cents | null;
   readonly yourItems: readonly ClaimedItem[];
+  readonly owers: readonly PersonView[];
 }
 
 export type LiveBill = ClaimingBill | FinishedBill;
@@ -126,7 +127,14 @@ export async function getLiveBill(code: string, viewer: AppContext | null): Prom
     );
     const mine =
       you !== null && split.ok && yourItems.length > 0 ? (split.value.shares.get(personId(you))?.total ?? ZERO_CENTS) : null;
-    return { ...base, status: "finished", total: cents(row.totalCents), yourShare: mine, yourItems };
+    const people = new Map(row.group.members.map((m) => [m.person.id, m.person]));
+    const owers = split.ok
+      ? [...split.value.shares].flatMap(([id, share]) => {
+          const person = people.get(id);
+          return id !== row.payer.id && share.total > 0 && person ? [toPersonView(person)] : [];
+        })
+      : [];
+    return { ...base, status: "finished", total: cents(row.totalCents), yourShare: mine, yourItems, owers };
   }
 
   const claimed = new Set(row.items.flatMap((item) => item.claims.map((c) => c.personId)));

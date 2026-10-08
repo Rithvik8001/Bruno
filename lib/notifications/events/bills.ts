@@ -11,11 +11,14 @@ import { cents, sumCents, type Cents } from "@/lib/money";
 import { firstNameOf } from "@/lib/people/defaults";
 import { pushMessages, pushTags } from "@/lib/push/messages";
 import { appUrl } from "@/lib/site";
+import { deliverPush } from "@/lib/push/send";
 import { deliver, deliverAll } from "../deliver";
 import { billDayLabel, emailPerson } from "../format";
 import { emailRecipient, emailRecipients } from "../recipients";
 
 const AVATAR_STACK_MAX = 4;
+const CLAIM_PUSH_SETTLE_MS = 15_000;
+const CLAIM_PUSH_WINDOW_MS = 5 * 60 * 1000;
 
 interface Stake {
   readonly stake: BillAddedStake;
@@ -82,7 +85,7 @@ export async function notifyBillShares(billId: string, actorId: string, variant:
           }),
           push: () => ({
             title: billAddedSubject(props),
-            body: pushMessages.billAdded(groupName, props.total),
+            body: variant === "split" ? pushMessages.billSplit(groupName, props.actorName) : pushMessages.billAdded(groupName, props.total),
             path: billPath,
             tag: pushTags.bill(bill.id),
           }),
@@ -149,10 +152,11 @@ export async function notifyClaimingOpened(billId: string, actorId: string): Pro
         text: claimInviteText({ ...props, chrome }),
       }),
       push: () => ({
-        title: claimInviteSubject(props),
-        body: pushMessages.claimInvite(props.groupName),
+        title: pushMessages.claimInviteTitle(props.senderName, props.billTitle, props.groupName),
+        body: pushMessages.claimInvite(props.groupName, props.senderName),
         path: claimPath,
-        tag: pushTags.claim(bill.id),
+        tag: pushTags.bill(bill.id),
+        action: pushMessages.claimNow,
       }),
     })),
   );
@@ -183,9 +187,41 @@ export async function notifyClaimsComplete(billId: string, actorId: string): Pro
     }),
     push: () => ({
       title: claimsCompleteSubject(props.billTitle),
-      body: pushMessages.claimsComplete(props.groupName),
+      body: pushMessages.claimsComplete(props.groupName, props.total, props.claimedPeople),
       path: routes.claimBill(bill.claimCode),
-      tag: pushTags.claim(bill.id),
+      tag: pushTags.bill(bill.id),
+    }),
+  });
+}
+
+export async function notifyItemsClaimed(billId: string, claimerId: string): Promise<void> {
+  const dedupeKey = `items-claimed/${billId}/${claimerId}/${Math.floor(Date.now() / CLAIM_PUSH_WINDOW_MS)}`;
+  if (await db.pushLog.findUnique({ where: { dedupeKey }, select: { id: true } })) return;
+  await new Promise((resolve) => setTimeout(resolve, CLAIM_PUSH_SETTLE_MS));
+  const bill = await claimingBill(billId);
+  if (!bill || bill.createdById === claimerId) return;
+  const priced = bill.items.filter((item) => item.priceCents > 0);
+  if (priced.length > 0 && priced.every((item) => item.claims.length > 0)) return;
+  const count = bill.items.filter((item) => item.claims.some((claim) => claim.personId === claimerId)).length;
+  if (count === 0) return;
+  const [creator, claimer, members] = await Promise.all([
+    db.person.findFirst({ where: { id: bill.createdById, notifyClaims: true }, select: { id: true } }),
+    db.person.findUnique({ where: { id: claimerId }, select: { displayName: true } }),
+    db.groupMember.count({ where: { groupId: bill.groupId, leftAt: null } }),
+  ]);
+  if (!creator || !claimer) return;
+  const claimedPeople = new Set(bill.items.flatMap((item) => item.claims.map((claim) => claim.personId))).size;
+  const name = firstNameOf(claimer.displayName);
+  await deliverPush({
+    kind: "itemsClaimed",
+    personId: creator.id,
+    dedupeKey,
+    payload: () => ({
+      kind: "itemsClaimed",
+      title: pushMessages.itemsClaimedTitle(name, count, bill.title),
+      body: pushMessages.itemsClaimed(bill.group.name, claimedPeople, members),
+      url: routes.claimBill(bill.claimCode),
+      tag: pushTags.bill(bill.id),
     }),
   });
 }

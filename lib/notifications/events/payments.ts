@@ -6,7 +6,10 @@ import { formatMoney, isCurrencyCode } from "@/lib/currency";
 import { db } from "@/lib/db";
 import { cents } from "@/lib/money";
 import { firstNameOf } from "@/lib/people/defaults";
-import { pushMessages, pushTags } from "@/lib/push/messages";
+import { personId as toPersonId, groupId as toGroupId } from "@/lib/domain/ids";
+import { loadGroupLedgers } from "@/lib/ledger/load";
+import { pairBalance } from "@/lib/ledger/pair";
+import { pushMessages, pushTags, type PairStanding } from "@/lib/push/messages";
 import { appUrl } from "@/lib/site";
 import { deliver } from "../deliver";
 import { emailDay, emailMoment } from "../format";
@@ -35,6 +38,7 @@ async function loadSettlement(settlementId: string) {
   return {
     ...row,
     groupId: row.groupId,
+    currency: row.currency,
     groupName: row.group.name,
     amount: formatMoney(cents(row.amountCents), row.currency),
     balancesPath: routes.groupTab(row.groupId, "balances"),
@@ -43,12 +47,29 @@ async function loadSettlement(settlementId: string) {
 
 type LoadedSettlement = NonNullable<Awaited<ReturnType<typeof loadSettlement>>>;
 
+async function standingOf(settlement: LoadedSettlement, me: string, other: string): Promise<PairStanding> {
+  const ledger = await loadGroupLedgers([settlement.groupId]);
+  const scope = { groupId: toGroupId(settlement.groupId), currency: settlement.currency };
+  const net = pairBalance(toPersonId(me), toPersonId(other), ledger.debts, ledger.settlements, scope, new Date());
+  if (net === 0) return { kind: "square" };
+  return net > 0
+    ? { kind: "theyOwe", amount: formatMoney(net, settlement.currency) }
+    : { kind: "youOwe", amount: formatMoney(cents(-net), settlement.currency) };
+}
+
+const updateTitles = {
+  confirmed: pushMessages.paymentConfirmedTitle,
+  received: pushMessages.paymentReceivedByThemTitle,
+  cancelled: pushMessages.paymentCancelledTitle,
+} as const satisfies Partial<Record<PaymentUpdate, (other: string, amount: string) => string>>;
+
 async function sendUpdate(settlement: LoadedSettlement, update: PaymentUpdate, toPersonId: string): Promise<void> {
   const recipient = await emailRecipient(toPersonId, "payments");
   if (!recipient) return;
   const other = toPersonId === settlement.fromId ? settlement.to : settlement.from;
   const otherId = toPersonId === settlement.fromId ? settlement.toId : settlement.fromId;
   const actionPath = update === "declined" ? routes.settle(settlement.groupId, otherId) : settlement.balancesPath;
+  const standing = await standingOf(settlement, toPersonId, otherId);
   const props = {
     update,
     otherName: firstNameOf(other.displayName),
@@ -67,8 +88,8 @@ async function sendUpdate(settlement: LoadedSettlement, update: PaymentUpdate, t
       text: paymentUpdateText({ ...props, chrome }),
     }),
     push: () => ({
-      title: paymentUpdateSubject(props),
-      body: pushMessages.paymentUpdate(props.groupName),
+      title: update === "declined" ? paymentUpdateSubject(props) : updateTitles[update](props.otherName, props.amount),
+      body: pushMessages.paymentStanding(props.groupName, props.otherName, standing),
       path: actionPath,
       tag: pushTags.settlement(settlement.id),
     }),
@@ -104,8 +125,8 @@ export async function notifySettlementRecorded(settlementId: string): Promise<vo
       text: paymentReceivedText({ ...props, chrome }),
     }),
     push: () => ({
-      title: paymentReceivedSubject(props),
-      body: pushMessages.paymentReceived(props.groupName, pending),
+      title: pushMessages.paymentReceivedTitle(props.fromName, props.amount),
+      body: pending ? pushMessages.paymentReceived(props.groupName) : props.groupName,
       path: actionPath,
       tag: pushTags.settlement(settlement.id),
     }),

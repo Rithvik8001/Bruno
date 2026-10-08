@@ -35,7 +35,7 @@ import { MAX_GROUP_MEMBERS } from "@/lib/members/types";
 import { memberMessages } from "@/lib/members/messages";
 import { cents } from "@/lib/money";
 import { deliverAll } from "@/lib/notifications/deliver";
-import { notifyBillShares, notifyClaimingOpened, notifyClaimsComplete } from "@/lib/notifications/events/bills";
+import { notifyBillShares, notifyClaimingOpened, notifyClaimsComplete, notifyItemsClaimed } from "@/lib/notifications/events/bills";
 import { emailRecipients } from "@/lib/notifications/recipients";
 import { firstNameOf } from "@/lib/people/defaults";
 import { personSelect } from "@/lib/people/person";
@@ -225,6 +225,7 @@ export const toggleClaim = definePublicAction(toggleClaimSchema, async ({ code, 
     joined: joining,
   });
   if (on) runInBackground("claims complete", () => notifyClaimsComplete(bill.id, person));
+  if (on) runInBackground("items claimed", () => notifyItemsClaimed(bill.id, person));
   return actionOk<ToggledClaim>({ joined: joining });
 });
 
@@ -453,10 +454,11 @@ export const remindClaimers = defineAction(billIdRefSchema, async ({ billId }, {
         text: claimReminderText({ ...props, chrome }),
       }),
       push: () => ({
-        title: claimReminderSubject(props),
-        body: pushMessages.claimReminder(props.groupName),
+        title: pushMessages.claimReminderTitle(props.senderName, props.billTitle),
+        body: pushMessages.claimReminder(props.groupName, props.claimedPeople, props.totalPeople, props.senderName),
         path: routes.claimBill(code),
-        tag: pushTags.claim(bill.id),
+        tag: pushTags.bill(bill.id),
+        action: pushMessages.claimNow,
       }),
     })),
   );

@@ -6,6 +6,7 @@ import { ThemeHead } from "@/components/theme/theme-head";
 import { ThemeSync } from "@/components/theme/theme-sync";
 import { ToastProvider } from "@/components/ui/toast";
 import { palettes } from "@/lib/design-system/tokens";
+import { SPLASH_IMAGES, splashMedia, splashPath } from "@/lib/pwa/splash";
 import "./globals.css";
 
 const inter = Inter({
@@ -17,7 +18,12 @@ export const metadata: Metadata = {
   title: { default: "Bruno", template: "%s · Bruno" },
   description: "Split the bill, not friendships.",
   applicationName: "Bruno",
-  appleWebApp: { capable: true, title: "Bruno", statusBarStyle: "default" },
+  appleWebApp: {
+    capable: true,
+    title: "Bruno",
+    statusBarStyle: "black-translucent",
+    startupImage: SPLASH_IMAGES.map((image) => ({ url: splashPath(image), media: splashMedia(image) })),
+  },
 };
 
 export const viewport: Viewport = {

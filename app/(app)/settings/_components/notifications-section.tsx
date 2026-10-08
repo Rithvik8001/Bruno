@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { PushRow } from "@/components/pwa/push-row";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/toast";
 import { setNotificationPref } from "@/lib/notifications/actions";
@@ -22,6 +23,7 @@ export function NotificationsSection({ initial }: { initial: NotificationPrefs }
 
   return (
     <>
+      <PushRow />
       {NOTIFICATION_CATEGORIES.map((category) => (
         <Switch
           key={category}

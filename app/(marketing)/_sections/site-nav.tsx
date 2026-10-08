@@ -8,7 +8,7 @@ import { NavLink } from "../_components/primitives";
 
 export function SiteNav() {
   return (
-    <header className="sticky top-0 z-10 border-b border-line bg-bg">
+    <header className="sticky top-0 z-10 border-b border-line bg-bg pt-safe">
       <div className="mx-auto flex h-16 max-w-landing items-center justify-between gap-2 border-x sm:gap-4 border-line px-5 sm:px-8">
         <LogoLink
           href={routes.home}

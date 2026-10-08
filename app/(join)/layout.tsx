@@ -5,7 +5,7 @@ import { shellCopy } from "../(app)/_data";
 
 export default function JoinLayout({ children }: LayoutProps<"/">) {
   return (
-    <div className="grid min-h-dvh grid-rows-[auto_1fr] pb-safe">
+    <div className="grid min-h-dvh grid-rows-[auto_1fr] pt-safe pb-safe">
       <header className="flex items-center justify-between px-5 py-4">
         <LogoLink href={routes.app} aria-label={shellCopy.homeLabel} className="text-text no-underline hover:text-text">
           <LiveMark size={28} />

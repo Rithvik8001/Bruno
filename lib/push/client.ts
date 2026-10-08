@@ -1,10 +1,20 @@
 import { actionFail, actionOk, type ActionResult } from "@/lib/actions/errors";
 import { pushPublicKey } from "@/lib/env.client";
+import { pushRowCopy } from "@/lib/pwa/messages";
 import { isIosDevice, isStandalone, serviceWorkerEnabled } from "@/lib/pwa/platform";
 import { removePushSubscription, savePushSubscription } from "./actions";
 import { pushSubscriptionSchema } from "./schema";
 
 export type PushState = "unsupported" | "needsInstall" | "blocked" | "off" | "on";
+
+export const PUSH_PROMPT_TIMEOUT_MS = 20_000;
+
+function askPermission(): Promise<NotificationPermission | "timeout"> {
+  return Promise.race([
+    Notification.requestPermission(),
+    new Promise<"timeout">((resolve) => setTimeout(() => resolve("timeout"), PUSH_PROMPT_TIMEOUT_MS)),
+  ]);
+}
 
 function pushCapable(): boolean {
   return serviceWorkerEnabled() && "PushManager" in window && "Notification" in window;
@@ -34,7 +44,8 @@ export async function readPushState(): Promise<PushState> {
 export async function enablePush(): Promise<ActionResult<PushState>> {
   const key = pushPublicKey();
   if (!key || !pushCapable()) return actionFail("conflict");
-  const permission = await Notification.requestPermission();
+  const permission = await askPermission();
+  if (permission === "timeout") return actionFail("conflict", pushRowCopy.noAnswer);
   if (permission === "denied") return actionOk("blocked");
   if (permission !== "granted") return actionOk("off");
   const registration = await navigator.serviceWorker.ready;

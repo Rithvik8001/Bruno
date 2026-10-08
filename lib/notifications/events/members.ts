@@ -51,7 +51,7 @@ export async function notifyAddedToGroup(groupId: string, personId: string, acto
     }),
     push: () => ({
       title: addedToGroupSubject(props),
-      body: pushMessages.addedToGroup(props.groupName),
+      body: pushMessages.addedToGroup(props.groupName, props.memberCount),
       path: routes.group(groupId),
       tag: pushTags.group(groupId),
     }),

@@ -52,8 +52,8 @@ async function sendPush(delivery: Delivery): Promise<boolean> {
       personId: delivery.recipient.personId,
       dedupeKey: delivery.dedupeKey,
       payload: () => {
-        const { title, body, path, tag } = content();
-        return { kind, title, body, url: path, tag };
+        const { title, body, path, tag, action } = content();
+        return { kind, title, body, url: path, tag, action };
       },
     });
   } catch (error) {

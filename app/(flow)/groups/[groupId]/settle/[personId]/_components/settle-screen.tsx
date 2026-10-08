@@ -7,6 +7,7 @@ import { CheckIn } from "@/components/motion/check-in";
 import { PressLink } from "@/components/motion/motion-link";
 import { BackLink } from "@/components/patterns/back-link";
 import { TearOffStub } from "@/components/patterns/tear-off-stub";
+import { PushOptInCard } from "@/components/pwa/push-opt-in-card";
 import { Icon } from "@/components/icons/icon";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ import { inlineDay } from "@/lib/dates";
 import { ZERO_CENTS, type Cents } from "@/lib/money";
 import { firstNameOf } from "@/lib/people/defaults";
 import { confirmSettlement, declineSettlement, recordSettlement, undoSettlement } from "@/lib/settlements/actions";
+import { optInCopy } from "@/lib/pwa/messages";
 import { SETTLEMENT_NOTE_MAX } from "@/lib/settlements/schema";
 import type { SettleUpView } from "@/lib/settlements/queries";
 import { cn } from "@/lib/utils/cn";
@@ -335,6 +337,7 @@ export function SettleScreen({ view: live, backHref, backKind }: SettleScreenPro
           {copy.awaiting.note(name)}
         </InlineAlert>
       )}
+      {done?.kind === "recorded" && done.pending && <PushOptInCard copy={optInCopy.confirm(name)} snoozeKey="optIn:confirm" />}
       {error && <InlineAlert>{error}</InlineAlert>}
     </div>
   );

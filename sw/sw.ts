@@ -2,13 +2,14 @@ import { pushPayloadSchema, type PushPayload } from "@/lib/push/payload";
 
 declare const self: ServiceWorkerGlobalScope;
 
-const VERSION = "v1";
+const VERSION = "v2";
 const SHELL_CACHE = `bruno-shell-${VERSION}`;
 const STATIC_CACHE = `bruno-static-${VERSION}`;
 const OFFLINE_PATH = "/offline";
 const SUBSCRIPTION_API = "/api/push/subscription";
 const ICON = "/icons/pwa/icon-192.png";
 const BADGE = "/icons/pwa/badge-96.png";
+const OPEN_ACTION = "open";
 const STATIC_PREFIXES = ["/_next/static/", "/icons/"] as const;
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
 const cacheStatics = !LOCAL_HOSTS.has(self.location.hostname);
@@ -77,6 +78,14 @@ async function navigate(request: Request): Promise<Response> {
   }
 }
 
+async function networkFirst(request: Request): Promise<Response> {
+  try {
+    return await fetch(request);
+  } catch {
+    return (await caches.match(request, { cacheName: STATIC_CACHE })) ?? Response.error();
+  }
+}
+
 async function cacheFirst(request: Request): Promise<Response> {
   const cached = await caches.match(request, { cacheName: STATIC_CACHE });
   if (cached) return cached;
@@ -98,7 +107,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
   if (STATIC_PREFIXES.some((prefix) => url.pathname.startsWith(prefix)))
-    event.respondWith(cacheFirst(request));
+    event.respondWith(cacheStatics ? cacheFirst(request) : networkFirst(request));
 });
 
 function readPayload(event: PushEvent): PushPayload | null {
@@ -113,15 +122,16 @@ function readPayload(event: PushEvent): PushPayload | null {
 self.addEventListener("push", (event) => {
   const payload = readPayload(event);
   if (!payload) return;
-  event.waitUntil(
-    self.registration.showNotification(payload.title, {
-      body: payload.body,
-      icon: ICON,
-      badge: BADGE,
-      tag: payload.tag,
-      data: { url: sameOriginPath(payload.url) },
-    }),
-  );
+  const options: NotificationOptions & { actions?: { action: string; title: string }[]; renotify?: boolean } = {
+    body: payload.body,
+    icon: ICON,
+    badge: BADGE,
+    tag: payload.tag,
+    renotify: true,
+    data: { url: sameOriginPath(payload.url) },
+    ...(payload.action ? { actions: [{ action: OPEN_ACTION, title: payload.action }] } : {}),
+  };
+  event.waitUntil(self.registration.showNotification(payload.title, options));
 });
 
 async function openPath(path: string): Promise<void> {

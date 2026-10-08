@@ -3,13 +3,15 @@ import { routes } from "@/lib/auth/rules";
 import { palettes } from "@/lib/design-system/tokens";
 import { PWA_ICONS, pwaIconPath } from "@/lib/pwa/icons";
 
+const PWA_START_URL = "/?source=pwa";
+
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    id: routes.app,
+    id: "/",
     name: "Bruno",
     short_name: "Bruno",
     description: "Split the bill, not friendships.",
-    start_url: routes.app,
+    start_url: PWA_START_URL,
     scope: "/",
     display: "standalone",
     orientation: "portrait",

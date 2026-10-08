@@ -17,7 +17,7 @@ export const settingsCopy = {
   sections: {
     profile: { title: "Profile", icon: null },
     plan: { title: "Plan", icon: "gem" },
-    notifications: { title: "Email notifications", icon: "bell" },
+    notifications: { title: "Notifications", icon: "bell" },
     preferences: { title: "Preferences", icon: "sparkles" },
     account: { title: "Account", icon: "key" },
   },

@@ -13,6 +13,7 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
+import { Icon } from "@/components/icons/icon";
 import { EASE, SPRING } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils/cn";
 
@@ -48,6 +49,7 @@ export interface ToastAction {
 
 export interface ToastOptions {
   message: string;
+  tone?: "plain" | "success";
   action?: ToastAction;
   duration?: number;
 }
@@ -59,6 +61,7 @@ export interface ToastViewProps extends Omit<ToastOptions, "duration"> {
 
 export function ToastView({
   message,
+  tone = "plain",
   action,
   onDismiss,
   className,
@@ -71,6 +74,7 @@ export function ToastView({
         className,
       )}
     >
+      {tone === "success" && <Icon name="check" size={14} strokeWidth={3} className="-mr-1.5 shrink-0 text-green" />}
       <span className="min-w-0 flex-1 pr-1.5">{message}</span>
       {action && (
         <button
@@ -178,6 +182,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           >
             <ToastView
               message={t.message}
+              tone={t.tone}
               action={t.action}
               onDismiss={() => remove(t.id)}
             />
